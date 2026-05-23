@@ -1,0 +1,32 @@
+[
+  {
+    "id": 1,
+    "question": "什么是 RAG？",
+    "mode": "education",
+    "expected_keywords": ["概念解释", "简单例子", "学习建议"]
+  },
+  {
+    "id": 2,
+    "question": "什么是 AI Agent？",
+    "mode": "general",
+    "expected_keywords": ["通用问答模式", "模拟回答"]
+  },
+  {
+    "id": 3,
+    "question": "请总结一篇关于可控文本生成的论文",
+    "mode": "paper_summary",
+    "expected_keywords": ["研究背景", "核心问题", "方法思路", "贡献与局限"]
+  },
+  {
+    "id": 4,
+    "question": "如何理解 Prompt Engineering？",
+    "mode": "education",
+    "expected_keywords": ["概念解释", "简单例子", "学习建议"]
+  },
+  {
+    "id": 5,
+    "question": "请分析知识蒸馏论文的核心思想",
+    "mode": "paper_summary",
+    "expected_keywords": ["研究背景", "核心问题", "方法思路"]
+  }
+]

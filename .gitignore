@@ -1,0 +1,6 @@
+.env
+.venv/
+__pycache__/
+logs/chat_log.json
+results/eval_results.json
+*.pyc
