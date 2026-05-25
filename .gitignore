@@ -1,6 +1,22 @@
+# Environment variables
 .env
+
+# Virtual environment
 .venv/
+venv/
+env/
+
+# Python cache
 __pycache__/
-logs/chat_log.json
-results/eval_results.json
 *.pyc
+
+# Logs and runtime results
+logs/
+results/
+
+# Vector database
+vector_db/
+
+# System files
+.DS_Store
+Thumbs.db
