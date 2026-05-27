@@ -2,6 +2,7 @@ from typing import Literal
 
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
+from rag_pipeline import rag_answer
 
 from config import MODEL, USE_MOCK
 from llm_client import call_llm
@@ -28,6 +29,9 @@ class ChatRequest(BaseModel):
     question: str
     mode: Literal["general", "education", "paper_summary"] = "general"
 
+class RagChatRequest(BaseModel):
+    question: str
+    top_k: int = 3
 
 class ChatResponse(BaseModel):
     """
@@ -117,6 +121,28 @@ def chat(request: ChatRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.post("/rag_chat")
+def rag_chat(request: RagChatRequest):
+    """
+    RAG 知识库问答接口。
+
+    输入：
+    - question: 用户问题
+    - top_k: 检索返回的文本块数量
+
+    输出：
+    - question: 原始问题
+    - answer: 模型回答
+    - sources: 引用来源
+    - retrieved_chunks: 检索到的文本块
+    """
+
+    result = rag_answer(
+        question=request.question,
+        top_k=request.top_k,
+    )
+
+    return result
 
 @app.post("/evaluate")
 def evaluate():

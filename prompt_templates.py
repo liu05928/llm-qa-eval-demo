@@ -47,3 +47,33 @@ def get_available_modes() -> list:
     """
 
     return list(PROMPT_TEMPLATES.keys())
+def build_rag_prompt(question: str, context: str) -> str:
+    """
+    构造 RAG 问答 Prompt。
+
+    参数：
+    - question: 用户问题
+    - context: 向量检索得到的参考资料
+
+    返回：
+    - 拼接好的 RAG Prompt
+    """
+
+    prompt = f"""
+你是一名教育领域的大模型知识库问答助手。
+请严格根据下面提供的参考资料回答用户问题。
+
+要求：
+1. 优先依据参考资料回答；
+2. 如果参考资料中没有相关信息，请明确说明“资料中未提及”；
+3. 不要编造参考资料中不存在的信息；
+4. 回答要清晰、分点说明；
+5. 最后给出参考来源。
+
+用户问题：
+{question}
+
+参考资料：
+{context}
+"""
+    return prompt.strip()
