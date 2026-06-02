@@ -1,3 +1,4 @@
+from rag_logger import save_rag_log
 from vector_store import VectorStore
 from prompt_templates import build_rag_prompt
 from llm_client import call_llm
@@ -92,6 +93,29 @@ def rag_answer(question: str, top_k: int = 3):
         "sources": build_sources(retrieved_chunks),
         "retrieved_chunks": retrieved_chunks,
     }
+    result = {
+    "question": question,
+    "answer": answer,
+    "sources": build_sources(retrieved_chunks),
+    "retrieved_chunks": retrieved_chunks,
+    }
+
+    log_data = {
+    "question": question,
+    "top_k": top_k,
+    "answer": answer,
+    "sources": result["sources"],
+    "retrieved_chunks": [
+        {
+            "chunk_id": chunk["chunk_id"],
+            "source": chunk["source"],
+            "distance": chunk.get("distance"),
+        }
+        for chunk in retrieved_chunks
+    ],
+    }
+
+    save_rag_log(log_data)
 
     return result
 

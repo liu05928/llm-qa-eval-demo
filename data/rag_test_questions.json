@@ -1,0 +1,62 @@
+[
+  {
+    "id": 1,
+    "question": "什么是 RAG？",
+    "expected_source": "rag_intro.md",
+    "expected_keywords": ["检索", "生成", "外部知识库"]
+  },
+  {
+    "id": 2,
+    "question": "RAG 为什么可以减少幻觉？",
+    "expected_source": "rag_intro.md",
+    "expected_keywords": ["幻觉", "资料", "依据"]
+  },
+  {
+    "id": 3,
+    "question": "RAG 的基本流程包括哪些步骤？",
+    "expected_source": "rag_intro.md",
+    "expected_keywords": ["文档读取", "文本切分", "向量化", "检索"]
+  },
+  {
+    "id": 4,
+    "question": "Agent 和普通聊天机器人有什么区别？",
+    "expected_source": "agent_intro.md",
+    "expected_keywords": ["观察", "思考", "行动"]
+  },
+  {
+    "id": 5,
+    "question": "什么时候不适合使用 Agent？",
+    "expected_source": "agent_intro.md",
+    "expected_keywords": ["流程", "稳定", "脚本"]
+  },
+  {
+    "id": 6,
+    "question": "Prompt Engineering 有什么作用？",
+    "expected_source": "prompt_engineering.md",
+    "expected_keywords": ["控制", "格式", "稳定性"]
+  },
+  {
+    "id": 7,
+    "question": "RAG Prompt 应该包含哪些要求？",
+    "expected_source": "prompt_engineering.md",
+    "expected_keywords": ["参考资料", "不要编造", "来源"]
+  },
+  {
+    "id": 8,
+    "question": "大模型在教育场景中可以做什么？",
+    "expected_source": "education_ai.md",
+    "expected_keywords": ["智能问答", "学习辅导", "教学设计"]
+  },
+  {
+    "id": 9,
+    "question": "大模型如何辅助论文阅读？",
+    "expected_source": "education_ai.md",
+    "expected_keywords": ["论文", "总结", "方法"]
+  },
+  {
+    "id": 10,
+    "question": "为什么 RAG 适合教育资料问答？",
+    "expected_source": "education_ai.md",
+    "expected_keywords": ["教材", "课程资料", "参考来源"]
+  }
+]
