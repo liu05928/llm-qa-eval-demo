@@ -1,4 +1,6 @@
-from config import API_KEY, USE_MOCK
+import requests
+
+from config import API_KEY, BASE_URL, MODEL_NAME, USE_MOCK
 from prompt_templates import get_prompt
 
 
@@ -10,11 +12,9 @@ def call_llm(question: str, mode: str = "general") -> str:
         question: 用户输入的问题；
         mode: 问答模式，例如 general、education、paper_summary。
 
-    当前阶段：
-        使用 Mock 模式，根据不同 mode 返回不同风格的模拟回答。
-
-    后续阶段：
-        接入真实大模型 API 时，会把 system_prompt 和 question 一起发送给模型。
+    当前支持：
+        1. USE_MOCK=true：返回 Mock 模拟回答；
+        2. USE_MOCK=false：调用硅基流动 DeepSeek API。
     """
 
     system_prompt = get_prompt(mode)
@@ -25,7 +25,59 @@ def call_llm(question: str, mode: str = "general") -> str:
     if not API_KEY:
         raise ValueError("没有检测到 DEEPSEEK_API_KEY，请检查 .env 文件。")
 
-    return "这里未来会接入真实大模型 API。"
+    return call_real_llm_api(
+        question=question,
+        system_prompt=system_prompt,
+    )
+
+
+def call_real_llm_api(question: str, system_prompt: str) -> str:
+    """
+    调用 OpenAI 兼容格式的大模型 API。
+
+    当前用于：
+        硅基流动平台的 DeepSeek 系列模型。
+    """
+
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {API_KEY}",
+    }
+
+    payload = {
+        "model": MODEL_NAME,
+        "messages": [
+            {
+                "role": "system",
+                "content": system_prompt,
+            },
+            {
+                "role": "user",
+                "content": question,
+            },
+        ],
+        "stream": False,
+        "temperature": 0.7,
+    }
+
+    response = requests.post(
+        BASE_URL,
+        headers=headers,
+        json=payload,
+        timeout=60,
+    )
+
+    if response.status_code != 200:
+        raise RuntimeError(
+            f"API 调用失败，状态码：{response.status_code}，返回内容：{response.text}"
+        )
+
+    data = response.json()
+
+    try:
+        return data["choices"][0]["message"]["content"]
+    except (KeyError, IndexError) as e:
+        raise RuntimeError(f"API 返回格式异常：{data}") from e
 
 
 def generate_mock_answer(question: str, mode: str, system_prompt: str) -> str:
@@ -69,3 +121,14 @@ def generate_mock_answer(question: str, mode: str, system_prompt: str) -> str:
         f"你的问题是：{question}\n"
         f"当前 mode={mode}，请检查 Prompt 模板配置。"
     )
+
+
+if __name__ == "__main__":
+    test_question = "请用通俗语言解释什么是 RAG。"
+
+    answer = call_llm(
+        question=test_question,
+        mode="education",
+    )
+
+    print(answer)
