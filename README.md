@@ -1,498 +1,401 @@
-# 教育资料 RAG 知识库问答系统
+# 教育资料 RAG 知识库问答与评测优化系统
 
-## 一、项目简介
+## 一、项目背景
 
-本项目是一个面向教育资料问答场景的 RAG 知识库问答系统，基于 Python、FastAPI、ChromaDB、sentence-transformers 和 Streamlit 构建。
+本项目是一个面向教育资料的大模型 RAG 知识库问答与评测优化系统，基于 Python、FastAPI、ChromaDB 和 Streamlit 构建。
 
-系统支持本地 Markdown 文档读取、文本切分、Embedding 向量化、向量数据库存储、Top-K 相似度检索、基于检索内容生成回答、返回引用来源、记录 RAG 问答日志，并提供简单的 RAG 效果评测与可视化演示页面。
+系统支持本地教育资料读取、文本切分、Embedding 向量化、向量检索、关键词检索、Hybrid Search、Rerank 重排序、大模型回答生成、来源引用、日志记录、自动评测和可视化展示。
 
-项目支持 Mock 模式和真实 API 模式。通过 `.env` 文件中的 `USE_MOCK` 参数可以切换运行方式：`USE_MOCK=true` 时使用模拟回答，`USE_MOCK=false` 时调用硅基流动平台的 DeepSeek 系列模型。
-
----
-## 二、项目演示
-
-Streamlit 演示页面支持用户输入问题、设置 `top_k`、查看模型回答、引用来源和检索到的知识片段。
-
-![RAG 问答演示](assets/rag_demo.png)
-## 三、项目亮点
-
-1. **完整 RAG 工程链路**：实现了从本地文档读取、文本切分、向量化、向量检索到 RAG 问答生成的完整流程。
-
-2. **支持 Mock 与真实 API 双模式**：通过 `.env` 中的 `USE_MOCK` 参数切换运行模式，既可以使用 Mock 模式进行本地调试，也可以调用硅基流动平台的 DeepSeek 系列模型生成真实回答。
-
-3. **引用来源可追溯**：RAG 问答接口会返回 `answer`、`sources` 和 `retrieved_chunks`，用户可以查看回答参考了哪些文档和文本片段。
-
-4. **具备简单评测能力**：构建了 RAG 测试集，支持从来源命中率和关键词命中率两个维度对 RAG 效果进行初步评估。
-
-5. **提供可视化演示页面**：使用 Streamlit 构建网页演示页面，支持用户输入问题、设置 `top_k`、查看模型回答、引用来源和检索片段。
-
-
-## 四、项目背景
-
-大模型在教育问答、学习辅导、论文辅助阅读和教学资源检索等场景中具有较强应用价值，但普通大模型问答存在回答缺少资料依据、容易产生幻觉、难以追溯来源等问题。
-
-本项目围绕大模型应用开发、RAG 应用开发和大模型评测等方向展开，从基础问答接口出发，逐步实现 Prompt 模板管理、多模式问答、日志记录、关键词评测、文档处理、向量检索、RAG 问答和可视化演示，重点训练以下能力：
-
-1. Python 项目结构组织；
-2. FastAPI 后端接口开发；
-3. Prompt 模板设计；
-4. 本地文档读取与文本切分；
-5. Embedding 向量化与 ChromaDB 向量检索；
-6. RAG Prompt 构造与问答流程封装；
-7. 引用来源返回与检索片段追溯；
-8. RAG 日志记录与简单效果评测；
-9. Streamlit 可视化演示页面构建；
-10. Mock 模式与真实大模型 API 模式切换。
+项目目标不是单纯实现一个问答 Demo，而是构建一个具备检索优化、结果溯源、效果评测和失败样例分析能力的 RAG 工程项目。
 
 ---
 
-## 五、技术栈
+## 二、技术栈
 
 * Python
 * FastAPI
-* Uvicorn
-* Pydantic
-* python-dotenv
-* requests
-* JSON
-* pathlib
-* sentence-transformers
-* ChromaDB
 * Streamlit
+* ChromaDB
+* sentence-transformers
+* SiliconFlow / DeepSeek API
 * Prompt Engineering
-* RAG
-* 硅基流动 DeepSeek API
-* Mock 模拟模式
-* 简单关键词评测
+* JSON / JSONL / CSV
+* Hybrid Search
+* Rerank
+* RAG Evaluation
 
 ---
 
-## 六、当前功能
+## 三、系统功能
 
-1. 支持命令行问答；
-2. 支持 FastAPI 后端接口；
-3. 支持基础问答接口 `POST /chat`；
-4. 支持 RAG 问答接口 `POST /rag_chat`；
-5. 支持 GET `/health` 健康检查接口；
-6. 支持 GET `/modes` 查看所有问答模式；
-7. 支持 Prompt 模板管理；
-8. 支持 `general`、`education`、`paper_summary` 等问答模式；
-9. 支持本地 Markdown 文档读取；
-10. 支持将长文档切分为多个文本块；
-11. 支持为每个文本块生成 `chunk_id`、`source` 和 `content`；
-12. 支持使用 sentence-transformers 生成文本向量；
-13. 支持使用 ChromaDB 构建本地向量数据库；
-14. 支持根据用户问题进行 Top-K 相似文本检索；
-15. 支持构造 RAG Prompt，将用户问题和检索内容拼接后生成回答；
-16. 支持返回模型回答、引用来源和检索片段；
-17. 支持记录普通问答日志和 RAG 问答日志；
-18. 支持构建普通问答测试集和 RAG 测试集；
-19. 支持来源命中率和关键词命中率评测；
-20. 支持 Streamlit 网页演示页面；
-21. 支持 Mock 模式和真实 API 模式切换；
-22. 支持通过硅基流动平台调用 DeepSeek 系列模型。
+### 1. 基础 RAG 问答
 
----
+系统支持读取本地教育资料文档，将文档切分为多个 chunk，并使用 Embedding 模型将文本片段转换为向量后写入 ChromaDB。
 
-## 七、项目结构
+用户输入问题后，系统会检索相关知识片段，构造 RAG Prompt，并调用大模型生成回答。
+
+### 2. 来源引用返回
+
+系统会返回回答所依据的来源文档和 chunk_id，便于追溯答案依据，提高问答结果的可信度。
+
+### 3. Hybrid Search 检索优化
+
+系统在基础向量检索基础上新增关键词检索能力，将向量检索结果和关键词检索结果进行融合，形成 Hybrid Search 候选召回结果。
+
+### 4. Dense-Preserving Hybrid Search + Rerank
+
+在实验过程中发现，直接使用 Hybrid Search 替代基础向量检索时，简单关键词匹配可能引入噪声。
+
+因此系统采用 Dense-Preserving Hybrid Search + Rerank 策略：
 
 ```text
-llm-qa-eval-demo/
-├── app.py                      # FastAPI 接口入口
-├── main.py                     # 命令行问答入口
-├── config.py                   # 项目配置管理
-├── llm_client.py               # 模型调用入口，支持 Mock 和真实 API
-├── chat_logger.py              # 普通问答日志保存
-├── prompt_templates.py         # Prompt 模板管理
-├── evaluator.py                # 普通问答关键词评测
-├── document_loader.py          # 本地文档读取
-├── text_splitter.py            # 文本切分
-├── embedding_client.py         # 文本向量化
-├── vector_store.py             # ChromaDB 向量库构建与检索
-├── rag_pipeline.py             # RAG 问答主流程
-├── rag_logger.py               # RAG 问答日志保存
-├── rag_evaluator.py            # RAG 效果评测
-├── web_demo.py                 # Streamlit 演示页面
+基础向量检索兜底
+↓
+Hybrid Search 扩大候选召回
+↓
+轻量级 Rerank 重排序
+↓
+保留 dense top2
+↓
+使用 rerank 后的 hybrid 结果补充最终上下文
+```
+
+该策略既保留了向量检索的语义稳定性，也利用 Hybrid Search 和 Rerank 提升候选片段的覆盖度和排序效果。
+
+### 5. 自动评测
+
+系统构建了 50 条 RAG 测试问题，覆盖概念解释、原理机制、对比辨析、教育应用和资料缺失等类型。
+
+评测指标包括：
+
+* 来源命中率
+* 关键词命中率
+* 引用完整率
+* 无资料拒答率
+* 平均回答长度
+* 平均检索片段数
+
+### 6. 日志记录与失败样例分析
+
+系统会记录 RAG 问答日志和检索日志，包括检索模式、候选片段、最终上下文、来源引用和回答长度等信息。
+
+同时，项目提供失败样例分析脚本，用于定位检索失败、回答覆盖不足、Prompt 约束不足、知识库缺失等问题。
+
+### 7. Streamlit 可视化展示
+
+项目提供 Streamlit 页面，支持：
+
+* 输入问题
+* 选择检索模式：vector / hybrid
+* 设置 top_k
+* 设置 candidate_k
+* 启用或关闭 Rerank
+* 展示模型回答
+* 展示引用来源
+* 展示检索片段
+* 展示 dense_score、sparse_score、hybrid_score、rerank_score
+* 展示评测结果
+* 查看检索日志
+
+---
+
+## 四、项目结构
+
+```text
+edu-rag-assistant/
+├── app.py
+├── web_demo.py
+├── llm_client.py
+├── config.py
+├── prompt_templates.py
+├── document_loader.py
+├── text_splitter.py
+├── embedding_client.py
+├── vector_store.py
+├── hybrid_retriever.py
+├── reranker.py
+├── rag_pipeline.py
+├── rag_logger.py
+├── rag_evaluator.py
+├── experiment_runner.py
+├── log_analyzer.py
+├── DEV_SPEC.md
 ├── data/
-│   ├── raw_docs/               # 原始知识库文档
-│   │   ├── rag_intro.md
-│   │   ├── agent_intro.md
-│   │   ├── prompt_engineering.md
-│   │   └── education_ai.md
+│   ├── raw_docs/
 │   ├── chunks/
-│   │   └── chunks.json         # 文本切分结果
-│   ├── test_questions.json     # 普通问答测试集
-│   └── rag_test_questions.json # RAG 测试集
-├── logs/                       # 本地日志，已加入 .gitignore
-├── results/                    # 本地评测结果，已加入 .gitignore
-├── vector_db/                  # 本地向量数据库，已加入 .gitignore
-├── assets/                     # 项目截图
-├── .env.example                # 环境变量示例文件
-├── .env                        # 环境变量文件，已加入 .gitignore
-├── .gitignore
-├── README.md
-└── requirements.txt
+│   └── rag_test_questions.json
+├── vector_db/
+├── logs/
+│   ├── rag_log.json
+│   └── retrieval_log.json
+├── eval_results/
+│   ├── baseline_eval.csv
+│   ├── hybrid_rerank_eval.csv
+│   ├── experiment_summary.json
+│   ├── experiment_report.md
+│   └── failure_cases.md
+├── assets/
+│   └── rag_demo.png
+├── requirements.txt
+├── .env.example
+└── README.md
 ```
 
 ---
 
-## 八、RAG 流程
-
-本项目的 RAG 问答流程如下：
+## 五、核心流程
 
 ```text
-本地教育资料
+文档读取
 ↓
-document_loader.py 读取文档
+文本切分
 ↓
-text_splitter.py 文本切分
+Embedding 向量化
 ↓
-生成 chunk_id、source、content
+向量库构建
 ↓
-embedding_client.py 生成文本向量
+向量检索 / 关键词检索
 ↓
-vector_store.py 写入 ChromaDB
+Hybrid Search
 ↓
-用户输入问题
+Rerank 重排序
 ↓
-向量检索 Top-K 相关文本块
+Prompt 构造
 ↓
-构造 RAG Prompt
+大模型生成回答
 ↓
-llm_client.py 调用 Mock 或真实大模型 API
+来源引用
 ↓
-生成回答
+日志记录
 ↓
-返回 answer、sources、retrieved_chunks
+自动评测
 ↓
-记录 RAG 日志
-↓
-运行 RAG 评测
+Dashboard 展示
 ```
-
-RAG 的核心思想是：在大模型生成答案之前，先从本地知识库中检索与用户问题相关的文本片段，再将检索内容和用户问题一起放入 Prompt 中，让模型基于资料生成回答。
-
-相比普通问答系统，RAG 可以让回答更依赖指定资料，并返回引用来源，从而提高回答的可追溯性，减少模型幻觉。
 
 ---
 
-## 九、环境变量配置
+## 六、模型说明
 
-本项目支持 Mock 模式和真实 API 模式，可以通过 `.env` 文件中的 `USE_MOCK` 参数进行切换。
+本项目使用两类模型：
 
-首次运行项目时，需要在项目根目录创建 `.env` 文件。可以参考 `.env.example`：
+### 1. Embedding 模型
 
-```bash
-cp .env.example .env
+```text
+sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2
 ```
 
-### 1. Mock 模式
+用于将教育资料文本和用户问题转换为向量，并基于 ChromaDB 进行相似度检索。
 
-如果只想跑通项目流程，不调用真实大模型 API，可以使用 Mock 模式：
+### 2. 生成式大模型
 
-```env
+项目通过 SiliconFlow API 接入 DeepSeek 模型，用于根据检索到的上下文生成最终回答。
+
+项目支持 Mock 模式：
+
+```text
 USE_MOCK=true
-DEEPSEEK_API_KEY=your_siliconflow_api_key_here
-DEEPSEEK_BASE_URL=https://api.siliconflow.cn/v1/chat/completions
-DEEPSEEK_MODEL=deepseek-ai/DeepSeek-V3
 ```
 
-在 Mock 模式下，系统不会真实请求大模型 API，而是返回模拟回答，适合用于本地流程调试、接口测试和项目演示。
+也支持真实 API 模式：
 
-### 2. 真实 API 模式
-
-如果需要调用硅基流动平台上的 DeepSeek 模型，需要将 `.env` 修改为：
-
-```env
+```text
 USE_MOCK=false
-DEEPSEEK_API_KEY=你的硅基流动API_KEY
-DEEPSEEK_BASE_URL=https://api.siliconflow.cn/v1/chat/completions
-DEEPSEEK_MODEL=deepseek-ai/DeepSeek-V3
 ```
-
-其中：
-
-* `DEEPSEEK_API_KEY`：硅基流动平台的 API Key；
-* `DEEPSEEK_BASE_URL`：硅基流动 OpenAI 兼容接口地址；
-* `DEEPSEEK_MODEL`：调用的模型名称，例如 `deepseek-ai/DeepSeek-V3`；
-* `USE_MOCK`：控制是否使用模拟模式。
-
-注意：`.env` 文件包含 API Key，已加入 `.gitignore`，不会上传 GitHub。
 
 ---
 
-## 十、运行方式
+## 七、评测设计
+
+测试集文件：
+
+```text
+data/rag_test_questions.json
+```
+
+测试集共 50 条问题，覆盖以下类型：
+
+| 问题类型        | 说明    |
+| ----------- | ----- |
+| concept     | 概念解释类 |
+| mechanism   | 原理机制类 |
+| compare     | 对比辨析类 |
+| application | 教育应用类 |
+| missing     | 资料缺失类 |
+
+每条测试样例包含：
+
+```json
+{
+  "id": 1,
+  "question": "什么是 RAG？",
+  "expected_source": "rag_intro.md",
+  "expected_keywords": ["检索", "生成", "知识库"],
+  "question_type": "concept"
+}
+```
+
+---
+
+## 八、实验结果
+
+本项目对基础向量检索方案和 Dense-Preserving Hybrid Search + Rerank 方案进行了对比实验。
+
+| 实验方案                                    |  来源命中率 | 关键词命中率 |   引用完整率 |  无资料拒答率 | 平均回答长度 | 平均检索片段数 |
+| --------------------------------------- | -----: | -----: | ------: | ------: | -----: | ------: |
+| Baseline：基础向量检索                         | 97.50% | 46.00% | 100.00% |  80.00% |  560.8 |     3.0 |
+| Dense-Preserving Hybrid Search + Rerank | 97.50% | 54.00% | 100.00% | 100.00% |  544.3 |     3.0 |
+
+实验结果表明，优化后的 Dense-Preserving Hybrid Search + Rerank 在保持来源命中率不下降的情况下，将关键词命中率从 46.00% 提升到 54.00%，并将无资料拒答率从 80.00% 提升到 100.00%。
+
+这说明该策略在保留基础向量检索稳定性的同时，能够提升回答覆盖度，并增强资料缺失场景下的幻觉控制能力。
+
+详细实验报告见：
+
+```text
+eval_results/experiment_report.md
+```
+
+失败样例分析见：
+
+```text
+eval_results/failure_cases.md
+```
+
+---
+
+## 九、运行方式
 
 ### 1. 安装依赖
 
 ```bash
-python -m pip install -r requirements.txt
+pip install -r requirements.txt
 ```
 
 ### 2. 配置环境变量
 
-复制环境变量示例文件：
+复制 `.env.example`：
 
 ```bash
 cp .env.example .env
 ```
 
-然后根据需要修改 `.env`。
+示例配置：
 
-如果使用 Mock 模式：
-
-```env
+```text
 USE_MOCK=true
+MODEL=deepseek-ai/DeepSeek-V3
+API_KEY=your_api_key_here
+BASE_URL=https://api.siliconflow.cn/v1/chat/completions
 ```
 
-如果使用真实 API 模式：
-
-```env
-USE_MOCK=false
-DEEPSEEK_API_KEY=你的硅基流动API_KEY
-DEEPSEEK_BASE_URL=https://api.siliconflow.cn/v1/chat/completions
-DEEPSEEK_MODEL=deepseek-ai/DeepSeek-V3
-```
-
-### 3. 生成文本切分结果
+### 3. 构建 chunks
 
 ```bash
 python text_splitter.py
 ```
 
-运行后会读取 `data/raw_docs/` 下的原始文档，并生成：
-
-```text
-data/chunks/chunks.json
-```
-
-### 4. 构建向量数据库
+### 4. 构建向量库
 
 ```bash
 python vector_store.py
 ```
 
-运行后会将文本块向量化，并写入本地 ChromaDB 向量数据库：
-
-```text
-vector_db/
-```
-
-`vector_db/` 是本地运行结果，已加入 `.gitignore`，不会上传 GitHub。
-
-### 5. 测试大模型调用
-
-```bash
-python llm_client.py
-```
-
-如果 `USE_MOCK=true`，会返回模拟回答。
-
-如果 `USE_MOCK=false` 且 API Key 配置正确，会调用硅基流动平台上的 DeepSeek 模型并返回真实回答。
-
-### 6. 测试 RAG 主流程
-
-```bash
-python rag_pipeline.py
-```
-
-该命令会完成：
-
-```text
-用户问题
-↓
-向量检索相关文本片段
-↓
-构造 RAG Prompt
-↓
-调用 llm_client 生成回答
-↓
-返回引用来源和检索片段
-```
-
-### 7. 启动 FastAPI 接口
+### 5. 启动 FastAPI
 
 ```bash
 uvicorn app:app --reload
 ```
 
-接口文档地址：
+访问接口文档：
 
 ```text
 http://127.0.0.1:8000/docs
 ```
 
-核心接口：
+### 6. 调用 RAG 接口
 
-```text
-POST /rag_chat
+```json
+{
+  "question": "什么是 RAG？",
+  "top_k": 3,
+  "retriever_mode": "hybrid",
+  "candidate_k": 10,
+  "use_rerank": true
+}
 ```
 
-### 8. 启动 Streamlit 演示页面
+### 7. 启动 Streamlit 页面
 
 ```bash
 streamlit run web_demo.py
 ```
 
-页面地址：
-
-```text
-http://127.0.0.1:8501
-```
-
-该页面支持：
-
-* 输入用户问题；
-* 设置 `top_k`；
-* 展示模型回答；
-* 展示引用来源；
-* 展示检索到的文本片段。
-
-### 9. 运行 RAG 评测
-
-```bash
-python rag_evaluator.py
-```
-
-评测结果会保存到：
-
-```text
-results/rag_eval_results.json
-```
-
-`results/` 是本地运行结果，已加入 `.gitignore`，不会上传 GitHub。
-
 ---
 
-## 十一、核心接口
+## 十、自动评测
 
-### POST `/rag_chat`
-
-请求示例：
-
-```json
-{
-  "question": "什么是 RAG？",
-  "top_k": 3
-}
-```
-
-返回示例：
-
-```json
-{
-  "question": "什么是 RAG？",
-  "answer": "RAG 是检索增强生成，它会先从外部知识库中检索相关资料，再结合大模型生成回答。",
-  "sources": [
-    {
-      "source": "rag_intro.md",
-      "chunk_id": "rag_intro_001"
-    }
-  ],
-  "retrieved_chunks": [
-    {
-      "chunk_id": "rag_intro_001",
-      "source": "rag_intro.md",
-      "content": "RAG 的全称是 Retrieval-Augmented Generation，中文通常叫检索增强生成……",
-      "distance": 0.123
-    }
-  ]
-}
-```
-
----
-
-## 十二、RAG 评测
-
-项目构建了 `data/rag_test_questions.json` 作为 RAG 测试集，目前共包含 50 条测试样例，覆盖以下几类问题：
-
-1. 概念解释类：测试系统能否准确解释 RAG、Agent、Prompt Engineering 等基础概念；
-2. 原理机制类：测试系统能否回答 RAG 流程、向量检索、文本切分、幻觉控制等问题；
-3. 对比辨析类：测试系统能否区分 RAG 与普通问答、Agent 与 Chatbot、Prompt 优化与模型微调等概念；
-4. 教育应用类：测试系统能否结合教育资料回答教学辅助、学习答疑、教育 AI 风险等问题；
-5. 资料缺失类：测试知识库中没有答案时，模型是否能够明确说明“根据当前资料无法确定”，避免编造。
-
-每条测试样例包含：
-
-* `id`：测试样例编号；
-* `question`：测试问题；
-* `expected_source`：预期检索命中的来源文档；
-* `expected_keywords`：预期回答中应包含的关键词；
-* `question_type`：问题类型，例如 `concept`、`mechanism`、`compare`、`application`、`missing`。
-
-当前评测指标包括：
-
-1. `source_hit`：来源命中率，判断检索结果是否包含预期来源文档；
-2. `keyword_hit`：关键词命中率，判断模型回答是否包含预期关键词；
-3. `has_sources`：引用完整率，判断回答结果是否返回来源引用；
-4. `missing_refusal`：无资料拒答率，判断资料缺失类问题中，模型是否明确说明当前资料无法确定。
-
-运行基础 RAG 评测：
+运行对比实验：
 
 ```bash
-python rag_evaluator.py
+python experiment_runner.py
 ```
 
-运行 baseline 结果导出：
-
-```bash
-python baseline_exporter.py
-```
-
-评测结果会保存到：
+输出文件：
 
 ```text
-results/rag_eval_results.json
 eval_results/baseline_eval.csv
-eval_results/baseline_summary.json
+eval_results/hybrid_rerank_eval.csv
+eval_results/experiment_summary.json
 ```
 
-其中：
+生成失败样例分析：
 
-* `results/rag_eval_results.json` 保存原始评测结果；
-* `eval_results/baseline_eval.csv` 保存每道题的详细评测结果，便于查看和后续分析；
-* `eval_results/baseline_summary.json` 保存整体评测汇总指标。
+```bash
+python log_analyzer.py
+```
 
-这些文件属于本地运行结果，不上传 GitHub。
-
----
-
-## 十三、当前状态
-
-当前项目已经完成教育资料 RAG 知识库问答系统的主要工程链路，包括：
+输出文件：
 
 ```text
-文档读取
-文本切分
-向量化
-向量检索
-RAG Prompt 构造
-真实 API 调用
-引用来源返回
-日志记录
-RAG 评测
-Streamlit 演示页面
+eval_results/failure_cases.md
 ```
-
-项目支持 Mock 模式和真实 API 模式，可通过 `.env` 文件中的 `USE_MOCK` 参数切换。
-
-当前知识库使用的是本地示例 Markdown 文档，后续可以扩展为 PDF、Word、网页、数据库或课程资料库等更复杂的数据源。
 
 ---
 
-## 十四、后续优化方向
+## 十一、页面展示
 
-后续可以继续优化以下方向：
+Streamlit 页面支持展示问答结果、引用来源、检索片段、检索分数、评测结果和检索日志。
 
-1. 支持 PDF、Word 等更多文档格式；
-2. 支持用户上传文档并自动构建知识库；
-3. 优化 chunk_size 和 chunk_overlap 参数；
-4. 增加 rerank 模块，提高检索结果质量；
-5. 增加更细粒度的 RAG 评测指标；
-6. 接入更多大模型服务商；
-7. 增加前端交互体验和项目截图展示；
-8. 支持多轮对话和历史上下文管理；
-9. 扩展为教育资料智能问答助手或论文阅读助手。
+示例截图：
+### RAG 问答与检索片段展示
 
-```
-```
+![RAG Answer](assets/rag_answer.png)
+
+### 自动评测结果展示
+
+![Evaluation Dashboard](assets/eval_dashboard.png)
+
+---
+
+## 十二、后续优化方向
+
+1. 使用 BM25 替代当前简单关键词匹配，提高 sparse search 的检索质量；
+2. 使用 Cross-Encoder Rerank 模型替代规则打分，提高候选片段排序效果；
+3. 增加 Query Rewrite，提高复杂问题和模糊问题的检索效果；
+4. 扩充教育资料知识库，引入更多课程资料、论文笔记和教学案例；
+5. 接入 Ragas 等更完整的 RAG 评测框架，补充上下文相关性、忠实度等指标；
+6. 后续扩展 Agent 或 MCP Server，增强复杂任务处理能力。
+
+---
+
+## 十三、项目亮点
+
+1. 实现了教育资料 RAG 问答完整链路；
+2. 支持基础向量检索和 Hybrid Search 两种检索模式；
+3. 设计了 Dense-Preserving Hybrid Search + Rerank 策略；
+4. 支持答案来源引用和检索日志记录；
+5. 构建 50 条测试问题集并完成自动评测；
+6. 输出实验报告和失败样例分析；
+7. 使用 Streamlit 搭建可视化演示页面；
+8. 项目具备可展示、可评测、可复盘和可写入简历的完整工程闭环。
