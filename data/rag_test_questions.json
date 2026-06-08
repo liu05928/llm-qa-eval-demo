@@ -3,60 +3,350 @@
     "id": 1,
     "question": "什么是 RAG？",
     "expected_source": "rag_intro.md",
-    "expected_keywords": ["检索", "生成", "外部知识库"]
+    "expected_keywords": ["检索", "生成", "知识库"],
+    "question_type": "concept"
   },
   {
     "id": 2,
-    "question": "RAG 为什么可以减少幻觉？",
+    "question": "RAG 的基本流程是什么？",
     "expected_source": "rag_intro.md",
-    "expected_keywords": ["幻觉", "资料", "依据"]
+    "expected_keywords": ["用户问题", "检索", "生成"],
+    "question_type": "concept"
   },
   {
     "id": 3,
-    "question": "RAG 的基本流程包括哪些步骤？",
+    "question": "RAG 为什么可以减少大模型幻觉？",
     "expected_source": "rag_intro.md",
-    "expected_keywords": ["文档读取", "文本切分", "向量化", "检索"]
+    "expected_keywords": ["参考资料", "外部知识", "减少"],
+    "question_type": "mechanism"
   },
   {
     "id": 4,
-    "question": "Agent 和普通聊天机器人有什么区别？",
-    "expected_source": "agent_intro.md",
-    "expected_keywords": ["观察", "思考", "行动"]
+    "question": "RAG 系统通常包括哪些模块？",
+    "expected_source": "rag_intro.md",
+    "expected_keywords": ["文档读取", "文本切分", "向量检索"],
+    "question_type": "concept"
   },
   {
     "id": 5,
-    "question": "什么时候不适合使用 Agent？",
-    "expected_source": "agent_intro.md",
-    "expected_keywords": ["流程", "稳定", "脚本"]
+    "question": "RAG 和普通大模型问答有什么区别？",
+    "expected_source": "rag_intro.md",
+    "expected_keywords": ["知识库", "检索", "上下文"],
+    "question_type": "compare"
   },
   {
     "id": 6,
-    "question": "Prompt Engineering 有什么作用？",
-    "expected_source": "prompt_engineering.md",
-    "expected_keywords": ["控制", "格式", "稳定性"]
+    "question": "RAG 中向量检索的作用是什么？",
+    "expected_source": "rag_intro.md",
+    "expected_keywords": ["相似度", "相关文本", "检索"],
+    "question_type": "mechanism"
   },
   {
     "id": 7,
-    "question": "RAG Prompt 应该包含哪些要求？",
-    "expected_source": "prompt_engineering.md",
-    "expected_keywords": ["参考资料", "不要编造", "来源"]
+    "question": "RAG 中为什么要进行文本切分？",
+    "expected_source": "rag_intro.md",
+    "expected_keywords": ["chunk", "上下文", "片段"],
+    "question_type": "mechanism"
   },
   {
     "id": 8,
-    "question": "大模型在教育场景中可以做什么？",
-    "expected_source": "education_ai.md",
-    "expected_keywords": ["智能问答", "学习辅导", "教学设计"]
+    "question": "RAG 系统为什么需要返回来源引用？",
+    "expected_source": "rag_intro.md",
+    "expected_keywords": ["来源", "可追溯", "可信"],
+    "question_type": "mechanism"
   },
   {
     "id": 9,
-    "question": "大模型如何辅助论文阅读？",
-    "expected_source": "education_ai.md",
-    "expected_keywords": ["论文", "总结", "方法"]
+    "question": "RAG 适合解决什么类型的问题？",
+    "expected_source": "rag_intro.md",
+    "expected_keywords": ["资料", "知识库", "问答"],
+    "question_type": "application"
   },
   {
     "id": 10,
-    "question": "为什么 RAG 适合教育资料问答？",
+    "question": "RAG 项目中的 top_k 参数是什么意思？",
+    "expected_source": "rag_intro.md",
+    "expected_keywords": ["检索", "返回", "片段"],
+    "question_type": "concept"
+  },
+  {
+    "id": 11,
+    "question": "什么是 Agent？",
+    "expected_source": "agent_intro.md",
+    "expected_keywords": ["观察", "思考", "行动"],
+    "question_type": "concept"
+  },
+  {
+    "id": 12,
+    "question": "Agent 的基本循环是什么？",
+    "expected_source": "agent_intro.md",
+    "expected_keywords": ["observe", "think", "act"],
+    "question_type": "mechanism"
+  },
+  {
+    "id": 13,
+    "question": "Agent 和 Chatbot 有什么区别？",
+    "expected_source": "agent_intro.md",
+    "expected_keywords": ["工具", "自主", "任务"],
+    "question_type": "compare"
+  },
+  {
+    "id": 14,
+    "question": "什么时候不适合使用 Agent？",
+    "expected_source": "agent_intro.md",
+    "expected_keywords": ["流程稳定", "任务可预测", "不确定性"],
+    "question_type": "compare"
+  },
+  {
+    "id": 15,
+    "question": "Agent 为什么需要工具调用能力？",
+    "expected_source": "agent_intro.md",
+    "expected_keywords": ["工具", "执行", "外部"],
+    "question_type": "mechanism"
+  },
+  {
+    "id": 16,
+    "question": "Workflow 和 Agent 的区别是什么？",
+    "expected_source": "agent_intro.md",
+    "expected_keywords": ["固定流程", "自主判断", "可控"],
+    "question_type": "compare"
+  },
+  {
+    "id": 17,
+    "question": "Agent 在教育场景中可以做什么？",
+    "expected_source": "agent_intro.md",
+    "expected_keywords": ["教学", "辅助", "任务"],
+    "question_type": "application"
+  },
+  {
+    "id": 18,
+    "question": "为什么说 Agent 会增加系统不确定性？",
+    "expected_source": "agent_intro.md",
+    "expected_keywords": ["自主", "复杂", "不确定"],
+    "question_type": "mechanism"
+  },
+  {
+    "id": 19,
+    "question": "多智能体系统是什么意思？",
+    "expected_source": "agent_intro.md",
+    "expected_keywords": ["多个", "协作", "分工"],
+    "question_type": "concept"
+  },
+  {
+    "id": 20,
+    "question": "Agent 项目中为什么要设计清晰的任务边界？",
+    "expected_source": "agent_intro.md",
+    "expected_keywords": ["任务边界", "稳定", "控制"],
+    "question_type": "mechanism"
+  },
+  {
+    "id": 21,
+    "question": "什么是 Prompt Engineering？",
+    "expected_source": "prompt_engineering.md",
+    "expected_keywords": ["提示词", "模型输出", "约束"],
+    "question_type": "concept"
+  },
+  {
+    "id": 22,
+    "question": "好的 Prompt 通常包含哪些内容？",
+    "expected_source": "prompt_engineering.md",
+    "expected_keywords": ["角色", "任务", "格式"],
+    "question_type": "concept"
+  },
+  {
+    "id": 23,
+    "question": "为什么 Prompt 中要明确输出格式？",
+    "expected_source": "prompt_engineering.md",
+    "expected_keywords": ["格式", "稳定", "可控"],
+    "question_type": "mechanism"
+  },
+  {
+    "id": 24,
+    "question": "Prompt Engineering 如何提升回答质量？",
+    "expected_source": "prompt_engineering.md",
+    "expected_keywords": ["约束", "上下文", "清晰"],
+    "question_type": "mechanism"
+  },
+  {
+    "id": 25,
+    "question": "在 RAG 系统中 Prompt 有什么作用？",
+    "expected_source": "prompt_engineering.md",
+    "expected_keywords": ["参考资料", "用户问题", "回答要求"],
+    "question_type": "application"
+  },
+  {
+    "id": 26,
+    "question": "为什么要在 Prompt 中要求模型不要编造？",
+    "expected_source": "prompt_engineering.md",
+    "expected_keywords": ["幻觉", "资料", "无法确定"],
+    "question_type": "mechanism"
+  },
+  {
+    "id": 27,
+    "question": "Prompt A/B 测试是什么意思？",
+    "expected_source": "prompt_engineering.md",
+    "expected_keywords": ["对比", "模板", "效果"],
+    "question_type": "concept"
+  },
+  {
+    "id": 28,
+    "question": "严格版 Prompt 相比基础版 Prompt 有什么优势？",
+    "expected_source": "prompt_engineering.md",
+    "expected_keywords": ["严格", "拒答", "减少编造"],
+    "question_type": "compare"
+  },
+  {
+    "id": 29,
+    "question": "为什么 Prompt 要写清楚角色设定？",
+    "expected_source": "prompt_engineering.md",
+    "expected_keywords": ["角色", "任务", "语气"],
+    "question_type": "mechanism"
+  },
+  {
+    "id": 30,
+    "question": "Prompt 优化和模型微调有什么区别？",
+    "expected_source": "prompt_engineering.md",
+    "expected_keywords": ["提示词", "训练", "参数"],
+    "question_type": "compare"
+  },
+  {
+    "id": 31,
+    "question": "大模型可以如何辅助教学？",
     "expected_source": "education_ai.md",
-    "expected_keywords": ["教材", "课程资料", "参考来源"]
+    "expected_keywords": ["教学设计", "答疑", "学习资源"],
+    "question_type": "application"
+  },
+  {
+    "id": 32,
+    "question": "教育 AI 可以帮助学生完成哪些学习任务？",
+    "expected_source": "education_ai.md",
+    "expected_keywords": ["答疑", "解释", "练习"],
+    "question_type": "application"
+  },
+  {
+    "id": 33,
+    "question": "大模型在教育场景中有哪些优势？",
+    "expected_source": "education_ai.md",
+    "expected_keywords": ["个性化", "反馈", "资源"],
+    "question_type": "application"
+  },
+  {
+    "id": 34,
+    "question": "大模型用于教育时可能有哪些风险？",
+    "expected_source": "education_ai.md",
+    "expected_keywords": ["错误信息", "依赖", "隐私"],
+    "question_type": "application"
+  },
+  {
+    "id": 35,
+    "question": "为什么教育 AI 需要可追溯的资料来源？",
+    "expected_source": "education_ai.md",
+    "expected_keywords": ["可信", "来源", "验证"],
+    "question_type": "mechanism"
+  },
+  {
+    "id": 36,
+    "question": "RAG 在教育问答系统中有什么价值？",
+    "expected_source": "education_ai.md",
+    "expected_keywords": ["教育资料", "知识库", "准确"],
+    "question_type": "application"
+  },
+  {
+    "id": 37,
+    "question": "教师如何利用大模型辅助备课？",
+    "expected_source": "education_ai.md",
+    "expected_keywords": ["教学设计", "教案", "资源"],
+    "question_type": "application"
+  },
+  {
+    "id": 38,
+    "question": "学生使用大模型学习时应该注意什么？",
+    "expected_source": "education_ai.md",
+    "expected_keywords": ["验证", "独立思考", "辅助"],
+    "question_type": "application"
+  },
+  {
+    "id": 39,
+    "question": "教育资料知识库问答系统适合哪些场景？",
+    "expected_source": "education_ai.md",
+    "expected_keywords": ["课程资料", "学习答疑", "知识查询"],
+    "question_type": "application"
+  },
+  {
+    "id": 40,
+    "question": "为什么教育 AI 不能完全替代教师？",
+    "expected_source": "education_ai.md",
+    "expected_keywords": ["教师", "引导", "判断"],
+    "question_type": "compare"
+  },
+  {
+    "id": 41,
+    "question": "硅基流动公司 2026 年最新融资金额是多少？",
+    "expected_source": null,
+    "expected_keywords": ["无法确定", "资料中未提及", "当前资料"],
+    "question_type": "missing"
+  },
+  {
+    "id": 42,
+    "question": "DeepSeek 最新模型的完整参数量是多少？",
+    "expected_source": null,
+    "expected_keywords": ["无法确定", "资料中未提及", "当前资料"],
+    "question_type": "missing"
+  },
+  {
+    "id": 43,
+    "question": "某课程老师的私人电话号码是多少？",
+    "expected_source": null,
+    "expected_keywords": ["无法确定", "资料中未提及", "当前资料"],
+    "question_type": "missing"
+  },
+  {
+    "id": 44,
+    "question": "2026 年某地教育政策的具体实施细则是什么？",
+    "expected_source": null,
+    "expected_keywords": ["无法确定", "资料中未提及", "当前资料"],
+    "question_type": "missing"
+  },
+  {
+    "id": 45,
+    "question": "这个知识库里有没有介绍股票投资建议？",
+    "expected_source": null,
+    "expected_keywords": ["无法确定", "资料中未提及", "当前资料"],
+    "question_type": "missing"
+  },
+  {
+    "id": 46,
+    "question": "某公司的内部员工名单是什么？",
+    "expected_source": null,
+    "expected_keywords": ["无法确定", "资料中未提及", "当前资料"],
+    "question_type": "missing"
+  },
+  {
+    "id": 47,
+    "question": "某大学 2026 年最新招生录取分数线是多少？",
+    "expected_source": null,
+    "expected_keywords": ["无法确定", "资料中未提及", "当前资料"],
+    "question_type": "missing"
+  },
+  {
+    "id": 48,
+    "question": "知识库中有没有介绍某篇论文的实验数据细节？",
+    "expected_source": null,
+    "expected_keywords": ["无法确定", "资料中未提及", "当前资料"],
+    "question_type": "missing"
+  },
+  {
+    "id": 49,
+    "question": "某个学生的个人成绩和联系方式是什么？",
+    "expected_source": null,
+    "expected_keywords": ["无法确定", "资料中未提及", "当前资料"],
+    "question_type": "missing"
+  },
+  {
+    "id": 50,
+    "question": "资料中有没有给出某模型训练使用的全部 GPU 数量？",
+    "expected_source": null,
+    "expected_keywords": ["无法确定", "资料中未提及", "当前资料"],
+    "question_type": "missing"
   }
 ]

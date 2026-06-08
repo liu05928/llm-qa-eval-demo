@@ -1,0 +1,20 @@
+{
+  "baseline": {
+    "total": 50,
+    "source_hit_rate": 0.975,
+    "keyword_hit_rate": 0.46,
+    "has_citation_rate": 1.0,
+    "no_context_reject_rate": 0.8,
+    "avg_answer_length": 560.84,
+    "avg_retrieved_chunk_count": 3.0
+  },
+  "hybrid_rerank": {
+    "total": 50,
+    "source_hit_rate": 0.975,
+    "keyword_hit_rate": 0.54,
+    "has_citation_rate": 1.0,
+    "no_context_reject_rate": 1.0,
+    "avg_answer_length": 544.34,
+    "avg_retrieved_chunk_count": 3.0
+  }
+}
