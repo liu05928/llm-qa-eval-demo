@@ -12,9 +12,9 @@ from evaluator import run_evaluation, load_eval_results
 
 
 app = FastAPI(
-    title="大模型问答接口系统",
-    description="基于 FastAPI 的大模型问答 Demo，支持 Prompt 模板、多模式问答和简单评测。",
-    version="0.3.0"
+    title="教育资料 RAG 知识库问答与评测优化系统",
+    description="基于 FastAPI 的教育资料 RAG 问答系统，支持基础向量检索、Hybrid Search、Rerank、来源引用和自动评测。",
+    version="0.4.0"
 )
 
 
@@ -30,8 +30,21 @@ class ChatRequest(BaseModel):
     mode: Literal["general", "education", "paper_summary"] = "general"
 
 class RagChatRequest(BaseModel):
+    """
+    RAG 知识库问答请求体。
+
+    question: 用户问题
+    top_k: 最终用于回答的文本块数量
+    retriever_mode: 检索模式，vector 表示基础向量检索，hybrid 表示 Hybrid Search
+    candidate_k: hybrid 模式下候选召回数量
+    use_rerank: 是否启用 Rerank 重排序
+    """
+
     question: str
     top_k: int = 3
+    retriever_mode: Literal["vector", "hybrid"] = "vector"
+    candidate_k: int = 10
+    use_rerank: bool = True
 
 class ChatResponse(BaseModel):
     """
@@ -126,23 +139,45 @@ def rag_chat(request: RagChatRequest):
     """
     RAG 知识库问答接口。
 
+    支持两种检索模式：
+    1. vector：基础向量检索；
+    2. hybrid：Hybrid Search + Rerank。
+
     输入：
     - question: 用户问题
-    - top_k: 检索返回的文本块数量
+    - top_k: 最终用于回答的文本块数量
+    - retriever_mode: 检索模式，vector 或 hybrid
+    - candidate_k: hybrid 模式下候选召回数量
+    - use_rerank: 是否启用 Rerank 重排序
 
     输出：
     - question: 原始问题
     - answer: 模型回答
     - sources: 引用来源
     - retrieved_chunks: 检索到的文本块
+    - retriever_mode: 当前使用的检索模式
+    - candidate_k: 候选召回数量
+    - use_rerank: 是否启用 Rerank
     """
 
-    result = rag_answer(
-        question=request.question,
-        top_k=request.top_k,
-    )
+    question = request.question.strip()
 
-    return result
+    if not question:
+        raise HTTPException(status_code=400, detail="问题不能为空")
+
+    try:
+        result = rag_answer(
+            question=question,
+            top_k=request.top_k,
+            retriever_mode=request.retriever_mode,
+            candidate_k=request.candidate_k,
+            use_rerank=request.use_rerank,
+        )
+
+        return result
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/evaluate")
 def evaluate():

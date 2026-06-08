@@ -404,30 +404,56 @@ results/rag_eval_results.json
 
 ## 十二、RAG 评测
 
-项目构建了 `data/rag_test_questions.json` 作为 RAG 测试集，每条测试样例包含：
+项目构建了 `data/rag_test_questions.json` 作为 RAG 测试集，目前共包含 50 条测试样例，覆盖以下几类问题：
 
+1. 概念解释类：测试系统能否准确解释 RAG、Agent、Prompt Engineering 等基础概念；
+2. 原理机制类：测试系统能否回答 RAG 流程、向量检索、文本切分、幻觉控制等问题；
+3. 对比辨析类：测试系统能否区分 RAG 与普通问答、Agent 与 Chatbot、Prompt 优化与模型微调等概念；
+4. 教育应用类：测试系统能否结合教育资料回答教学辅助、学习答疑、教育 AI 风险等问题；
+5. 资料缺失类：测试知识库中没有答案时，模型是否能够明确说明“根据当前资料无法确定”，避免编造。
+
+每条测试样例包含：
+
+* `id`：测试样例编号；
 * `question`：测试问题；
 * `expected_source`：预期检索命中的来源文档；
-* `expected_keywords`：预期回答中应包含的关键词。
+* `expected_keywords`：预期回答中应包含的关键词；
+* `question_type`：问题类型，例如 `concept`、`mechanism`、`compare`、`application`、`missing`。
 
 当前评测指标包括：
 
-1. `source_hit`：检索结果是否包含预期来源文档；
-2. `keyword_hit`：模型回答是否包含预期关键词。
+1. `source_hit`：来源命中率，判断检索结果是否包含预期来源文档；
+2. `keyword_hit`：关键词命中率，判断模型回答是否包含预期关键词；
+3. `has_sources`：引用完整率，判断回答结果是否返回来源引用；
+4. `missing_refusal`：无资料拒答率，判断资料缺失类问题中，模型是否明确说明当前资料无法确定。
 
-运行方式：
+运行基础 RAG 评测：
 
 ```bash
 python rag_evaluator.py
+```
+
+运行 baseline 结果导出：
+
+```bash
+python baseline_exporter.py
 ```
 
 评测结果会保存到：
 
 ```text
 results/rag_eval_results.json
+eval_results/baseline_eval.csv
+eval_results/baseline_summary.json
 ```
 
-该文件属于本地运行结果，不上传 GitHub。
+其中：
+
+* `results/rag_eval_results.json` 保存原始评测结果；
+* `eval_results/baseline_eval.csv` 保存每道题的详细评测结果，便于查看和后续分析；
+* `eval_results/baseline_summary.json` 保存整体评测汇总指标。
+
+这些文件属于本地运行结果，不上传 GitHub。
 
 ---
 
