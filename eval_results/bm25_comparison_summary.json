@@ -1,0 +1,28 @@
+{
+  "dense_rerank_no_keyword": {
+    "total": 60,
+    "source_hit_rate": 0.96,
+    "keyword_hit_rate": 0.6333333333333333,
+    "has_citation_rate": 1.0,
+    "no_context_reject_rate": 0.7,
+    "avg_answer_length": 581.2,
+    "avg_retrieved_chunk_count": 3.0
+  },
+  "bm25_hybrid_rerank": {
+    "total": 60,
+    "source_hit_rate": 0.96,
+    "keyword_hit_rate": 0.6166666666666667,
+    "has_citation_rate": 1.0,
+    "no_context_reject_rate": 0.9,
+    "avg_answer_length": 576.65,
+    "avg_retrieved_chunk_count": 3.0
+  },
+  "delta_bm25_minus_no_keyword": {
+    "source_hit_rate": 0.0,
+    "keyword_hit_rate": -0.016666666666666607,
+    "has_citation_rate": 0.0,
+    "no_context_reject_rate": 0.20000000000000007,
+    "avg_answer_length": -4.550000000000068,
+    "avg_retrieved_chunk_count": 0.0
+  }
+}

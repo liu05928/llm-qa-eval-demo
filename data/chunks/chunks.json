@@ -1,13 +1,28 @@
 [
   {
-    "chunk_id": "agent_intro_001",
-    "source": "agent_intro.md",
-    "content": "# Agent 入门介绍\n\nAgent 通常指具有一定自主决策能力的智能体。和普通聊天机器人相比，Agent 不只是根据用户输入生成一句回答，而是可以根据任务目标进行观察、思考、行动，并根据行动结果继续调整下一步。\n\n一个常见的 Agent 基本循环是：\n\n1. Observe：观察当前环境或接收用户输入；\n2. Think：分析当前任务，判断下一步应该做什么；\n3. Act：调用工具、执行操作或生成输出；\n4. Observe：再次观察执行结果；\n5. Continue：根据结果继续推理或结束任务。\n\n普通 chatbot 更像是“问一句答一句”。用户问什么，它就直接回答什么。workflow 更像是固定流程，例如按照预设步骤完成表单填写、信息提取或报告生成。Agent 则更强调根据任务动态选择工具和行动路径。\n\n例如，用户说“帮我整理最近三天的重要邮件并生成待办事项”。普通聊天机器人无法直接完成，因为它不能主动访问工具。一个 Agent 系统则可以先调用邮件搜索工具，读取邮件内容，判断哪些邮件重要，再生成待办事项。\n\n但是，并不是所有任务都适合使用 Agent。如果任务流程非常稳定"
+    "chunk_id": "prompt_engineering_001",
+    "source": "prompt_engineering.md",
+    "content": "# Prompt Engineering 入门介绍\n\nPrompt Engineering 通常翻译为提示词工程，指的是通过设计输入给大模型的提示词，引导模型按照指定目标、格式和风格生成回答。\n\n在大模型应用中，Prompt 不只是简单的一句话问题。一个较完整的 Prompt 通常会包含角色设定、任务说明、输入内容、输出格式要求、限制条件和示例。\n\n例如，在教育解释场景中，可以要求模型扮演“耐心的老师”，用通俗语言解释概念，并分步骤说明。在论文总结场景中，可以要求模型从研究背景、方法、实验、结论和不足几个方面进行总结。\n\n第一周项目中已经设计了 mode 参数，包括 general、education 和 paper_summary 三种模式。这个设计体现了 Prompt 模板管理思想：不同任务使用不同模板，而不是所有问题都用同一种提示方式。\n\nPrompt Engineering 的作用包括：\n\n1. 控制回答风格；\n2. 规范输出格式；\n3. 降低模型答非所问的概率；\n4. 提高复杂任务的稳定性；\n5. 让系统更容易接入接口和前端；\n6. 为后续评测提供统一输出结构。\n\n在 RAG"
   },
   {
-    "chunk_id": "agent_intro_002",
-    "source": "agent_intro.md",
-    "content": "Agent 系统则可以先调用邮件搜索工具，读取邮件内容，判断哪些邮件重要，再生成待办事项。\n\n但是，并不是所有任务都适合使用 Agent。如果任务流程非常稳定、规则非常明确，用普通脚本或 workflow 反而更可靠。Agent 适合任务步骤不完全固定、需要根据中间结果动态决策、可能需要调用多个工具的场景。\n\n在大模型应用开发中，Agent 常见于智能办公助手、自动资料分析、代码助手、数据分析助手和复杂任务规划等场景。学习 Agent 时，不能只关注概念，还要理解它和 chatbot、workflow、multi-agent 的区别。"
+    "chunk_id": "prompt_engineering_002",
+    "source": "prompt_engineering.md",
+    "content": "范输出格式；\n3. 降低模型答非所问的概率；\n4. 提高复杂任务的稳定性；\n5. 让系统更容易接入接口和前端；\n6. 为后续评测提供统一输出结构。\n\n在 RAG 系统中，Prompt Engineering 更加重要。因为系统需要告诉模型：回答必须优先依据检索到的参考资料。如果参考资料没有相关信息，就应该明确说明资料中未提及，而不是编造答案。\n\n一个好的 RAG Prompt 通常会包含：\n\n1. 角色：你是一个知识库问答助手；\n2. 资料约束：请严格根据参考资料回答；\n3. 缺失处理：资料没有提到时，不要编造；\n4. 输出要求：回答要清晰，可以分点；\n5. 来源要求：最后给出参考来源。\n\n因此，Prompt Engineering 是大模型应用开发中的基础能力，也是 RAG 和 Agent 项目的重要组成部分。"
+  },
+  {
+    "chunk_id": "retrieval_optimization_001",
+    "source": "retrieval_optimization.md",
+    "content": "# RAG 检索优化与召回\n\nRAG 系统的回答质量很大程度取决于检索质量。大模型只能基于传入的上下文生成答案，如果检索阶段没有找到相关资料，后续 Prompt 写得再好也很难回答准确。因此，检索优化的目标不是让分数看起来更高，而是让真正有用的 chunks 更稳定地进入最终上下文。\n\n向量检索通常使用 Top-K 参数控制返回数量。Top-K 表示从向量数据库中取回最相关的 K 个文本块。较小的 Top-K 可以减少噪声，让答案更聚焦；较大的 Top-K 可以提升召回，降低漏掉关键资料的概率。当前项目在 RAG 问答中使用 top_k 控制最终上下文数量，在 Hybrid Search 中还使用 candidate_k 扩大候选召回范围。\n\n召回和精度需要平衡。召回强调“有没有把相关资料找回来”，精度强调“返回结果里无关内容少不少”。例如用户问“Rerank 的作用是什么”，如果 Top-K 结果全部来自 RAG 入门文档而没有重排序内容，说明召回不足；如果结果里混入和向量检索主线无关的资料，说明精度不足。优化检索时要同时观察这两个方向。\n\n影响检索效果的因素主要包括：\n\n- chu"
+  },
+  {
+    "chunk_id": "retrieval_optimization_002",
+    "source": "retrieval_optimization.md",
+    "content": "有重排序内容，说明召回不足；如果结果里混入和向量检索主线无关的资料，说明精度不足。优化检索时要同时观察这两个方向。\n\n影响检索效果的因素主要包括：\n\n- chunk_size：文本块过小会缺少上下文，过大会混入多个主题；\n- chunk_overlap：适当重叠可以避免关键信息被切断；\n- Embedding 模型：模型要适合中文语义和当前领域；\n- 文档结构：标题、小标题和列表能帮助文本块保留主题信息；\n- Top-K 和 candidate_k：候选数量决定召回范围；\n- 去噪和筛选：无关主题进入知识库会干扰检索。\n\n当前项目的一个优化思路是先进行基础向量检索，保证语义相关结果的稳定性；再使用 Hybrid Search 扩大候选范围；最后用 Rerank 模型对候选 chunks 重新排序。这个流程把“召回更多可能相关内容”和“筛选更适合回答的问题片段”拆成两个阶段，适合教育资料问答这种要求依据明确的场景。\n\n检索优化还需要日志和评测支持。项目会记录检索到的 chunk_id、source、distance、dense_score、sparse_score、hybrid_scor"
+  },
+  {
+    "chunk_id": "retrieval_optimization_003",
+    "source": "retrieval_optimization.md",
+    "content": "要日志和评测支持。项目会记录检索到的 chunk_id、source、distance、dense_score、sparse_score、hybrid_score 和 rerank_score。通过这些日志，可以分析某个问题为什么召回失败，是向量检索没有命中，还是 Hybrid Search 引入噪声，或者 Rerank 没有把正确片段排到前面。持续观察失败案例，是改进 RAG 系统的重要方法。"
   },
   {
     "chunk_id": "education_ai_001",
@@ -20,14 +35,19 @@
     "content": "学设计、学习分析、智能教育系统等方向结合。\n\nRAG 在教育场景中尤其有价值。因为教育问答通常需要依据教材、课件、讲义或论文等具体资料。如果只依赖大模型自身知识，可能会出现解释不准确、脱离课程内容或编造细节的问题。通过 RAG，系统可以先检索课程资料，再基于资料生成回答，并返回参考来源。\n\n因此，一个教育资料 RAG 知识库问答系统可以作为大模型应用开发项目，体现文档处理、向量检索、Prompt 设计、接口开发、日志记录和效果评测等能力。"
   },
   {
-    "chunk_id": "prompt_engineering_001",
-    "source": "prompt_engineering.md",
-    "content": "# Prompt Engineering 入门介绍\n\nPrompt Engineering 通常翻译为提示词工程，指的是通过设计输入给大模型的提示词，引导模型按照指定目标、格式和风格生成回答。\n\n在大模型应用中，Prompt 不只是简单的一句话问题。一个较完整的 Prompt 通常会包含角色设定、任务说明、输入内容、输出格式要求、限制条件和示例。\n\n例如，在教育解释场景中，可以要求模型扮演“耐心的老师”，用通俗语言解释概念，并分步骤说明。在论文总结场景中，可以要求模型从研究背景、方法、实验、结论和不足几个方面进行总结。\n\n第一周项目中已经设计了 mode 参数，包括 general、education 和 paper_summary 三种模式。这个设计体现了 Prompt 模板管理思想：不同任务使用不同模板，而不是所有问题都用同一种提示方式。\n\nPrompt Engineering 的作用包括：\n\n1. 控制回答风格；\n2. 规范输出格式；\n3. 降低模型答非所问的概率；\n4. 提高复杂任务的稳定性；\n5. 让系统更容易接入接口和前端；\n6. 为后续评测提供统一输出结构。\n\n在 RAG"
+    "chunk_id": "rerank_intro_001",
+    "source": "rerank_intro.md",
+    "content": "# Rerank 重排序入门\n\nRerank 是 RAG 检索流程中的二阶段排序方法。第一阶段通常由向量检索或 Hybrid Search 负责召回候选 chunks，目标是尽量把可能相关的资料找回来。第二阶段由 Rerank 模型对“用户问题”和“候选文本块”逐对判断相关性，再按相关性分数重新排序。Rerank 的重点是提高最终上下文质量。\n\n当前项目使用 BAAI/bge-reranker-v2-m3 作为重排序模型。系统会先通过 Hybrid Search 获得 candidate_k 个候选 chunks，再把每个 chunk 的 content 和用户问题一起发送给 Rerank 客户端。模型返回 relevance_score，表示该候选文本对当前问题的相关程度。项目会把这个分数保存为 rerank_score，并记录 rerank_model，方便在日志和 Streamlit 页面中观察检索效果。\n\nRerank 和 Embedding 检索的区别在于计算方式不同。Embedding 检索会先把文本预先编码成向量，查询时通过向量距离快速召回；Rerank 通常在候选集上逐"
   },
   {
-    "chunk_id": "prompt_engineering_002",
-    "source": "prompt_engineering.md",
-    "content": "范输出格式；\n3. 降低模型答非所问的概率；\n4. 提高复杂任务的稳定性；\n5. 让系统更容易接入接口和前端；\n6. 为后续评测提供统一输出结构。\n\n在 RAG 系统中，Prompt Engineering 更加重要。因为系统需要告诉模型：回答必须优先依据检索到的参考资料。如果参考资料没有相关信息，就应该明确说明资料中未提及，而不是编造答案。\n\n一个好的 RAG Prompt 通常会包含：\n\n1. 角色：你是一个知识库问答助手；\n2. 资料约束：请严格根据参考资料回答；\n3. 缺失处理：资料没有提到时，不要编造；\n4. 输出要求：回答要清晰，可以分点；\n5. 来源要求：最后给出参考来源。\n\n因此，Prompt Engineering 是大模型应用开发中的基础能力，也是 RAG 和 Agent 项目的重要组成部分。"
+    "chunk_id": "rerank_intro_002",
+    "source": "rerank_intro.md",
+    "content": "和 Embedding 检索的区别在于计算方式不同。Embedding 检索会先把文本预先编码成向量，查询时通过向量距离快速召回；Rerank 通常在候选集上逐条比较问题和文档，计算更精细，但成本更高。因此 Rerank 不适合直接对整个知识库排序，而适合放在候选召回之后，对几十条以内的候选结果做精排。\n\n在当前 RAG 流程中，Rerank 的位置是：\n\n1. 用户提出问题；\n2. 系统进行向量检索或 Hybrid Search；\n3. 得到 candidate_k 个候选 chunks；\n4. Rerank 模型为每个候选 chunk 打相关性分；\n5. 系统按 rerank_score 选择更适合进入上下文的片段；\n6. 最终 chunks 被拼接成 context，交给大模型生成答案。\n\nRerank 可以改善几类常见问题。第一，向量检索召回了语义相近但不能直接回答问题的片段，Rerank 可以把更匹配问题意图的片段排到前面。第二，Hybrid Search 引入了关键词噪声，Rerank 可以降低只包含少量关键词但上下文不相关的结果。第三，当多个候选都来自同一主题时，Rera"
+  },
+  {
+    "chunk_id": "rerank_intro_003",
+    "source": "rerank_intro.md",
+    "content": "前面。第二，Hybrid Search 引入了关键词噪声，Rerank 可以降低只包含少量关键词但上下文不相关的结果。第三，当多个候选都来自同一主题时，Rerank 可以选择更完整、更直接回答问题的 chunk。\n\n当前项目还使用 Dense-Preserving 策略：最终结果中会优先保留一部分基础向量检索结果，再用 Rerank 后的 Hybrid 候选补充剩余位置。这样做是为了避免关键词检索或重排序波动导致语义检索的稳定结果完全丢失。对于教育资料 RAG，这种策略可以在召回扩展和回答稳定性之间取得更好的平衡。"
   },
   {
     "chunk_id": "rag_intro_001",
@@ -38,5 +58,75 @@
     "chunk_id": "rag_intro_002",
     "source": "rag_intro.md",
     "content": "似度检索：用户提问后，将问题也转换成向量，并检索最相关的文本块；\n6. Prompt 构造：把用户问题和检索到的文本块组合成提示词；\n7. 答案生成：调用大模型生成最终回答；\n8. 来源引用：返回答案时附带参考资料来源。\n\nRAG 可以减少幻觉的原因在于，它让模型的回答有明确的资料依据。模型不再完全依赖自身记忆，而是优先参考检索到的知识片段。如果资料中没有相关信息，系统可以要求模型明确说明“资料中未提及”，而不是强行编造答案。\n\n在教育场景中，RAG 可以用于课程资料问答、论文辅助阅读、学习笔记查询、教学资源检索和个性化学习辅导。例如，学生上传课程讲义后，可以向系统提问，系统先从课程资料中检索相关段落，再基于这些内容生成解释。"
+  },
+  {
+    "chunk_id": "vector_database_001",
+    "source": "vector_database.md",
+    "content": "# 向量数据库在 RAG 中的作用\n\n向量数据库用于存储和检索 Embedding 向量，是 RAG 系统的核心基础设施之一。普通数据库更擅长按字段精确查询，例如按标题、时间或编号查询；向量数据库更擅长按语义相似度查询，例如用户问“RAG 检索流程是什么”，系统可以找到包含“问题向量化、相似度检索、Top-K 召回、上下文拼接”的资料片段。\n\n当前项目使用 ChromaDB 作为向量数据库。构建索引时，系统会读取 `data/chunks/chunks.json`，取出每个 chunk 的 content 生成 Embedding，并把向量、文本、chunk_id 和 source 写入 Chroma collection。ChromaDB 会把向量库持久化到 `vector_db/` 目录，因此构建完成后，后续问答可以直接加载已经保存的向量索引。\n\n向量数据库检索的基本流程是：先把用户问题转换成查询向量，再在 collection 中查找距离最近的若干文本向量。这个返回数量通常叫 Top-K。Top-K 越小，返回内容越精简，但可能漏掉有用资料；Top-K 越大，召回更充分，但也可能"
+  },
+  {
+    "chunk_id": "vector_database_002",
+    "source": "vector_database.md",
+    "content": "on 中查找距离最近的若干文本向量。这个返回数量通常叫 Top-K。Top-K 越小，返回内容越精简，但可能漏掉有用资料；Top-K 越大，召回更充分，但也可能带来噪声，增加大模型上下文压力。当前项目默认会根据配置或调用参数返回若干条最相关 chunks。\n\nChromaDB 返回的检索结果中包含 distance。distance 表示查询向量和文档向量之间的距离，通常距离越小，语义越相关。为了便于展示和融合，项目会把 distance 转换为 dense_score，例如使用 `1 / (1 + distance)` 得到一个越大越相关的分数。\n\n一个向量数据库中的每条记录通常包含：\n\n- id：文本块唯一标识，例如 chunk_id；\n- document：原始文本块内容；\n- embedding：由 Embedding 模型生成的向量；\n- metadata：来源文件、chunk_id 或其他辅助字段；\n- distance 或 score：查询时返回的相关性信息。\n\n向量数据库不是知识库的全部。它只保存向量和可检索文本，真正的知识组织还依赖文档质量、切分策略、元数据和检索流程"
+  },
+  {
+    "chunk_id": "vector_database_003",
+    "source": "vector_database.md",
+    "content": "ce 或 score：查询时返回的相关性信息。\n\n向量数据库不是知识库的全部。它只保存向量和可检索文本，真正的知识组织还依赖文档质量、切分策略、元数据和检索流程。如果 raw_docs 中加入了新的 Markdown 文件，需要先运行文本切分脚本生成新的 chunks，再删除旧的 `vector_db/` 并重新构建索引。这样新增资料才会进入 ChromaDB，被后续 RAG 问答检索到。"
+  },
+  {
+    "chunk_id": "vector_knowledge_base_001",
+    "source": "vector_knowledge_base.md",
+    "content": "# 向量知识库构建流程\n\n向量知识库是把原始文档整理成“可被语义检索的资料库”的过程。它不是简单地把文件放进目录，而是要经过文档读取、文本切分、Embedding 向量化、向量数据库写入和检索验证等步骤。当前项目的知识库主线围绕教育资料问答，因此适合加入概念清晰、主题集中的 Markdown 文档。\n\n在当前项目中，原始资料放在 `data/raw_docs/`。文档读取模块会读取这些 Markdown 文件，并保留文件名作为 source。随后文本切分模块会把长文档切成多个 chunks。每个 chunk 都有自己的 chunk_id，例如某个文件的第一个片段会生成类似 `embedding_intro_001` 的编号。chunk_id 的作用是让检索结果能够追溯到具体片段，方便日志分析、页面展示和答案引用。\n\n切分后的 chunks 会保存到 `data/chunks/chunks.json`。向量库构建脚本会读取这个 JSON 文件，提取每个 chunk 的 content，调用 BAAI/bge-m3 生成 Embedding，然后写入 ChromaDB。写入时通常会保存三类"
+  },
+  {
+    "chunk_id": "vector_knowledge_base_002",
+    "source": "vector_knowledge_base.md",
+    "content": "SON 文件，提取每个 chunk 的 content，调用 BAAI/bge-m3 生成 Embedding，然后写入 ChromaDB。写入时通常会保存三类信息：文本内容、向量表示和元数据。文本内容用于拼接 RAG 上下文，向量表示用于相似度检索，元数据用于显示来源和定位片段。\n\n适合进入向量知识库的文档应满足以下条件：\n\n- 主题和系统定位一致，例如 RAG、Embedding、向量数据库、检索优化；\n- 每篇文档有明确标题和小标题，便于切分后仍保留语义；\n- 内容不宜过度发散，一个段落最好只讲一个技术点；\n- 避免加入和当前向量检索主线关系不大的扩展主题；\n- 避免大量代码堆叠，优先写清楚概念、流程、输入输出和使用场景。\n\n向量知识库的质量会影响 RAG 的最终回答。若原始文档主题混杂，检索阶段可能召回无关 chunks；若文档过短，模型可能缺少足够上下文；若文档过长，切分后可能产生重复或边界模糊的问题。对于教育资料 RAG，推荐把每个技术主题整理成独立 Markdown 文件，让每个 chunk 都能回答一个相对完整的问题。\n\n构建完成后，需要用典型问题验证检索结果。例如询问"
+  },
+  {
+    "chunk_id": "vector_knowledge_base_003",
+    "source": "vector_knowledge_base.md",
+    "content": "AG，推荐把每个技术主题整理成独立 Markdown 文件，让每个 chunk 都能回答一个相对完整的问题。\n\n构建完成后，需要用典型问题验证检索结果。例如询问“什么是 Top-K 检索”“Hybrid Search 为什么能提升召回”“Rerank 在 RAG 中解决什么问题”。如果返回的 chunks 能稳定命中相关文档，说明向量知识库的主题覆盖和切分质量比较合适。"
+  },
+  {
+    "chunk_id": "hybrid_search_001",
+    "source": "hybrid_search.md",
+    "content": "# Hybrid Search 混合检索\n\nHybrid Search 是把多种检索方式结合起来的一种 RAG 检索策略。单纯向量检索擅长语义匹配，可以找到表达不同但意思相近的内容；关键词检索擅长精确匹配，可以抓住模型名称、缩写、专有名词和具体术语。混合检索的目标是利用两者优势，提高候选 chunks 的召回质量。\n\n当前项目中的 Hybrid Search 包含两个通道。第一个通道是 dense search，也就是向量检索。系统调用 ChromaDB，根据用户问题的 Embedding 向量查找相似 chunks，并把 Chroma 返回的 distance 转换为 dense_score。第二个通道是 sparse search，也就是轻量关键词检索。项目使用简单分词函数提取英文、数字和中文字符，计算 query 与 chunk 的关键词重叠数量，得到 sparse_score。\n\n两个通道各自返回 candidate_k 条候选结果后，系统使用 RRF 排名融合。RRF 的核心思想不是直接比较原始分数，而是比较排名位置。排名越靠前，贡献越大。当前项目还使用加权 RRF，让 de"
+  },
+  {
+    "chunk_id": "hybrid_search_002",
+    "source": "hybrid_search.md",
+    "content": "条候选结果后，系统使用 RRF 排名融合。RRF 的核心思想不是直接比较原始分数，而是比较排名位置。排名越靠前，贡献越大。当前项目还使用加权 RRF，让 dense search 权重更高，sparse search 权重更低。这样可以保持语义检索为主，同时让关键词检索补充专有名词和精确表达。\n\nHybrid Search 的基本流程如下：\n\n1. 将用户问题送入 dense search，得到向量检索候选；\n2. 将用户问题送入 sparse search，得到关键词候选；\n3. 对两个候选列表按 chunk_id 合并去重；\n4. 使用 RRF 计算 hybrid_score；\n5. 按 hybrid_score 排序，返回 Top-K 或 candidate_k 结果；\n6. 如启用 Rerank，再把候选结果交给重排序模型。\n\n混合检索适合处理两类问题。第一类是语义表达变化较大的问题，例如“向量库怎么帮 RAG 找资料”和“向量数据库在检索增强生成中的作用”。第二类是包含明确术语的问题，例如“BAAI/bge-m3”“Top-K”“RRF”“ChromaDB”。向量检索能覆盖"
+  },
+  {
+    "chunk_id": "hybrid_search_003",
+    "source": "hybrid_search.md",
+    "content": "”和“向量数据库在检索增强生成中的作用”。第二类是包含明确术语的问题，例如“BAAI/bge-m3”“Top-K”“RRF”“ChromaDB”。向量检索能覆盖语义相近表达，关键词检索能避免专有词被语义模型弱化。\n\nHybrid Search 也可能引入噪声。关键词重叠并不总是代表语义相关，尤其是中文按单字匹配时，常见字可能造成误召回。因此当前项目采用 dense 权重更高的策略，并在后续加入 Rerank。这样系统既能扩大候选范围，又能尽量避免无关关键词结果直接进入最终上下文。"
+  },
+  {
+    "chunk_id": "embedding_intro_001",
+    "source": "embedding_intro.md",
+    "content": "# Embedding 向量化入门\n\nEmbedding 是 RAG 系统中连接“自然语言文本”和“向量检索”的关键步骤。它的作用是把一段文本转换成一组数字向量。向量不是给人直接阅读的内容，而是给向量数据库和相似度算法使用的表示方式。语义越接近的文本，在向量空间中的距离通常越近；语义差异越大的文本，距离通常越远。\n\n在当前教育资料 RAG 项目中，文档会先被读取并切分成 chunks。每个 chunk 的正文会交给 Embedding 模型生成向量，然后和 chunk_id、source、content 等信息一起写入 ChromaDB。用户提问时，问题本身也会被同一个 Embedding 模型转换成查询向量。系统再用查询向量去匹配知识库中的文本块向量，找出最相关的 Top-K 片段。\n\n本项目使用的向量模型是 BAAI/bge-m3。bge-m3 适合中文和多语言语义表示，常用于 RAG 检索、文本相似度计算和问答系统。对于教育资料问答来说，它可以把“什么是向量数据库”和“向量库有什么作用”这类表达不同但语义接近的问题映射到相近的向量位置，从而提升召回效果。\n\nEmbedding 的"
+  },
+  {
+    "chunk_id": "embedding_intro_002",
+    "source": "embedding_intro.md",
+    "content": "育资料问答来说，它可以把“什么是向量数据库”和“向量库有什么作用”这类表达不同但语义接近的问题映射到相近的向量位置，从而提升召回效果。\n\nEmbedding 的质量会直接影响检索质量。如果文本块太短，向量可能缺少上下文；如果文本块太长，向量可能混合多个主题，导致检索结果不够聚焦。因此当前项目在切分阶段使用固定 chunk_size 和 chunk_overlap，让相邻文本块保留一定重叠，减少关键信息被切断的风险。\n\n构建向量知识库时要注意几个问题：\n\n- 文档和问题必须使用同一个或兼容的 Embedding 模型；\n- 文本块内容应尽量围绕一个主题，避免一个 chunk 同时讲多个无关概念；\n- 向量维度必须和向量数据库集合配置一致；\n- 空文本、重复文本和噪声文本会降低检索质量；\n- 更新原始文档后，需要重新切分并重建向量索引。\n\n在 RAG 中，Embedding 不负责生成答案，它只负责把文本变成可比较的语义表示。真正的回答生成发生在检索之后：系统把 Top-K 检索结果拼接成参考上下文，再交给大模型生成最终回答。因此，Embedding 的核心价值是提高“找资料”的准确性，而"
+  },
+  {
+    "chunk_id": "embedding_intro_003",
+    "source": "embedding_intro.md",
+    "content": "回答生成发生在检索之后：系统把 Top-K 检索结果拼接成参考上下文，再交给大模型生成最终回答。因此，Embedding 的核心价值是提高“找资料”的准确性，而不是直接回答用户问题。"
+  },
+  {
+    "chunk_id": "agent_intro_001",
+    "source": "agent_intro.md",
+    "content": "# Agent 入门介绍\n\nAgent 通常指具有一定自主决策能力的智能体。和普通聊天机器人相比，Agent 不只是根据用户输入生成一句回答，而是可以根据任务目标进行观察、思考、行动，并根据行动结果继续调整下一步。\n\n一个常见的 Agent 基本循环是：\n\n1. Observe：观察当前环境或接收用户输入；\n2. Think：分析当前任务，判断下一步应该做什么；\n3. Act：调用工具、执行操作或生成输出；\n4. Observe：再次观察执行结果；\n5. Continue：根据结果继续推理或结束任务。\n\n普通 chatbot 更像是“问一句答一句”。用户问什么，它就直接回答什么。workflow 更像是固定流程，例如按照预设步骤完成表单填写、信息提取或报告生成。Agent 则更强调根据任务动态选择工具和行动路径。\n\n例如，用户说“帮我整理最近三天的重要邮件并生成待办事项”。普通聊天机器人无法直接完成，因为它不能主动访问工具。一个 Agent 系统则可以先调用邮件搜索工具，读取邮件内容，判断哪些邮件重要，再生成待办事项。\n\n但是，并不是所有任务都适合使用 Agent。如果任务流程非常稳定"
+  },
+  {
+    "chunk_id": "agent_intro_002",
+    "source": "agent_intro.md",
+    "content": "Agent 系统则可以先调用邮件搜索工具，读取邮件内容，判断哪些邮件重要，再生成待办事项。\n\n但是，并不是所有任务都适合使用 Agent。如果任务流程非常稳定、规则非常明确，用普通脚本或 workflow 反而更可靠。Agent 适合任务步骤不完全固定、需要根据中间结果动态决策、可能需要调用多个工具的场景。\n\n在大模型应用开发中，Agent 常见于智能办公助手、自动资料分析、代码助手、数据分析助手和复杂任务规划等场景。学习 Agent 时，不能只关注概念，还要理解它和 chatbot、workflow、multi-agent 的区别。"
   }
 ]

@@ -1,6 +1,7 @@
 import json
 import csv
 import os
+import time
 from typing import List, Dict, Any
 
 from rag_pipeline import rag_answer
@@ -9,9 +10,19 @@ from rag_pipeline import rag_answer
 TEST_FILE = "data/rag_test_questions.json"
 EVAL_DIR = "eval_results"
 
-BASELINE_FILE = "eval_results/baseline_eval.csv"
-HYBRID_FILE = "eval_results/hybrid_rerank_eval.csv"
-SUMMARY_FILE = "eval_results/experiment_summary.json"
+NO_KEYWORD_FILE = "eval_results/no_keyword_dense_rerank_eval.csv"
+BM25_FILE = "eval_results/bm25_hybrid_rerank_eval.csv"
+COMPARISON_SUMMARY_FILE = "eval_results/bm25_comparison_summary.json"
+COMPARISON_REPORT_FILE = "eval_results/bm25_comparison_report.md"
+
+SUMMARY_METRICS = [
+    "source_hit_rate",
+    "keyword_hit_rate",
+    "has_citation_rate",
+    "no_context_reject_rate",
+    "avg_answer_length",
+    "avg_retrieved_chunk_count",
+]
 
 
 def load_test_questions(file_path: str = TEST_FILE) -> List[Dict[str, Any]]:
@@ -98,7 +109,9 @@ def run_single_eval(
     retriever_mode: str,
     top_k: int = 3,
     candidate_k: int = 10,
-    use_rerank: bool = True
+    use_rerank: bool = True,
+    max_retries: int = 2,
+    retry_sleep_seconds: int = 3,
 ):
     """
     运行单组实验。
@@ -119,13 +132,26 @@ def run_single_eval(
         print(f"正在评测：{retriever_mode} | 第 {qid} 题：{question}")
 
         try:
-            result = rag_answer(
-                question=question,
-                top_k=top_k,
-                retriever_mode=retriever_mode,
-                candidate_k=candidate_k,
-                use_rerank=use_rerank,
-            )
+            for attempt in range(max_retries + 1):
+                try:
+                    result = rag_answer(
+                        question=question,
+                        top_k=top_k,
+                        retriever_mode=retriever_mode,
+                        candidate_k=candidate_k,
+                        use_rerank=use_rerank,
+                    )
+                    break
+                except Exception as retry_error:
+                    if attempt >= max_retries:
+                        raise
+
+                    print(
+                        f"第 {qid} 题调用失败，"
+                        f"{retry_sleep_seconds} 秒后重试 "
+                        f"({attempt + 1}/{max_retries})：{retry_error}"
+                    )
+                    time.sleep(retry_sleep_seconds)
 
             answer = result.get("answer", "")
             sources = result.get("sources", [])
@@ -229,6 +255,14 @@ def calc_summary(rows):
     }
 
 
+def calc_delta(before_summary, after_summary):
+    """计算 BM25 相比 no-keyword 方案的指标变化。"""
+    return {
+        metric: after_summary.get(metric, 0) - before_summary.get(metric, 0)
+        for metric in SUMMARY_METRICS
+    }
+
+
 def print_summary(summary):
     print(f"测试问题数：{summary['total']}")
     print(f"来源命中率：{summary['source_hit_rate']:.2%}")
@@ -239,40 +273,95 @@ def print_summary(summary):
     print(f"平均检索片段数：{summary['avg_retrieved_chunk_count']:.1f}")
 
 
+def format_metric(metric, value):
+    """格式化报告中的指标。"""
+    if metric.endswith("_rate"):
+        return f"{value:.2%}"
+
+    return f"{value:.1f}"
+
+
+def write_comparison_report(no_keyword_summary, bm25_summary, delta):
+    """生成 no-keyword 与 BM25 的 Markdown 对比报告。"""
+    metric_names = {
+        "source_hit_rate": "来源命中率",
+        "keyword_hit_rate": "关键词命中率",
+        "has_citation_rate": "引用完整率",
+        "no_context_reject_rate": "无资料拒答率",
+        "avg_answer_length": "平均回答长度",
+        "avg_retrieved_chunk_count": "平均检索片段数",
+    }
+
+    with open(COMPARISON_REPORT_FILE, "w", encoding="utf-8") as f:
+        f.write("# BM25 对比实验报告\n\n")
+        f.write("## 实验设置\n\n")
+        f.write("- No Keyword：`retriever_mode=dense_rerank`，向量召回后直接 Rerank。\n")
+        f.write("- BM25 Hybrid：`retriever_mode=bm25_hybrid`，向量召回 + BM25 召回 + RRF 融合后 Rerank。\n")
+        f.write("- 两组均使用 `top_k=3`、`candidate_k=10`、`use_rerank=True`。\n\n")
+
+        f.write("## 指标对比\n\n")
+        f.write("| 指标 | No Keyword | BM25 Hybrid | BM25 - No Keyword |\n")
+        f.write("| --- | ---: | ---: | ---: |\n")
+
+        for metric in SUMMARY_METRICS:
+            f.write(
+                "| "
+                f"{metric_names[metric]} | "
+                f"{format_metric(metric, no_keyword_summary.get(metric, 0))} | "
+                f"{format_metric(metric, bm25_summary.get(metric, 0))} | "
+                f"{format_metric(metric, delta.get(metric, 0))} |\n"
+            )
+
+        f.write("\n## 结果文件\n\n")
+        f.write(f"- `{NO_KEYWORD_FILE}`\n")
+        f.write(f"- `{BM25_FILE}`\n")
+        f.write(f"- `{COMPARISON_SUMMARY_FILE}`\n")
+
+
 def main():
     os.makedirs(EVAL_DIR, exist_ok=True)
 
-    print("\n开始运行 Baseline：基础向量检索")
-    baseline_summary = run_single_eval(
-        output_file=BASELINE_FILE,
-        retriever_mode="vector",
-        top_k=3,
-        candidate_k=3,
-        use_rerank=False
-    )
-
-    print("\n开始运行 Optimized：Hybrid Search + Rerank")
-    hybrid_summary = run_single_eval(
-        output_file=HYBRID_FILE,
-        retriever_mode="hybrid",
+    print("\n开始运行 No Keyword：Dense Rerank")
+    no_keyword_summary = run_single_eval(
+        output_file=NO_KEYWORD_FILE,
+        retriever_mode="dense_rerank",
         top_k=3,
         candidate_k=10,
         use_rerank=True
     )
 
+    print("\n开始运行 BM25 Hybrid + Rerank")
+    bm25_summary = run_single_eval(
+        output_file=BM25_FILE,
+        retriever_mode="bm25_hybrid",
+        top_k=3,
+        candidate_k=10,
+        use_rerank=True
+    )
+
+    delta = calc_delta(no_keyword_summary, bm25_summary)
+
     experiment_summary = {
-        "baseline": baseline_summary,
-        "hybrid_rerank": hybrid_summary
+        "dense_rerank_no_keyword": no_keyword_summary,
+        "bm25_hybrid_rerank": bm25_summary,
+        "delta_bm25_minus_no_keyword": delta,
     }
 
-    with open(SUMMARY_FILE, "w", encoding="utf-8") as f:
+    with open(COMPARISON_SUMMARY_FILE, "w", encoding="utf-8") as f:
         json.dump(experiment_summary, f, ensure_ascii=False, indent=2)
+
+    write_comparison_report(
+        no_keyword_summary=no_keyword_summary,
+        bm25_summary=bm25_summary,
+        delta=delta,
+    )
 
     print("\n" + "=" * 80)
     print("对比实验完成")
-    print(f"Baseline 结果：{BASELINE_FILE}")
-    print(f"Hybrid + Rerank 结果：{HYBRID_FILE}")
-    print(f"汇总结果：{SUMMARY_FILE}")
+    print(f"No Keyword 结果：{NO_KEYWORD_FILE}")
+    print(f"BM25 Hybrid 结果：{BM25_FILE}")
+    print(f"汇总结果：{COMPARISON_SUMMARY_FILE}")
+    print(f"对比报告：{COMPARISON_REPORT_FILE}")
     print("=" * 80)
 
 

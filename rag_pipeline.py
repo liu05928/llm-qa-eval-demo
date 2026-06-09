@@ -6,11 +6,12 @@ from rag_logger import save_rag_log
 from vector_store import VectorStore
 from prompt_templates import build_rag_prompt
 from llm_client import call_llm
-from hybrid_retriever import hybrid_search
+from hybrid_retriever import dense_search, hybrid_search
 from reranker import rerank_chunks
 
 
 RETRIEVAL_LOG_FILE = Path("logs/retrieval_log.json")
+VALID_RETRIEVER_MODES = {"vector", "dense_rerank", "bm25_hybrid"}
 
 
 def format_context(retrieved_chunks):
@@ -92,14 +93,86 @@ def add_scores_for_vector_results(chunks):
             dense_score = 1 / (1 + float(distance))
 
         item["dense_score"] = dense_score
-        item["sparse_score"] = 0
+        item["bm25_score"] = 0.0
         item["hybrid_score"] = 0.0
         item["rerank_score"] = None
+        item["rerank_model"] = None
         item["retrieval_type"] = "vector"
 
         new_chunks.append(item)
 
     return new_chunks
+
+
+def build_chunk_log_item(chunk):
+    """提取检索日志和页面展示需要的统一分数字段。"""
+
+    return {
+        "chunk_id": chunk.get("chunk_id"),
+        "source": chunk.get("source"),
+        "distance": chunk.get("distance"),
+        "dense_score": chunk.get("dense_score"),
+        "bm25_score": chunk.get("bm25_score"),
+        "hybrid_score": chunk.get("hybrid_score"),
+        "rerank_score": chunk.get("rerank_score"),
+        "rerank_model": chunk.get("rerank_model"),
+        "retrieval_type": chunk.get("retrieval_type"),
+        "dense_rank": chunk.get("dense_rank"),
+        "bm25_rank": chunk.get("bm25_rank"),
+    }
+
+
+def build_chunk_log_list(chunks):
+    """批量提取检索日志字段。"""
+
+    return [build_chunk_log_item(chunk) for chunk in chunks]
+
+
+def add_final_rerank_scores(question, final_chunks, use_rerank=True):
+    """
+    对最终上下文补充模型 Rerank 分数，但不改变 final_chunks 原有顺序。
+
+    作用：
+    1. Dense-Preserving 策略仍然保留向量检索兜底结果；
+    2. 最终 Top-K 中的 dense 兜底片段也能显示 rerank_score；
+    3. 页面和日志中可以看到 BAAI/bge-reranker-v2-m3 的模型打分结果。
+    """
+
+    if not use_rerank or not final_chunks:
+        return final_chunks
+
+    scored_chunks = rerank_chunks(
+        query=question,
+        chunks=final_chunks,
+        top_k=len(final_chunks),
+    )
+
+    score_map = {}
+
+    for chunk in scored_chunks:
+        chunk_id = chunk.get("chunk_id")
+
+        if not chunk_id:
+            continue
+
+        score_map[chunk_id] = {
+            "rerank_score": chunk.get("rerank_score"),
+            "rerank_model": chunk.get("rerank_model"),
+        }
+
+    updated_chunks = []
+
+    for chunk in final_chunks:
+        new_chunk = dict(chunk)
+        chunk_id = new_chunk.get("chunk_id")
+
+        if chunk_id in score_map:
+            new_chunk["rerank_score"] = score_map[chunk_id].get("rerank_score")
+            new_chunk["rerank_model"] = score_map[chunk_id].get("rerank_model")
+
+        updated_chunks.append(new_chunk)
+
+    return updated_chunks
 
 
 def retrieve_chunks(
@@ -115,15 +188,20 @@ def retrieve_chunks(
     retriever_mode = "vector"：
         使用原始向量检索。
 
-    retriever_mode = "hybrid"：
-        使用 Dense-Preserving Hybrid Search + Rerank。
+    retriever_mode = "dense_rerank"：
+        使用向量召回 candidate_k 条候选，再进行模型 Rerank。
 
-        设计思路：
-        1. 先保留基础向量检索结果，保证语义检索稳定性；
-        2. 再使用 Hybrid Search 扩大候选召回范围；
-        3. 对 Hybrid 候选结果进行 Rerank；
-        4. 最终结果中优先保留 dense top2，剩余位置由 rerank 后的 hybrid 结果补充。
+    retriever_mode = "bm25_hybrid"：
+        使用向量召回 + BM25 稀疏召回 + RRF 融合，再进行模型 Rerank。
+
+    dense_rerank 和 bm25_hybrid 都采用 Dense-Preserving 策略：
+    先保留 dense top2，再用 rerank 后的候选结果补足最终上下文。
     """
+
+    if retriever_mode not in VALID_RETRIEVER_MODES:
+        raise ValueError(
+            "retriever_mode 只能是 'vector'、'dense_rerank' 或 'bm25_hybrid'"
+        )
 
     if retriever_mode == "vector":
         vector_store = VectorStore()
@@ -143,144 +221,79 @@ def retrieve_chunks(
             "final_top_k": top_k,
             "use_rerank": False,
             "strategy": "vector_only",
-            "retrieved_candidates": [
-                {
-                    "chunk_id": chunk.get("chunk_id"),
-                    "source": chunk.get("source"),
-                    "distance": chunk.get("distance"),
-                    "dense_score": chunk.get("dense_score"),
-                    "sparse_score": chunk.get("sparse_score"),
-                    "hybrid_score": chunk.get("hybrid_score"),
-                    "rerank_score": chunk.get("rerank_score"),
-                }
-                for chunk in retrieved_chunks
-            ],
-            "final_context": [
-                {
-                    "chunk_id": chunk.get("chunk_id"),
-                    "source": chunk.get("source"),
-                    "distance": chunk.get("distance"),
-                    "dense_score": chunk.get("dense_score"),
-                    "sparse_score": chunk.get("sparse_score"),
-                    "hybrid_score": chunk.get("hybrid_score"),
-                    "rerank_score": chunk.get("rerank_score"),
-                }
-                for chunk in retrieved_chunks
-            ],
+            "retrieved_candidates": build_chunk_log_list(retrieved_chunks),
+            "final_context": build_chunk_log_list(retrieved_chunks),
         }
 
         return retrieved_chunks, retrieval_log
 
-    if retriever_mode == "hybrid":
-        # 1. 基础向量检索结果作为稳定兜底
-        vector_store = VectorStore()
+    dense_candidates = dense_search(
+        query=question,
+        top_k=candidate_k,
+    )
 
-        dense_base_chunks = vector_store.search(
-            query=question,
-            top_k=top_k,
-        )
+    dense_base_chunks = dense_candidates[:top_k]
 
-        dense_base_chunks = add_scores_for_vector_results(dense_base_chunks)
-
-        # 2. Hybrid Search 扩大候选召回范围
+    if retriever_mode == "dense_rerank":
+        candidate_chunks = dense_candidates
+        strategy = "dense_rerank_no_keyword"
+    else:
         candidate_chunks = hybrid_search(
             query=question,
             top_k=candidate_k,
             candidate_k=candidate_k,
+            dense_results=dense_candidates,
         )
+        strategy = "dense_preserving_bm25_hybrid_rerank"
 
-        # 3. 对 Hybrid 候选结果进行 Rerank
-        if use_rerank:
-            reranked_chunks = rerank_chunks(
-                query=question,
-                chunks=candidate_chunks,
-                top_k=candidate_k,
-            )
-        else:
-            reranked_chunks = candidate_chunks
+    if use_rerank:
+        reranked_chunks = rerank_chunks(
+            query=question,
+            chunks=candidate_chunks,
+            top_k=candidate_k,
+        )
+    else:
+        reranked_chunks = candidate_chunks
 
-        # 4. Dense-Preserving 安全融合
-        #    默认至少保留 dense top2，避免简单关键词检索带来噪声
-        keep_dense_k = min(2, top_k)
+    keep_dense_k = min(2, top_k)
+    final_chunks = []
+    seen_chunk_ids = set()
 
-        final_chunks = []
-        seen_chunk_ids = set()
+    for chunk in dense_base_chunks[:keep_dense_k]:
+        final_chunks.append(chunk)
+        seen_chunk_ids.add(chunk.get("chunk_id"))
 
-        for chunk in dense_base_chunks[:keep_dense_k]:
+    for chunk in reranked_chunks:
+        chunk_id = chunk.get("chunk_id")
+
+        if chunk_id not in seen_chunk_ids:
             final_chunks.append(chunk)
-            seen_chunk_ids.add(chunk.get("chunk_id"))
+            seen_chunk_ids.add(chunk_id)
 
-        for chunk in reranked_chunks:
-            chunk_id = chunk.get("chunk_id")
+        if len(final_chunks) >= top_k:
+            break
 
-            if chunk_id not in seen_chunk_ids:
-                final_chunks.append(chunk)
-                seen_chunk_ids.add(chunk_id)
+    final_chunks = add_final_rerank_scores(
+        question=question,
+        final_chunks=final_chunks,
+        use_rerank=use_rerank,
+    )
 
-            if len(final_chunks) >= top_k:
-                break
+    retrieval_log = {
+        "time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "question": question,
+        "retriever_mode": retriever_mode,
+        "candidate_k": candidate_k,
+        "final_top_k": top_k,
+        "use_rerank": use_rerank,
+        "strategy": strategy,
+        "dense_base_chunks": build_chunk_log_list(dense_base_chunks),
+        "retrieved_candidates": build_chunk_log_list(candidate_chunks),
+        "reranked_candidates": build_chunk_log_list(reranked_chunks),
+        "final_context": build_chunk_log_list(final_chunks),
+    }
 
-        retrieval_log = {
-            "time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            "question": question,
-            "retriever_mode": retriever_mode,
-            "candidate_k": candidate_k,
-            "final_top_k": top_k,
-            "use_rerank": use_rerank,
-            "strategy": "dense_preserving_hybrid_rerank",
-            "dense_base_chunks": [
-                {
-                    "chunk_id": chunk.get("chunk_id"),
-                    "source": chunk.get("source"),
-                    "distance": chunk.get("distance"),
-                    "dense_score": chunk.get("dense_score"),
-                    "sparse_score": chunk.get("sparse_score"),
-                    "hybrid_score": chunk.get("hybrid_score"),
-                    "rerank_score": chunk.get("rerank_score"),
-                }
-                for chunk in dense_base_chunks
-            ],
-            "retrieved_candidates": [
-                {
-                    "chunk_id": chunk.get("chunk_id"),
-                    "source": chunk.get("source"),
-                    "distance": chunk.get("distance"),
-                    "dense_score": chunk.get("dense_score"),
-                    "sparse_score": chunk.get("sparse_score"),
-                    "hybrid_score": chunk.get("hybrid_score"),
-                    "rerank_score": chunk.get("rerank_score"),
-                }
-                for chunk in candidate_chunks
-            ],
-            "reranked_candidates": [
-                {
-                    "chunk_id": chunk.get("chunk_id"),
-                    "source": chunk.get("source"),
-                    "distance": chunk.get("distance"),
-                    "dense_score": chunk.get("dense_score"),
-                    "sparse_score": chunk.get("sparse_score"),
-                    "hybrid_score": chunk.get("hybrid_score"),
-                    "rerank_score": chunk.get("rerank_score"),
-                }
-                for chunk in reranked_chunks
-            ],
-            "final_context": [
-                {
-                    "chunk_id": chunk.get("chunk_id"),
-                    "source": chunk.get("source"),
-                    "distance": chunk.get("distance"),
-                    "dense_score": chunk.get("dense_score"),
-                    "sparse_score": chunk.get("sparse_score"),
-                    "hybrid_score": chunk.get("hybrid_score"),
-                    "rerank_score": chunk.get("rerank_score"),
-                }
-                for chunk in final_chunks
-            ],
-        }
-
-        return final_chunks, retrieval_log
-
-    raise ValueError("retriever_mode 只能是 'vector' 或 'hybrid'")
+    return final_chunks, retrieval_log
 
 
 def rag_answer(
@@ -295,8 +308,8 @@ def rag_answer(
 
     流程：
     1. 根据用户问题检索相关 chunks；
-    2. 支持 vector 和 hybrid 两种检索模式；
-    3. hybrid 模式下支持 Rerank；
+    2. 支持 vector、dense_rerank 和 bm25_hybrid 三种检索模式；
+    3. dense_rerank / bm25_hybrid 模式下支持模型 Rerank；
     4. 将 chunks 拼接成 context；
     5. 构造 RAG Prompt；
     6. 调用大模型或 Mock 模型生成回答；
@@ -343,15 +356,7 @@ def rag_answer(
         "answer": answer,
         "sources": result["sources"],
         "retrieved_chunks": [
-            {
-                "chunk_id": chunk.get("chunk_id"),
-                "source": chunk.get("source"),
-                "distance": chunk.get("distance"),
-                "dense_score": chunk.get("dense_score"),
-                "sparse_score": chunk.get("sparse_score"),
-                "hybrid_score": chunk.get("hybrid_score"),
-                "rerank_score": chunk.get("rerank_score"),
-            }
+            build_chunk_log_item(chunk)
             for chunk in retrieved_chunks
         ],
     }
@@ -371,7 +376,7 @@ if __name__ == "__main__":
     result = rag_answer(
         question=question,
         top_k=3,
-        retriever_mode="hybrid",
+        retriever_mode="bm25_hybrid",
         candidate_k=10,
         use_rerank=True,
     )
@@ -396,7 +401,8 @@ if __name__ == "__main__":
         print(f"source: {chunk.get('source')}")
         print(f"distance: {chunk.get('distance')}")
         print(f"dense_score: {chunk.get('dense_score')}")
-        print(f"sparse_score: {chunk.get('sparse_score')}")
+        print(f"bm25_score: {chunk.get('bm25_score')}")
         print(f"hybrid_score: {chunk.get('hybrid_score')}")
         print(f"rerank_score: {chunk.get('rerank_score')}")
+        print(f"rerank_model: {chunk.get('rerank_model')}")
         print(f"content: {chunk.get('content', '')[:150]}...")

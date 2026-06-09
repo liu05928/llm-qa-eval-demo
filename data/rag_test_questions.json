@@ -348,5 +348,75 @@
     "expected_source": null,
     "expected_keywords": ["无法确定", "资料中未提及", "当前资料"],
     "question_type": "missing"
-  }
+  },
+  {
+  "id": 51,
+  "question": "Embedding 模型在 RAG 系统中有什么作用？",
+  "expected_source": "embedding_intro.md",
+  "expected_keywords": ["向量", "语义", "检索"],
+  "question_type": "mechanism"
+},
+{
+  "id": 52,
+  "question": "BAAI/bge-m3 在本项目中负责什么？",
+  "expected_source": "embedding_intro.md",
+  "expected_keywords": ["BAAI/bge-m3", "向量", "Embedding"],
+  "question_type": "application"
+},
+{
+  "id": 53,
+  "question": "向量数据库在 RAG 系统中保存哪些信息？",
+  "expected_source": "vector_database.md",
+  "expected_keywords": ["embedding", "document", "metadata"],
+  "question_type": "mechanism"
+},
+{
+  "id": 54,
+  "question": "ChromaDB 在本项目中有什么作用？",
+  "expected_source": "vector_database.md",
+  "expected_keywords": ["ChromaDB", "向量数据库", "检索"],
+  "question_type": "application"
+},
+{
+  "id": 55,
+  "question": "向量知识库通常如何构建？",
+  "expected_source": "vector_knowledge_base.md",
+  "expected_keywords": ["文档读取", "文本切分", "向量化"],
+  "question_type": "mechanism"
+},
+{
+  "id": 56,
+  "question": "Hybrid Search 为什么能改善 RAG 检索效果？",
+  "expected_source": "hybrid_search.md",
+  "expected_keywords": ["向量检索", "关键词检索", "融合"],
+  "question_type": "mechanism"
+},
+{
+  "id": 57,
+  "question": "RAG 系统为什么需要 Rerank？",
+  "expected_source": "rerank_intro.md",
+  "expected_keywords": ["候选", "重排序", "相关性"],
+  "question_type": "mechanism"
+},
+{
+  "id": 58,
+  "question": "BAAI/bge-reranker-v2-m3 在本项目中负责什么？",
+  "expected_source": "rerank_intro.md",
+  "expected_keywords": ["BAAI/bge-reranker-v2-m3", "重排序", "候选片段"],
+  "question_type": "application"
+},
+{
+  "id": 59,
+  "question": "RAG 检索优化可以从哪些方向进行？",
+  "expected_source": "retrieval_optimization.md",
+  "expected_keywords": ["Query Rewrite", "Hybrid Search", "Rerank"],
+  "question_type": "mechanism"
+},
+{
+  "id": 60,
+  "question": "Top-K 和 candidate_k 有什么区别？",
+  "expected_source": "retrieval_optimization.md",
+  "expected_keywords": ["Top-K", "candidate_k", "候选"],
+  "question_type": "compare"
+}
 ]

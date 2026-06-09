@@ -4,7 +4,7 @@
 
 本项目是一个面向教育资料的大模型 RAG 知识库问答与评测优化系统，基于 Python、FastAPI、ChromaDB 和 Streamlit 构建。
 
-系统支持本地教育资料读取、文本切分、Embedding 向量化、向量检索、关键词检索、Hybrid Search、Rerank 重排序、大模型回答生成、来源引用、日志记录、自动评测和可视化展示。
+系统支持本地教育资料读取、文本切分、Embedding 向量化、向量检索、Dense Rerank、BM25 Hybrid、Rerank 重排序、大模型回答生成、来源引用、日志记录、自动评测和可视化展示。
 
 项目目标不是单纯实现一个问答 Demo，而是构建一个具备检索优化、结果溯源、效果评测和失败样例分析能力的 RAG 工程项目。
 
@@ -20,7 +20,7 @@
 * SiliconFlow / DeepSeek API
 * Prompt Engineering
 * JSON / JSONL / CSV
-* Hybrid Search
+* BM25 Hybrid Search
 * Rerank
 * RAG Evaluation
 
@@ -38,29 +38,29 @@
 
 系统会返回回答所依据的来源文档和 chunk_id，便于追溯答案依据，提高问答结果的可信度。
 
-### 3. Hybrid Search 检索优化
+### 3. BM25 Hybrid 检索优化
 
-系统在基础向量检索基础上新增关键词检索能力，将向量检索结果和关键词检索结果进行融合，形成 Hybrid Search 候选召回结果。
+系统在基础向量检索基础上新增 BM25 稀疏召回能力，将向量召回结果和 BM25 召回结果通过 RRF 进行融合，形成 BM25 Hybrid 候选召回结果。
 
-### 4. Dense-Preserving Hybrid Search + Rerank
+### 4. Dense-Preserving BM25 Hybrid + Rerank
 
-在实验过程中发现，直接使用 Hybrid Search 替代基础向量检索时，简单关键词匹配可能引入噪声。
+系统提供 `dense_rerank` 和 `bm25_hybrid` 两种优化实验模式，用于对比无稀疏召回和 BM25 稀疏召回的效果。
 
-因此系统采用 Dense-Preserving Hybrid Search + Rerank 策略：
+因此系统采用 Dense-Preserving BM25 Hybrid + Rerank 策略：
 
 ```text
 基础向量检索兜底
 ↓
-Hybrid Search 扩大候选召回
+BM25 Hybrid 扩大候选召回
 ↓
 轻量级 Rerank 重排序
 ↓
 保留 dense top2
 ↓
-使用 rerank 后的 hybrid 结果补充最终上下文
+使用 rerank 后的候选结果补充最终上下文
 ```
 
-该策略既保留了向量检索的语义稳定性，也利用 Hybrid Search 和 Rerank 提升候选片段的覆盖度和排序效果。
+该策略既保留了向量检索的语义稳定性，也利用 BM25 和 Rerank 提升候选片段的覆盖度和排序效果。
 
 ### 5. 自动评测
 
@@ -86,14 +86,14 @@ Hybrid Search 扩大候选召回
 项目提供 Streamlit 页面，支持：
 
 * 输入问题
-* 选择检索模式：vector / hybrid
+* 选择检索模式：vector / dense_rerank / bm25_hybrid
 * 设置 top_k
 * 设置 candidate_k
 * 启用或关闭 Rerank
 * 展示模型回答
 * 展示引用来源
 * 展示检索片段
-* 展示 dense_score、sparse_score、hybrid_score、rerank_score
+* 展示 dense_score、bm25_score、hybrid_score、rerank_score
 * 展示评测结果
 * 查看检索日志
 
@@ -130,10 +130,11 @@ edu-rag-assistant/
 │   └── retrieval_log.json
 ├── eval_results/
 │   ├── baseline_eval.csv
-│   ├── hybrid_rerank_eval.csv
-│   ├── experiment_summary.json
-│   ├── experiment_report.md
-│   └── failure_cases.md
+│   ├── no_keyword_dense_rerank_eval.csv
+│   ├── bm25_hybrid_rerank_eval.csv
+│   ├── bm25_comparison_summary.json
+│   ├── bm25_comparison_report.md
+│   └── bm25_failure_cases.md
 ├── assets/
 │   └── rag_demo.png
 ├── requirements.txt
@@ -154,9 +155,9 @@ Embedding 向量化
 ↓
 向量库构建
 ↓
-向量检索 / 关键词检索
+向量召回 / BM25 召回
 ↓
-Hybrid Search
+BM25 Hybrid Search
 ↓
 Rerank 重排序
 ↓
@@ -239,27 +240,24 @@ data/rag_test_questions.json
 
 ## 八、实验结果
 
-本项目对基础向量检索方案和 Dense-Preserving Hybrid Search + Rerank 方案进行了对比实验。
+本项目当前默认对 `dense_rerank` 和 `bm25_hybrid` 两组方案进行对比实验。
 
-| 实验方案                                    |  来源命中率 | 关键词命中率 |   引用完整率 |  无资料拒答率 | 平均回答长度 | 平均检索片段数 |
-| --------------------------------------- | -----: | -----: | ------: | ------: | -----: | ------: |
-| Baseline：基础向量检索                         | 97.50% | 46.00% | 100.00% |  80.00% |  560.8 |     3.0 |
-| Dense-Preserving Hybrid Search + Rerank | 97.50% | 54.00% | 100.00% | 100.00% |  544.3 |     3.0 |
+`dense_rerank` 作为无稀疏召回对照组，只使用向量召回候选片段并进行 Rerank。
 
-实验结果表明，优化后的 Dense-Preserving Hybrid Search + Rerank 在保持来源命中率不下降的情况下，将关键词命中率从 46.00% 提升到 54.00%，并将无资料拒答率从 80.00% 提升到 100.00%。
+`bm25_hybrid` 在向量召回基础上加入 BM25 稀疏召回，并通过 RRF 融合后进行 Rerank。
 
-这说明该策略在保留基础向量检索稳定性的同时，能够提升回答覆盖度，并增强资料缺失场景下的幻觉控制能力。
+运行 `experiment_runner.py` 后会生成最新指标表和差值分析。
 
 详细实验报告见：
 
 ```text
-eval_results/experiment_report.md
+eval_results/bm25_comparison_report.md
 ```
 
 失败样例分析见：
 
 ```text
-eval_results/failure_cases.md
+eval_results/bm25_failure_cases.md
 ```
 
 ---
@@ -319,7 +317,7 @@ http://127.0.0.1:8000/docs
 {
   "question": "什么是 RAG？",
   "top_k": 3,
-  "retriever_mode": "hybrid",
+  "retriever_mode": "bm25_hybrid",
   "candidate_k": 10,
   "use_rerank": true
 }
@@ -344,9 +342,10 @@ python experiment_runner.py
 输出文件：
 
 ```text
-eval_results/baseline_eval.csv
-eval_results/hybrid_rerank_eval.csv
-eval_results/experiment_summary.json
+eval_results/no_keyword_dense_rerank_eval.csv
+eval_results/bm25_hybrid_rerank_eval.csv
+eval_results/bm25_comparison_summary.json
+eval_results/bm25_comparison_report.md
 ```
 
 生成失败样例分析：
@@ -358,7 +357,7 @@ python log_analyzer.py
 输出文件：
 
 ```text
-eval_results/failure_cases.md
+eval_results/bm25_failure_cases.md
 ```
 
 ---
@@ -380,7 +379,7 @@ Streamlit 页面支持展示问答结果、引用来源、检索片段、检索�
 
 ## 十二、后续优化方向
 
-1. 使用 BM25 替代当前简单关键词匹配，提高 sparse search 的检索质量；
+1. 调整 BM25 与向量召回的 RRF 权重，观察召回稳定性变化；
 2. 使用 Cross-Encoder Rerank 模型替代规则打分，提高候选片段排序效果；
 3. 增加 Query Rewrite，提高复杂问题和模糊问题的检索效果；
 4. 扩充教育资料知识库，引入更多课程资料、论文笔记和教学案例；
@@ -392,8 +391,8 @@ Streamlit 页面支持展示问答结果、引用来源、检索片段、检索�
 ## 十三、项目亮点
 
 1. 实现了教育资料 RAG 问答完整链路；
-2. 支持基础向量检索和 Hybrid Search 两种检索模式；
-3. 设计了 Dense-Preserving Hybrid Search + Rerank 策略；
+2. 支持 vector、dense_rerank 和 bm25_hybrid 三种检索模式；
+3. 设计了 Dense-Preserving BM25 Hybrid + Rerank 策略；
 4. 支持答案来源引用和检索日志记录；
 5. 构建 50 条测试问题集并完成自动评测；
 6. 输出实验报告和失败样例分析；

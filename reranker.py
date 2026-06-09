@@ -1,102 +1,159 @@
 from typing import List, Dict, Any
 
-from hybrid_retriever import simple_tokenize, hybrid_search
+import requests
+
+from config import (
+    USE_MOCK,
+    SILICONFLOW_API_KEY,
+    SILICONFLOW_BASE_URL,
+    RERANK_MODEL,
+)
+from hybrid_retriever import hybrid_search
 
 
-def calc_keyword_overlap_score(query: str, content: str) -> float:
+class RerankerClient:
     """
-    计算问题和 chunk 内容的关键词重叠得分。
+    Reranker 客户端。
+
+    USE_MOCK=false:
+        调用硅基流动 BAAI/bge-reranker-v2-m3 进行模型重排序。
+
+    USE_MOCK=true:
+        使用简单规则 mock 分数，方便本地跑通流程。
     """
-    query_tokens = set(simple_tokenize(query))
-    content_tokens = set(simple_tokenize(content))
 
-    if not query_tokens:
-        return 0.0
+    def __init__(self):
+        self.model = RERANK_MODEL
+        self.api_key = SILICONFLOW_API_KEY
+        self.base_url = SILICONFLOW_BASE_URL.rstrip("/")
+        self.rerank_url = f"{self.base_url}/rerank"
 
-    overlap = query_tokens.intersection(content_tokens)
-    return len(overlap) / len(query_tokens)
+    def _mock_score(self, query: str, document: str) -> float:
+        """
+        Mock Rerank 分数。
+        只用于 USE_MOCK=true 时跑通流程。
+        """
+        query_chars = set(query)
+        doc_chars = set(document)
 
+        if not query_chars:
+            return 0.0
 
-def calc_length_score(content: str) -> float:
-    """
-    简单长度得分。
-    太短的 chunk 信息不足，太长的 chunk 可能噪声较多。
-    """
-    length = len(content)
+        return len(query_chars.intersection(doc_chars)) / len(query_chars)
 
-    if 100 <= length <= 800:
-        return 1.0
-    elif 50 <= length < 100:
-        return 0.7
-    elif 800 < length <= 1200:
-        return 0.7
-    else:
-        return 0.4
+    def rerank(
+        self,
+        query: str,
+        documents: List[str],
+        top_n: int = 3,
+    ) -> List[Dict[str, Any]]:
+        """
+        调用 Rerank API。
+
+        返回格式示例：
+        [
+            {
+                "index": 0,
+                "relevance_score": 0.98
+            }
+        ]
+        """
+
+        if not documents:
+            return []
+
+        if USE_MOCK:
+            scored = []
+
+            for idx, doc in enumerate(documents):
+                scored.append(
+                    {
+                        "index": idx,
+                        "relevance_score": self._mock_score(query, doc),
+                    }
+                )
+
+            scored = sorted(
+                scored,
+                key=lambda x: x["relevance_score"],
+                reverse=True,
+            )
+
+            return scored[:top_n]
+
+        if not self.api_key:
+            raise ValueError("SILICONFLOW_API_KEY 未配置，无法调用硅基流动 Rerank API")
+
+        headers = {
+            "Authorization": f"Bearer {self.api_key}",
+            "Content-Type": "application/json",
+        }
+
+        payload = {
+            "model": self.model,
+            "query": query,
+            "documents": documents,
+            "top_n": top_n,
+            "return_documents": False,
+        }
+
+        response = requests.post(
+            self.rerank_url,
+            headers=headers,
+            json=payload,
+            timeout=60,
+        )
+
+        if response.status_code != 200:
+            raise RuntimeError(
+                f"Rerank API 调用失败，状态码：{response.status_code}，返回：{response.text}"
+            )
+
+        data = response.json()
+
+        return data.get("results", [])
 
 
 def rerank_chunks(
     query: str,
     chunks: List[Dict[str, Any]],
-    top_k: int = 3
+    top_k: int = 3,
 ) -> List[Dict[str, Any]]:
     """
-    对候选 chunks 进行轻量级重排序。
-
-    改进策略：
-    1. 更重视 dense_score，保证语义检索结果不被简单关键词检索挤掉；
-    2. 保留 hybrid_score，体现融合检索结果；
-    3. 降低 sparse_score 和 keyword_overlap 的影响，减少关键词噪声。
+    使用硅基流动 Rerank 模型对候选 chunks 进行重排序。
     """
 
-    reranked = []
+    if not chunks:
+        return []
 
-    for chunk in chunks:
-        content = chunk.get("content", "")
+    documents = [chunk.get("content", "") for chunk in chunks]
 
-        hybrid_score = float(chunk.get("hybrid_score", 0.0) or 0.0)
-        dense_score = float(chunk.get("dense_score", 0.0) or 0.0)
-        sparse_score = float(chunk.get("sparse_score", 0.0) or 0.0)
+    client = RerankerClient()
 
-        keyword_overlap_score = calc_keyword_overlap_score(query, content)
-        length_score = calc_length_score(content)
-
-        dense_rank = chunk.get("dense_rank")
-        sparse_rank = chunk.get("sparse_rank")
-
-        if dense_rank is None:
-            dense_rank_score = 0.0
-        else:
-            dense_rank_score = 1 / dense_rank
-
-        if sparse_rank is None:
-            sparse_rank_score = 0.0
-        else:
-            sparse_rank_score = 1 / sparse_rank
-
-        rerank_score = (
-            0.40 * dense_score
-            + 0.25 * dense_rank_score
-            + 0.20 * hybrid_score
-            + 0.07 * keyword_overlap_score
-            + 0.04 * min(sparse_score / 10, 1.0)
-            + 0.02 * sparse_rank_score
-            + 0.02 * length_score
-        )
-
-        new_chunk = dict(chunk)
-        new_chunk["keyword_overlap_score"] = keyword_overlap_score
-        new_chunk["length_score"] = length_score
-        new_chunk["rerank_score"] = rerank_score
-
-        reranked.append(new_chunk)
-
-    reranked = sorted(
-        reranked,
-        key=lambda x: x["rerank_score"],
-        reverse=True
+    rerank_results = client.rerank(
+        query=query,
+        documents=documents,
+        top_n=min(top_k, len(documents)),
     )
 
-    return reranked[:top_k]
+    final_chunks = []
+
+    for item in rerank_results:
+        index = item.get("index")
+        score = item.get("relevance_score", item.get("score", 0.0))
+
+        if index is None:
+            continue
+
+        chunk = dict(chunks[index])
+        chunk["rerank_score"] = score
+        chunk["rerank_model"] = client.model
+        chunk["retrieval_type"] = "model_rerank"
+
+        final_chunks.append(chunk)
+
+    return final_chunks
+
 
 if __name__ == "__main__":
     test_question = "什么是 RAG？"
@@ -104,22 +161,23 @@ if __name__ == "__main__":
     candidates = hybrid_search(
         query=test_question,
         top_k=10,
-        candidate_k=10
+        candidate_k=10,
     )
 
     final_chunks = rerank_chunks(
         query=test_question,
         chunks=candidates,
-        top_k=3
+        top_k=3,
     )
 
-    print("===== Rerank 测试 =====")
+    print("Rerank 模型：", RERANK_MODEL)
+    print("===== 模型 Rerank 测试 =====")
 
     for i, item in enumerate(final_chunks, start=1):
         print(f"\nTop {i}")
         print("chunk_id:", item.get("chunk_id"))
         print("source:", item.get("source"))
         print("hybrid_score:", item.get("hybrid_score"))
-        print("keyword_overlap_score:", item.get("keyword_overlap_score"))
         print("rerank_score:", item.get("rerank_score"))
+        print("rerank_model:", item.get("rerank_model"))
         print("content:", item.get("content", "")[:150])

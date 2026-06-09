@@ -2,13 +2,13 @@
 
 ## 一、项目目标
 
-本项目是一个面向教育资料的大模型 RAG 知识库问答与评测优化系统，目标是在基础 RAG 问答链路上，引入 Hybrid Search、Rerank、自动评测、日志分析和 Streamlit 可视化展示能力，提升系统在知识库问答场景下的检索稳定性、回答可信度和结果可分析性。
+本项目是一个面向教育资料的大模型 RAG 知识库问答与评测优化系统，目标是在基础 RAG 问答链路上，引入 Dense Rerank、BM25 Hybrid、自动评测、日志分析和 Streamlit 可视化展示能力，提升系统在知识库问答场景下的检索稳定性、回答可信度和结果可分析性。
 
-系统支持本地教育资料读取、文本切分、Embedding 向量化、向量库构建、关键词检索、向量检索、Hybrid Search 融合检索、Rerank 重排序、Prompt 构造、大模型回答生成、来源引用、日志记录和自动评测。
+系统支持本地教育资料读取、文本切分、Embedding 向量化、向量库构建、向量检索、BM25 稀疏召回、RRF 融合检索、Rerank 重排序、Prompt 构造、大模型回答生成、来源引用、日志记录和自动评测。
 
 ## 二、核心流程
 
-文档读取 → 文本切分 → Embedding 向量化 → 向量库构建 → 向量检索 / 关键词检索 → Hybrid Search → Rerank → Prompt 构造 → 大模型生成 → 来源引用 → 日志记录 → 自动评测 → Streamlit 展示
+文档读取 → 文本切分 → Embedding 向量化 → 向量库构建 → 向量检索 / BM25 召回 → RRF 融合 → Rerank → Prompt 构造 → 大模型生成 → 来源引用 → 日志记录 → 自动评测 → Streamlit 展示
 
 ## 三、项目功能设计
 
@@ -20,13 +20,13 @@
 
 系统在生成回答时返回对应的来源文档和检索片段，便于用户追溯回答依据，提高问答结果的可信度和可解释性。
 
-### 3. Hybrid Search 检索优化
+### 3. BM25 Hybrid 检索优化
 
-在原有向量检索基础上，系统新增关键词检索能力，并将向量检索结果与关键词检索结果进行融合。Hybrid Search 可以同时利用语义相似度和关键词匹配结果，改善单一向量检索可能出现的漏召回问题。
+在原有向量检索基础上，系统新增 BM25 稀疏召回能力，并将向量召回结果与 BM25 召回结果进行融合。BM25 Hybrid 可以同时利用语义相似度和术语精确匹配信号，改善单一向量检索可能出现的漏召回问题。
 
 ### 4. Rerank 重排序
 
-系统支持对 Hybrid Search 召回的候选知识片段进行轻量级重排序。流程上先扩大候选召回范围，再根据问题与 chunk 的相关性对候选片段进行排序，最终选择更相关的片段作为 Prompt 上下文。
+系统支持对向量候选或 BM25 Hybrid 候选知识片段进行轻量级重排序。流程上先扩大候选召回范围，再根据问题与 chunk 的相关性对候选片段进行排序，最终选择更相关的片段作为 Prompt 上下文。
 
 ### 5. 自动评测
 
@@ -60,11 +60,11 @@
 
 ### hybrid_retriever.py
 
-负责关键词检索 sparse_search、向量检索 dense_search，以及 Hybrid Search 融合检索。
+负责向量检索 dense_search、BM25 稀疏召回 bm25_search，以及 BM25 Hybrid 融合检索。
 
 ### reranker.py
 
-负责对 Hybrid Search 召回的候选 chunk 进行轻量级重排序。
+负责对向量候选或 BM25 Hybrid 候选 chunk 进行轻量级重排序。
 
 ### rag_pipeline.py
 
@@ -76,7 +76,7 @@
 
 ### experiment_runner.py
 
-负责自动运行 baseline 和 hybrid_rerank 两组实验，并保存 CSV 评测结果。
+负责自动运行 dense_rerank_no_keyword 和 bm25_hybrid_rerank 两组实验，并保存 CSV、JSON 汇总和 Markdown 对比报告。
 
 ### log_analyzer.py
 
@@ -105,25 +105,36 @@
 
 ## 六、实验设计
 
-### Baseline：基础向量检索
+### Vector：基础向量检索
 
 ```text
 retriever_mode = vector
 top_k = 3
 ```
 
-该版本作为基础对照组，用于评估原始向量检索 RAG 流程的效果。
+该版本用于基础 RAG 问答，不参与当前默认 BM25 对比实验。
 
-### Optimized：Hybrid Search + Rerank
+### No Keyword：Dense Rerank
 
 ```text
-retriever_mode = hybrid
+retriever_mode = dense_rerank
 candidate_k = 10
 final_top_k = 3
 use_rerank = true
 ```
 
-该版本先通过 Hybrid Search 扩大候选召回范围，再通过 Rerank 选择最终上下文，用于评估检索优化策略对系统效果的影响。
+该版本只使用向量召回 candidate_k 个候选片段，再通过 Rerank 选择最终上下文，用于作为无稀疏召回对照组。
+
+### BM25 Hybrid + Rerank
+
+```text
+retriever_mode = bm25_hybrid
+candidate_k = 10
+final_top_k = 3
+use_rerank = true
+```
+
+该版本使用向量召回 + BM25 稀疏召回 + RRF 融合扩大候选集合，再通过 Rerank 选择最终上下文，用于评估 BM25 稀疏召回对系统效果的影响。
 
 ## 七、实验输出
 
@@ -131,21 +142,25 @@ use_rerank = true
 
 ```text
 eval_results/baseline_eval.csv
-eval_results/hybrid_rerank_eval.csv
-eval_results/experiment_report.md
-eval_results/failure_cases.md
+eval_results/no_keyword_dense_rerank_eval.csv
+eval_results/bm25_hybrid_rerank_eval.csv
+eval_results/bm25_comparison_summary.json
+eval_results/bm25_comparison_report.md
+eval_results/bm25_failure_cases.md
 ```
 
 其中：
 
-1. baseline_eval.csv 保存基础向量检索版本的评测结果；
-2. hybrid_rerank_eval.csv 保存 Hybrid Search + Rerank 版本的评测结果；
-3. experiment_report.md 保存实验目的、测试集设计、评测指标、实验结果和后续优化方向；
-4. failure_cases.md 保存失败样例和原因分析。
+1. baseline_eval.csv 保存历史基础向量检索版本的评测结果；
+2. no_keyword_dense_rerank_eval.csv 保存 Dense Rerank 无稀疏召回版本的评测结果；
+3. bm25_hybrid_rerank_eval.csv 保存 BM25 Hybrid + Rerank 版本的评测结果；
+4. bm25_comparison_summary.json 保存两组实验的指标汇总和差值；
+5. bm25_comparison_report.md 保存 BM25 对比实验报告；
+6. bm25_failure_cases.md 保存失败样例和原因分析。
 
 ## 八、后续优化方向
 
-1. 使用 BM25 替代简单关键词匹配，提高关键词检索效果；
+1. 调整 BM25 与向量召回的 RRF 权重，观察召回稳定性变化；
 2. 使用 Cross-Encoder 模型进行更精细的 Rerank；
 3. 增加 Query Rewrite，提高问题表达不清时的检索效果；
 4. 扩充教育资料知识库，提升知识覆盖范围；

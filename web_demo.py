@@ -6,6 +6,7 @@ from pathlib import Path
 import streamlit as st
 
 from rag_pipeline import rag_answer
+from config import CHAT_MODEL, EMBEDDING_MODEL, RERANK_MODEL
 
 
 st.set_page_config(
@@ -15,8 +16,8 @@ st.set_page_config(
 )
 
 
-BASELINE_EVAL_FILE = Path("eval_results/baseline_eval.csv")
-HYBRID_EVAL_FILE = Path("eval_results/hybrid_rerank_eval.csv")
+NO_KEYWORD_EVAL_FILE = Path("eval_results/no_keyword_dense_rerank_eval.csv")
+BM25_EVAL_FILE = Path("eval_results/bm25_hybrid_rerank_eval.csv")
 RETRIEVAL_LOG_FILE = Path("logs/retrieval_log.json")
 
 
@@ -95,8 +96,12 @@ def show_eval_summary(title, rows):
 st.title("📚 教育资料 RAG 知识库问答与评测优化系统")
 
 st.markdown(
-    """
-本系统支持基础向量检索、Hybrid Search、Rerank、来源引用、检索日志记录和自动评测展示。
+    f"""
+本系统支持基础向量检索、Dense Rerank、BM25 Hybrid、来源引用、检索日志记录和自动评测展示。
+
+**生成模型：** `{CHAT_MODEL}`  
+**Embedding 模型：** `{EMBEDDING_MODEL}`  
+**Rerank 模型：** `{RERANK_MODEL}`
 """
 )
 
@@ -120,9 +125,9 @@ with tab_chat:
     with col_right:
         retriever_mode = st.selectbox(
             "检索模式",
-            options=["vector", "hybrid"],
-            index=1,
-            help="vector 表示基础向量检索；hybrid 表示 Hybrid Search + Rerank。"
+            options=["vector", "dense_rerank", "bm25_hybrid"],
+            index=2,
+            help="vector 表示基础向量检索；dense_rerank 表示无关键词召回对照；bm25_hybrid 表示向量召回 + BM25 + Rerank。"
         )
 
         top_k = st.slider(
@@ -140,7 +145,7 @@ with tab_chat:
         )
 
         use_rerank = st.checkbox(
-            "启用 Rerank",
+            "启用模型 Rerank",
             value=True
         )
 
@@ -189,8 +194,8 @@ with tab_chat:
 
                     with col_b:
                         st.metric(
-                            "sparse_score",
-                            round(float(chunk.get("sparse_score") or 0), 4)
+                            "bm25_score",
+                            round(float(chunk.get("bm25_score") or 0), 4)
                         )
 
                     with col_c:
@@ -206,6 +211,13 @@ with tab_chat:
                         else:
                             st.metric("rerank_score", round(float(rerank_score), 4))
 
+                    rerank_model = chunk.get("rerank_model")
+
+                    if rerank_model:
+                        st.markdown(f"**Rerank 模型：** `{rerank_model}`")
+                    else:
+                        st.markdown("**Rerank 模型：** `未使用 / 无模型打分`")
+
                     st.markdown("**片段内容：**")
                     st.write(chunk.get("content", ""))
 
@@ -213,14 +225,14 @@ with tab_chat:
 with tab_eval:
     st.header("评测结果展示")
 
-    baseline_rows = load_csv_rows(BASELINE_EVAL_FILE)
-    hybrid_rows = load_csv_rows(HYBRID_EVAL_FILE)
+    no_keyword_rows = load_csv_rows(NO_KEYWORD_EVAL_FILE)
+    bm25_rows = load_csv_rows(BM25_EVAL_FILE)
 
-    show_eval_summary("Baseline：基础向量检索", baseline_rows)
+    show_eval_summary("No Keyword：Dense Rerank", no_keyword_rows)
 
     st.divider()
 
-    show_eval_summary("Optimized：Hybrid Search + Rerank", hybrid_rows)
+    show_eval_summary("BM25 Hybrid + 模型 Rerank", bm25_rows)
 
 
 with tab_log:

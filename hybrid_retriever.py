@@ -1,11 +1,21 @@
 import json
+import math
 import re
-from typing import List, Dict, Any
+from collections import Counter
+from typing import List, Dict, Any, Optional
 
 from vector_store import VectorStore
 
 
 CHUNKS_FILE = "data/chunks/chunks.json"
+BM25_K1 = 1.5
+BM25_B = 0.75
+
+STOPWORDS = {
+    "的", "了", "是", "在", "和", "与", "或", "也", "有", "中", "对",
+    "什", "么", "为", "何", "如", "哪", "些", "一", "个", "这", "那",
+    "吗", "呢", "吧"
+}
 
 
 def load_chunks(chunks_file: str = CHUNKS_FILE) -> List[Dict[str, Any]]:
@@ -15,10 +25,12 @@ def load_chunks(chunks_file: str = CHUNKS_FILE) -> List[Dict[str, Any]]:
     return chunks
 
 
-def simple_tokenize(text: str) -> List[str]:
+def bm25_tokenize(text: str) -> List[str]:
     """
-    简单切词函数。
-    不额外引入 jieba，避免新增依赖导致项目跑不通。
+    BM25 使用的轻量切词函数。
+
+    不引入额外依赖：英文/数字按词切分，中文按单字切分。
+    对当前小型教育资料库足够稳定，也能避免新增 rank_bm25 依赖。
     """
     if not text:
         return []
@@ -30,48 +42,81 @@ def simple_tokenize(text: str) -> List[str]:
 
     tokens = english_tokens + chinese_chars
 
-    stopwords = {
-        "的", "了", "是", "在", "和", "与", "或", "也", "有", "中", "对",
-        "什", "么", "为", "何", "如", "何", "哪", "些", "一", "个",
-        "这", "那", "吗", "呢", "吧"
-    }
-
-    return [t for t in tokens if t not in stopwords]
+    return [token for token in tokens if token not in STOPWORDS]
 
 
-def sparse_search(query: str, top_k: int = 5) -> List[Dict[str, Any]]:
+def bm25_search(query: str, top_k: int = 5) -> List[Dict[str, Any]]:
     """
-    关键词检索：
+    BM25 稀疏召回：
     1. 读取 chunks
-    2. 计算 query 和 chunk 的关键词重叠数量
-    3. 按 sparse_score 排序
+    2. 使用 BM25(k1=1.5, b=0.75) 计算 query 与 chunk 的相关分
+    3. 按 bm25_score 排序
     4. 返回 top_k
     """
     chunks = load_chunks()
-    query_tokens = set(simple_tokenize(query))
+    query_tokens = bm25_tokenize(query)
+
+    if not query_tokens:
+        return []
+
+    tokenized_docs = []
+    doc_lengths = []
+    document_frequency = Counter()
+
+    for chunk in chunks:
+        tokens = bm25_tokenize(chunk.get("content", ""))
+        tokenized_docs.append(tokens)
+        doc_lengths.append(len(tokens))
+
+        for token in set(tokens):
+            document_frequency[token] += 1
+
+    doc_count = len(chunks)
+    avg_doc_length = sum(doc_lengths) / doc_count if doc_count else 0
 
     results = []
 
-    for chunk in chunks:
+    for chunk, doc_tokens, doc_length in zip(chunks, tokenized_docs, doc_lengths):
         content = chunk.get("content", "")
-        chunk_tokens = set(simple_tokenize(content))
+        token_counts = Counter(doc_tokens)
+        bm25_score = 0.0
 
-        overlap = query_tokens.intersection(chunk_tokens)
-        sparse_score = len(overlap)
+        for token in query_tokens:
+            term_frequency = token_counts.get(token, 0)
 
-        if sparse_score > 0:
+            if term_frequency == 0:
+                continue
+
+            doc_frequency = document_frequency.get(token, 0)
+            idf = math.log(
+                1 + (doc_count - doc_frequency + 0.5) / (doc_frequency + 0.5)
+            )
+            length_norm = 1 - BM25_B
+
+            if avg_doc_length:
+                length_norm += BM25_B * (doc_length / avg_doc_length)
+
+            denominator = term_frequency + BM25_K1 * length_norm
+            bm25_score += (
+                idf
+                * term_frequency
+                * (BM25_K1 + 1)
+                / denominator
+            )
+
+        if bm25_score > 0:
             results.append({
                 "chunk_id": chunk.get("chunk_id"),
                 "source": chunk.get("source"),
                 "content": content,
-                "sparse_score": sparse_score,
+                "bm25_score": bm25_score,
                 "dense_score": 0.0,
                 "distance": None,
                 "hybrid_score": 0.0,
-                "retrieval_type": "sparse"
+                "retrieval_type": "bm25"
             })
 
-    results = sorted(results, key=lambda x: x["sparse_score"], reverse=True)
+    results = sorted(results, key=lambda x: x["bm25_score"], reverse=True)
     return results[:top_k]
 
 
@@ -101,7 +146,7 @@ def dense_search(query: str, top_k: int = 5) -> List[Dict[str, Any]]:
             "content": item.get("content"),
             "distance": distance,
             "dense_score": dense_score,
-            "sparse_score": 0,
+            "bm25_score": 0.0,
             "hybrid_score": 0.0,
             "retrieval_type": "dense"
         })
@@ -111,11 +156,11 @@ def dense_search(query: str, top_k: int = 5) -> List[Dict[str, Any]]:
 
 def reciprocal_rank_fusion(
     dense_results: List[Dict[str, Any]],
-    sparse_results: List[Dict[str, Any]],
+    bm25_results: List[Dict[str, Any]],
     top_k: int = 5,
     k: int = 60,
-    dense_weight: float = 0.85,
-    sparse_weight: float = 0.15
+    dense_weight: float = 0.75,
+    bm25_weight: float = 0.25
 ) -> List[Dict[str, Any]]:
     """
     加权 RRF 排名融合。
@@ -125,8 +170,7 @@ def reciprocal_rank_fusion(
 
     当前改进：
     - 向量检索 dense 权重更高；
-    - 关键词检索 sparse 权重更低；
-    - 避免简单关键词匹配引入过多噪声。
+    - BM25 稀疏召回用于补充术语、模型名、专有名词等精确匹配信号。
     """
 
     fused = {}
@@ -138,8 +182,8 @@ def reciprocal_rank_fusion(
             fused[chunk_id] = dict(item)
             fused[chunk_id]["rrf_score"] = 0.0
             fused[chunk_id]["dense_rank"] = None
-            fused[chunk_id]["sparse_rank"] = None
-            fused[chunk_id]["sparse_score"] = item.get("sparse_score", 0)
+            fused[chunk_id]["bm25_rank"] = None
+            fused[chunk_id]["bm25_score"] = item.get("bm25_score", 0.0)
             fused[chunk_id]["dense_score"] = item.get("dense_score", 0.0)
             fused[chunk_id]["distance"] = item.get("distance")
 
@@ -148,20 +192,20 @@ def reciprocal_rank_fusion(
         fused[chunk_id]["dense_score"] = item.get("dense_score", 0.0)
         fused[chunk_id]["distance"] = item.get("distance")
 
-    for rank, item in enumerate(sparse_results, start=1):
+    for rank, item in enumerate(bm25_results, start=1):
         chunk_id = item.get("chunk_id")
 
         if chunk_id not in fused:
             fused[chunk_id] = dict(item)
             fused[chunk_id]["rrf_score"] = 0.0
             fused[chunk_id]["dense_rank"] = None
-            fused[chunk_id]["sparse_rank"] = None
+            fused[chunk_id]["bm25_rank"] = None
             fused[chunk_id]["dense_score"] = item.get("dense_score", 0.0)
             fused[chunk_id]["distance"] = item.get("distance")
 
-        fused[chunk_id]["rrf_score"] += sparse_weight * (1 / (k + rank))
-        fused[chunk_id]["sparse_rank"] = rank
-        fused[chunk_id]["sparse_score"] = item.get("sparse_score", 0)
+        fused[chunk_id]["rrf_score"] += bm25_weight * (1 / (k + rank))
+        fused[chunk_id]["bm25_rank"] = rank
+        fused[chunk_id]["bm25_score"] = item.get("bm25_score", 0.0)
 
     final_results = list(fused.values())
 
@@ -181,21 +225,24 @@ def reciprocal_rank_fusion(
 def hybrid_search(
     query: str,
     top_k: int = 5,
-    candidate_k: int = 10
+    candidate_k: int = 10,
+    dense_results: Optional[List[Dict[str, Any]]] = None,
 ) -> List[Dict[str, Any]]:
     """
-    Hybrid Search 主函数：
+    BM25 Hybrid Search 主函数：
     1. 向量检索 candidate_k 条
-    2. 关键词检索 candidate_k 条
+    2. BM25 稀疏召回 candidate_k 条
     3. RRF 融合
     4. 返回 top_k 条
     """
-    dense_results = dense_search(query, top_k=candidate_k)
-    sparse_results = sparse_search(query, top_k=candidate_k)
+    if dense_results is None:
+        dense_results = dense_search(query, top_k=candidate_k)
+
+    bm25_results = bm25_search(query, top_k=candidate_k)
 
     return reciprocal_rank_fusion(
         dense_results=dense_results,
-        sparse_results=sparse_results,
+        bm25_results=bm25_results,
         top_k=top_k
     )
 
@@ -214,17 +261,17 @@ if __name__ == "__main__":
         print("dense_score:", item.get("dense_score"))
         print("content:", item.get("content", "")[:120])
 
-    print("\n===== Sparse Search 测试 =====")
-    sparse_results = sparse_search(test_question, top_k=3)
+    print("\n===== BM25 Search 测试 =====")
+    bm25_results = bm25_search(test_question, top_k=3)
 
-    for i, item in enumerate(sparse_results, start=1):
+    for i, item in enumerate(bm25_results, start=1):
         print(f"\nTop {i}")
         print("chunk_id:", item.get("chunk_id"))
         print("source:", item.get("source"))
-        print("sparse_score:", item.get("sparse_score"))
+        print("bm25_score:", item.get("bm25_score"))
         print("content:", item.get("content", "")[:120])
 
-    print("\n===== Hybrid Search 测试 =====")
+    print("\n===== BM25 Hybrid Search 测试 =====")
     hybrid_results = hybrid_search(test_question, top_k=5, candidate_k=10)
 
     for i, item in enumerate(hybrid_results, start=1):
@@ -232,6 +279,6 @@ if __name__ == "__main__":
         print("chunk_id:", item.get("chunk_id"))
         print("source:", item.get("source"))
         print("dense_rank:", item.get("dense_rank"))
-        print("sparse_rank:", item.get("sparse_rank"))
+        print("bm25_rank:", item.get("bm25_rank"))
         print("hybrid_score:", item.get("hybrid_score"))
         print("content:", item.get("content", "")[:120])

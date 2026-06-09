@@ -3,9 +3,9 @@ import os
 from pathlib import Path
 
 
-BASELINE_FILE = Path("eval_results/baseline_eval.csv")
-HYBRID_FILE = Path("eval_results/hybrid_rerank_eval.csv")
-OUTPUT_FILE = Path("eval_results/failure_cases.md")
+NO_KEYWORD_FILE = Path("eval_results/no_keyword_dense_rerank_eval.csv")
+BM25_FILE = Path("eval_results/bm25_hybrid_rerank_eval.csv")
+OUTPUT_FILE = Path("eval_results/bm25_failure_cases.md")
 
 
 def load_csv(file_path: Path):
@@ -131,7 +131,7 @@ def write_case_section(f, title, rows, max_cases=5):
         f.write("**可能优化方向：**\n\n")
 
         if failure_type == "检索失败":
-            f.write("- 可尝试改进关键词检索策略，引入 BM25 或 Query Rewrite。\n")
+            f.write("- 可调整 BM25 与向量召回的融合权重，或引入 Query Rewrite。\n")
             f.write("- 可扩充知识库内容，增加更多相关资料。\n\n")
         elif failure_type == "Prompt 约束不足或幻觉控制不足":
             f.write("- 可强化 Prompt 中“资料不足时必须拒答”的约束。\n")
@@ -150,16 +150,16 @@ def write_case_section(f, title, rows, max_cases=5):
 def main():
     os.makedirs("eval_results", exist_ok=True)
 
-    baseline_rows = load_csv(BASELINE_FILE)
-    hybrid_rows = load_csv(HYBRID_FILE)
+    no_keyword_rows = load_csv(NO_KEYWORD_FILE)
+    bm25_rows = load_csv(BM25_FILE)
 
     with OUTPUT_FILE.open("w", encoding="utf-8") as f:
         f.write("# RAG 失败样例分析\n\n")
 
         f.write("## 1. 分析目的\n\n")
         f.write(
-            "本文档基于 RAG 自动评测结果，对基础向量检索方案和 "
-            "Dense-Preserving Hybrid Search + Rerank 方案中的失败样例进行归因分析。"
+            "本文档基于 RAG 自动评测结果，对 Dense Rerank 无关键词召回方案和 "
+            "BM25 Hybrid + Rerank 方案中的失败样例进行归因分析。"
             "分析目标是定位检索失败、回答覆盖不足、引用缺失和资料缺失场景下拒答不稳定等问题，"
             "为后续优化提供依据。\n\n"
         )
@@ -175,15 +175,15 @@ def main():
 
         write_case_section(
             f,
-            title="3. Baseline：基础向量检索失败样例",
-            rows=baseline_rows,
+            title="3. No Keyword：Dense Rerank 失败样例",
+            rows=no_keyword_rows,
             max_cases=5
         )
 
         write_case_section(
             f,
-            title="4. Dense-Preserving Hybrid Search + Rerank 失败样例",
-            rows=hybrid_rows,
+            title="4. BM25 Hybrid + Rerank 失败样例",
+            rows=bm25_rows,
             max_cases=5
         )
 
@@ -192,7 +192,7 @@ def main():
             "从失败样例可以看出，RAG 系统的问题不仅来自生成模型，也可能来自检索召回、文本切分、"
             "Prompt 约束和知识库覆盖范围。后续可从以下方向继续优化：\n\n"
         )
-        f.write("1. 使用 BM25 替代简单关键词匹配，提高 sparse search 的检索质量；\n")
+        f.write("1. 调整 BM25 与向量召回的 RRF 权重，观察召回稳定性变化；\n")
         f.write("2. 使用 Cross-Encoder Rerank 模型提升候选片段排序效果；\n")
         f.write("3. 增加 Query Rewrite，提高复杂问题和模糊问题的检索效果；\n")
         f.write("4. 扩充教育资料知识库，减少知识库缺失导致的无法回答问题；\n")

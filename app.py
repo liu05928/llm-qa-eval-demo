@@ -13,8 +13,8 @@ from evaluator import run_evaluation, load_eval_results
 
 app = FastAPI(
     title="教育资料 RAG 知识库问答与评测优化系统",
-    description="基于 FastAPI 的教育资料 RAG 问答系统，支持基础向量检索、Hybrid Search、Rerank、来源引用和自动评测。",
-    version="0.4.0"
+    description="基于 FastAPI 的教育资料 RAG 问答系统，支持基础向量检索、Dense Rerank、BM25 Hybrid、来源引用和自动评测。",
+    version="0.5.0"
 )
 
 
@@ -35,14 +35,14 @@ class RagChatRequest(BaseModel):
 
     question: 用户问题
     top_k: 最终用于回答的文本块数量
-    retriever_mode: 检索模式，vector 表示基础向量检索，hybrid 表示 Hybrid Search
-    candidate_k: hybrid 模式下候选召回数量
+    retriever_mode: 检索模式，支持 vector、dense_rerank、bm25_hybrid
+    candidate_k: dense_rerank / bm25_hybrid 模式下候选召回数量
     use_rerank: 是否启用 Rerank 重排序
     """
 
     question: str
     top_k: int = 3
-    retriever_mode: Literal["vector", "hybrid"] = "vector"
+    retriever_mode: Literal["vector", "dense_rerank", "bm25_hybrid"] = "vector"
     candidate_k: int = 10
     use_rerank: bool = True
 
@@ -139,15 +139,16 @@ def rag_chat(request: RagChatRequest):
     """
     RAG 知识库问答接口。
 
-    支持两种检索模式：
+    支持三种检索模式：
     1. vector：基础向量检索；
-    2. hybrid：Hybrid Search + Rerank。
+    2. dense_rerank：向量召回 + Rerank，无关键词/BM25 召回；
+    3. bm25_hybrid：向量召回 + BM25 召回 + RRF 融合 + Rerank。
 
     输入：
     - question: 用户问题
     - top_k: 最终用于回答的文本块数量
-    - retriever_mode: 检索模式，vector 或 hybrid
-    - candidate_k: hybrid 模式下候选召回数量
+    - retriever_mode: 检索模式，vector、dense_rerank 或 bm25_hybrid
+    - candidate_k: dense_rerank / bm25_hybrid 模式下候选召回数量
     - use_rerank: 是否启用 Rerank 重排序
 
     输出：
