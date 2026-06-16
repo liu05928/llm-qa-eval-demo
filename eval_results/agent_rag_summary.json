@@ -1,0 +1,9 @@
+{
+  "total": 60,
+  "source_hit_rate": 0.96,
+  "keyword_hit_rate": 0.6,
+  "has_citation_rate": 0.9833333333333333,
+  "no_context_reject_rate": 0.9,
+  "avg_answer_length": 575.1333333333333,
+  "avg_retrieved_chunk_count": 3.0
+}

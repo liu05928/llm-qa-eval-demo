@@ -1,0 +1,214 @@
+[
+  {
+    "id": 1,
+    "question": "压力和压强有什么关系？",
+    "expected_source": "science_textbooks/003_科学_8年级上册_沪教版_2013版_一_压力与压强_main_036.md",
+    "expected_keywords": ["压力", "受力面积", "压强"],
+    "question_type": "concept"
+  },
+  {
+    "id": 2,
+    "question": "动物呼吸和氧气有什么关系？",
+    "expected_source": "science_textbooks/002_科学_7年级下册_沪教版_2012版_一_动物的呼吸_main_078.md",
+    "expected_keywords": ["呼吸", "氧气", "二氧化碳"],
+    "question_type": "mechanism"
+  },
+  {
+    "id": 3,
+    "question": "水有哪些不同形态？",
+    "expected_source": "science_textbooks/008_科学_7年级下册_沪教版_2012版_一_水的不同形态_main_097.md",
+    "expected_keywords": ["固态", "液态", "气态"],
+    "question_type": "concept"
+  },
+  {
+    "id": 4,
+    "question": "声音的特征有哪些？",
+    "expected_source": "science_textbooks/031_科学_7年级上册_沪教版_2012版_三_声音的特征_main_183.md",
+    "expected_keywords": ["声音", "音调", "响度"],
+    "question_type": "concept"
+  },
+  {
+    "id": 5,
+    "question": "透镜有什么特点？",
+    "expected_source": "science_textbooks/037_科学_7年级上册_沪教版_2012版_三_透镜的秘密_main_149.md",
+    "expected_keywords": ["透镜", "光", "成像"],
+    "question_type": "concept"
+  },
+  {
+    "id": 6,
+    "question": "什么是浮力？",
+    "expected_source": "science_textbooks/063_科学_8年级上册_沪教版_2013版_五_浮力_main_058.md",
+    "expected_keywords": ["浮力", "液体", "物体"],
+    "question_type": "concept"
+  },
+  {
+    "id": 7,
+    "question": "欧姆定律说明了什么？",
+    "expected_source": "science_textbooks/059_科学_9年级上册_沪教版_2013版_五_欧姆定律_main_199.md",
+    "expected_keywords": ["电流", "电压", "电阻"],
+    "question_type": "mechanism"
+  },
+  {
+    "id": 8,
+    "question": "牛顿第一定律和惯性有什么关系？",
+    "expected_source": "science_textbooks/070_科学_8年级下册_沪教版_2013版_四_牛顿第一定律_main_024.md",
+    "expected_keywords": ["牛顿第一定律", "惯性", "运动"],
+    "question_type": "mechanism"
+  },
+  {
+    "id": 9,
+    "question": "燃烧和灭火需要关注哪些条件？",
+    "expected_source": "science_textbooks/074_科学_7年级下册_沪教版_2012版_四_燃烧与灭火_main_063.md",
+    "expected_keywords": ["燃烧", "灭火", "氧气"],
+    "question_type": "application"
+  },
+  {
+    "id": 10,
+    "question": "地球自转会带来什么现象？",
+    "expected_source": "science_textbooks/007_科学_7年级上册_沪教版_2012版_一_地球的自转运动_main_102.md",
+    "expected_keywords": ["地球", "自转", "昼夜"],
+    "question_type": "mechanism"
+  },
+  {
+    "id": 11,
+    "question": "酸有哪些常见性质？",
+    "expected_source": "science_textbooks/005_科学_9年级上册_沪教版_2013版_一_广泛存在的酸_main_036.md",
+    "expected_keywords": ["酸", "醋酸", "硫酸"],
+    "question_type": "concept"
+  },
+  {
+    "id": 12,
+    "question": "为什么要保护生物多样性？",
+    "expected_source": "science_textbooks/054_科学_9年级下册_沪教版_2013版_四_生物多样性及其保护_main_062.md",
+    "expected_keywords": ["生物多样性", "保护", "生态"],
+    "question_type": "application"
+  },
+  {
+    "id": 13,
+    "question": "空气有质量的实验证据是什么？",
+    "expected_source": "science_textbooks/056_科学_7年级下册_沪教版_2012版_二_空气的性质_main_051.md",
+    "expected_keywords": ["空气", "质量", "平衡"],
+    "question_type": "experiment"
+  },
+  {
+    "id": 14,
+    "question": "高山上为什么普通锅不容易把饭煮熟？",
+    "expected_source": "science_textbooks/027_科学_8年级上册_沪教版_2013版_三_大气压强_main_049.md",
+    "expected_keywords": ["大气压", "海拔", "沸点"],
+    "question_type": "mechanism"
+  },
+  {
+    "id": 15,
+    "question": "省力杠杆和费力杠杆有什么区别？",
+    "expected_source": "science_textbooks/016_科学_8年级下册_沪教版_2013版_一_杠杆_main_038.md",
+    "expected_keywords": ["杠杆", "动力臂", "阻力臂"],
+    "question_type": "comparison"
+  },
+  {
+    "id": 16,
+    "question": "种子萌发需要哪些外部条件？",
+    "expected_source": "science_textbooks/058_科学_8年级下册_沪教版_2013版_二_种子_新生命的开始_main_123.md",
+    "expected_keywords": ["水", "空气", "温度"],
+    "question_type": "experiment"
+  },
+  {
+    "id": 17,
+    "question": "生态系统由哪些部分组成？",
+    "expected_source": "science_textbooks/057_科学_8年级上册_沪教版_2013版_二_生态系统的结构_main_144.md",
+    "expected_keywords": ["生产者", "消费者", "分解者"],
+    "question_type": "concept"
+  },
+  {
+    "id": 18,
+    "question": "植物蒸腾作用主要发生在哪里？",
+    "expected_source": "science_textbooks/062_科学_7年级下册_沪教版_2012版_二_蒸腾作用_水分的散失_main_140.md",
+    "expected_keywords": ["蒸腾作用", "叶片", "水滴"],
+    "question_type": "experiment"
+  },
+  {
+    "id": 19,
+    "question": "碱溶液遇到石蕊和酚酞会有什么变化？",
+    "expected_source": "science_textbooks/047_科学_9年级上册_沪教版_2013版_二_实用的碱_main_045.md",
+    "expected_keywords": ["石蕊", "酚酞", "变红"],
+    "question_type": "experiment"
+  },
+  {
+    "id": 20,
+    "question": "电磁铁磁性大小受哪些因素影响？",
+    "expected_source": "science_textbooks/053_科学_9年级上册_沪教版_2013版_二_电生磁_main_232.md",
+    "expected_keywords": ["电磁铁", "电流", "线圈"],
+    "question_type": "experiment"
+  },
+  {
+    "id": 21,
+    "question": "磁化在生活中有什么应用？",
+    "expected_source": "science_textbooks/011_科学_9年级上册_沪教版_2013版_一_磁体和磁场_main_221.md",
+    "expected_keywords": ["磁化", "磁铁", "螺丝刀"],
+    "question_type": "application"
+  },
+  {
+    "id": 22,
+    "question": "稀有气体为什么能用于霓虹灯？",
+    "expected_source": "science_textbooks/020_科学_7年级下册_沪教版_2012版_一_空气的组成_main_049.md",
+    "expected_keywords": ["稀有气体", "通电", "有色的光"],
+    "question_type": "application"
+  },
+  {
+    "id": 23,
+    "question": "土壤对植物有什么意义？",
+    "expected_source": "science_textbooks/044_科学_7年级下册_沪教版_2012版_二_土壤与植物_main_177.md",
+    "expected_keywords": ["土壤", "植物", "水分"],
+    "question_type": "concept"
+  },
+  {
+    "id": 24,
+    "question": "果实可以怎样分类？",
+    "expected_source": "science_textbooks/010_科学_8年级下册_沪教版_2013版_一_开花与结果_main_113.md",
+    "expected_keywords": ["果实", "干果", "肉果"],
+    "question_type": "concept"
+  },
+  {
+    "id": 25,
+    "question": "人类有哪些生殖细胞？",
+    "expected_source": "science_textbooks/004_科学_8年级下册_沪教版_2013版_一_人类的繁殖_main_132.md",
+    "expected_keywords": ["卵细胞", "精子", "生殖"],
+    "question_type": "concept"
+  },
+  {
+    "id": 26,
+    "question": "安全电流和安全电压可以怎样估算人体电阻？",
+    "expected_source": "science_textbooks/059_科学_9年级上册_沪教版_2013版_五_欧姆定律_main_199.md",
+    "expected_keywords": ["电流", "电压", "电阻"],
+    "question_type": "application"
+  },
+  {
+    "id": 27,
+    "question": "空气热胀冷缩实验会观察到什么？",
+    "expected_source": "science_textbooks/056_科学_7年级下册_沪教版_2012版_二_空气的性质_main_051.md",
+    "expected_keywords": ["空气", "热胀冷缩", "水柱"],
+    "question_type": "experiment"
+  },
+  {
+    "id": 28,
+    "question": "压力相同的情况下怎样减小压强？",
+    "expected_source": "science_textbooks/003_科学_8年级上册_沪教版_2013版_一_压力与压强_main_036.md",
+    "expected_keywords": ["压力", "受力面积", "压强"],
+    "question_type": "application"
+  },
+  {
+    "id": 29,
+    "question": "火星上明天的天气预报是多少？",
+    "expected_source": null,
+    "expected_keywords": [],
+    "question_type": "missing",
+    "expected_no_context_reject": true
+  },
+  {
+    "id": 30,
+    "question": "2026年最新中考科学分数线是多少？",
+    "expected_source": null,
+    "expected_keywords": [],
+    "question_type": "missing",
+    "expected_no_context_reject": true
+  }
+]

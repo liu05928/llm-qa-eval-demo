@@ -1,0 +1,40 @@
+{
+  "small": {
+    "total": 30,
+    "source_hit_rate": 1.0,
+    "exact_keyword_hit_rate": 1.0,
+    "semantic_keyword_hit_rate": 1.0,
+    "has_citation_rate": 1.0,
+    "no_context_reject_rate": 1.0,
+    "avg_answer_length": 434.1333333333333,
+    "avg_context_chars": 1237.3666666666666,
+    "avg_small_chunk_count": 3.0,
+    "avg_big_chunk_count": 0.0,
+    "avg_trigger_count": 0.0
+  },
+  "small_to_big": {
+    "total": 30,
+    "source_hit_rate": 1.0,
+    "exact_keyword_hit_rate": 1.0,
+    "semantic_keyword_hit_rate": 1.0,
+    "has_citation_rate": 1.0,
+    "no_context_reject_rate": 1.0,
+    "avg_answer_length": 438.6,
+    "avg_context_chars": 1676.1,
+    "avg_small_chunk_count": 3.0,
+    "avg_big_chunk_count": 2.066666666666667,
+    "avg_trigger_count": 3.0
+  },
+  "delta": {
+    "source_hit_rate": 0.0,
+    "exact_keyword_hit_rate": 0.0,
+    "semantic_keyword_hit_rate": 0.0,
+    "has_citation_rate": 0.0,
+    "no_context_reject_rate": 0.0,
+    "avg_answer_length": 4.466666666666697,
+    "avg_context_chars": 438.73333333333335,
+    "avg_small_chunk_count": 0.0,
+    "avg_big_chunk_count": 2.066666666666667,
+    "avg_trigger_count": 3.0
+  }
+}

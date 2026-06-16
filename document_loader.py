@@ -6,7 +6,7 @@ RAW_DOCS_DIR = Path("data/raw_docs")
 
 def load_documents(raw_docs_dir: Path = RAW_DOCS_DIR):
     """
-    读取 data/raw_docs/ 目录下的 Markdown 和 TXT 文档。
+    递归读取 data/raw_docs/ 目录下的 Markdown 和 TXT 文档。
 
     返回格式：
     [
@@ -23,8 +23,11 @@ def load_documents(raw_docs_dir: Path = RAW_DOCS_DIR):
     if not raw_docs_dir.exists():
         raise FileNotFoundError(f"文档目录不存在: {raw_docs_dir}")
 
-    # 遍历 raw_docs 目录下的所有文件
-    for file_path in raw_docs_dir.iterdir():
+    # 递归遍历 raw_docs，支持按垂直领域建立子目录。
+    for file_path in sorted(raw_docs_dir.rglob("*")):
+        if not file_path.is_file():
+            continue
+
         # 只读取 .md 和 .txt 文件
         if file_path.suffix.lower() not in [".md", ".txt"]:
             continue
@@ -41,7 +44,7 @@ def load_documents(raw_docs_dir: Path = RAW_DOCS_DIR):
 
         documents.append(
             {
-                "source": file_path.name,
+                "source": file_path.relative_to(raw_docs_dir).as_posix(),
                 "content": content,
             }
         )

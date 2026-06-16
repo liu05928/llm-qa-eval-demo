@@ -17,8 +17,18 @@ PROMPT_TEMPLATES: Dict[str, str] = {
         "你是一个科研论文阅读助手。"
         "请帮助用户理解论文或学术内容。"
         "回答时尽量包含：研究背景、核心问题、方法思路、可能贡献和局限。"
+    ),
+
+    "query_rewrite": (
+        "你是一个 RAG 检索查询改写器。"
+        "你的任务是把用户问题改写成更适合知识库检索的一句话。"
+        "只输出改写后的问题，不要解释，不要回答问题。"
+        "改写时保留原问题的核心意图，补全必要主题词，避免加入无法从问题推断的新事实。"
     )
 }
+
+
+PUBLIC_MODES = ["general", "education", "paper_summary"]
 
 
 def get_prompt(mode: str) -> str:
@@ -41,12 +51,17 @@ def get_prompt(mode: str) -> str:
     return PROMPT_TEMPLATES[mode]
 
 
-def get_available_modes() -> list:
+def get_available_modes(include_internal: bool = False) -> list:
     """
     返回当前支持的所有模式。
     """
 
-    return list(PROMPT_TEMPLATES.keys())
+    if include_internal:
+        return list(PROMPT_TEMPLATES.keys())
+
+    return PUBLIC_MODES.copy()
+
+
 def build_rag_prompt(question: str, context: str) -> str:
     """
     构造 RAG 问答 Prompt。

@@ -11,6 +11,13 @@ from config import (
 from hybrid_retriever import hybrid_search
 
 
+def _safe_float(value: Any) -> float:
+    try:
+        return float(value or 0.0)
+    except (TypeError, ValueError):
+        return 0.0
+
+
 class RerankerClient:
     """
     Reranker 客户端。
@@ -137,6 +144,14 @@ def rerank_chunks(
     )
 
     final_chunks = []
+    max_bm25_score = max(
+        [_safe_float(chunk.get("bm25_score")) for chunk in chunks],
+        default=0.0,
+    )
+    max_hybrid_score = max(
+        [_safe_float(chunk.get("hybrid_score")) for chunk in chunks],
+        default=0.0,
+    )
 
     for item in rerank_results:
         index = item.get("index")
@@ -146,13 +161,37 @@ def rerank_chunks(
             continue
 
         chunk = dict(chunks[index])
+        bm25_norm = (
+            _safe_float(chunk.get("bm25_score")) / max_bm25_score
+            if max_bm25_score > 0
+            else 0.0
+        )
+        hybrid_norm = (
+            _safe_float(chunk.get("hybrid_score")) / max_hybrid_score
+            if max_hybrid_score > 0
+            else 0.0
+        )
+        if max_bm25_score > 0 and _safe_float(chunk.get("bm25_score")) > 0:
+            retrieval_score = 0.8 * bm25_norm + 0.2 * hybrid_norm
+        else:
+            retrieval_score = hybrid_norm
+
+        combined_score = 0.6 * _safe_float(score) + 0.4 * retrieval_score
+
         chunk["rerank_score"] = score
+        chunk["rerank_combined_score"] = round(combined_score, 6)
         chunk["rerank_model"] = client.model
         chunk["retrieval_type"] = "model_rerank"
 
         final_chunks.append(chunk)
 
-    return final_chunks
+    final_chunks = sorted(
+        final_chunks,
+        key=lambda chunk: chunk.get("rerank_combined_score", 0.0),
+        reverse=True,
+    )
+
+    return final_chunks[:top_k]
 
 
 if __name__ == "__main__":

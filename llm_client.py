@@ -116,6 +116,15 @@ def generate_mock_answer(question: str, mode: str, system_prompt: str) -> str:
             f"当前为 Mock 模式，后续接入真实 API 后会根据论文内容生成摘要。"
         )
 
+    if mode == "query_rewrite":
+        marker = "原问题："
+        if marker in question:
+            raw_question = question.split(marker, 1)[1].splitlines()[0].strip()
+        else:
+            raw_question = question.strip().splitlines()[-1]
+
+        return raw_question
+
     return (
         f"【未知模式】\n"
         f"你的问题是：{question}\n"

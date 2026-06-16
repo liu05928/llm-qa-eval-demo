@@ -1,12 +1,17 @@
-# 教育资料 RAG 知识库问答与评测优化系统
+# 教育资料 RAG Agent 问答与检索优化系统
 
 ## 一、项目背景
 
-本项目是一个面向教育资料的大模型 RAG 知识库问答与评测优化系统，基于 Python、FastAPI、ChromaDB 和 Streamlit 构建。
+本项目是一个面向教育资料与初中科学教材的大模型 RAG Agent 问答与检索优化系统，基于 Python、FastAPI、ChromaDB 和 Streamlit 构建。
 
-系统支持本地教育资料读取、文本切分、Embedding 向量化、向量检索、Dense Rerank、BM25 Hybrid、Rerank 重排序、大模型回答生成、来源引用、日志记录、自动评测和可视化展示。
+系统支持 Single-Agent 任务判断、会话记忆、垂直领域知识库导入、Long-text RAG、Small-to-Big 上下文扩展、本地教育资料读取、文本切分、Embedding 向量化、向量检索、Dense Rerank、BM25 Hybrid、Rerank 重排序、Query Rewrite、大模型回答生成、来源引用、日志记录、自动评测和可视化展示。
 
-项目目标不是单纯实现一个问答 Demo，而是构建一个具备检索优化、结果溯源、效果评测和失败样例分析能力的 RAG 工程项目。
+项目目标不是单纯实现一个问答 Demo，而是构建一个具备 Agent 工作流、垂直知识库构建、检索优化、结果溯源、效果评测和失败样例分析能力的 RAG 工程项目。
+
+当前知识库包含两类资料：
+
+* 大模型应用开发资料：RAG、Agent、Prompt Engineering、Embedding、Rerank、BM25 Hybrid 等。
+* 初中科学教材资料：从 `ch-3` 项目的沪教版初中科学 Markdown 教材中均衡抽样导入，覆盖 7-9 年级上下册的科学知识点。
 
 ---
 
@@ -19,6 +24,12 @@
 * sentence-transformers
 * SiliconFlow / DeepSeek API
 * Prompt Engineering
+* Single-Agent Workflow
+* Conversation Memory
+* Vertical Domain Knowledge Base
+* Long-text RAG
+* Small-to-Big Retrieval
+* Query Rewrite
 * JSON / JSONL / CSV
 * BM25 Hybrid Search
 * Rerank
@@ -28,43 +39,117 @@
 
 ## 三、系统功能
 
-### 1. 基础 RAG 问答
+### 1. Single-Agent RAG 问答
+
+系统新增本地状态机 Agent。Agent 会先读取会话记忆并补全多轮追问，再识别用户问题类型、选择检索策略，必要时执行 Query Rewrite 和二次检索，最后判断上下文是否足够生成回答。
+
+Query Rewrite 采用 LLM 优先、规则兜底的可控设计：真实 API 模式下由大模型把模糊问题改写成更适合检索的一句话；Mock 模式、API 失败或 LLM 输出不可用时自动回退到规则改写，保证本地演示稳定。
+
+Agent 执行过程包括：
+
+```text
+resolve_memory（可选）
+↓
+classify_query
+↓
+select_strategy
+↓
+retrieve_context
+↓
+judge_context
+↓
+rewrite_query（可选）
+↓
+generate_answer
+↓
+update_memory（可选）
+↓
+finalize_response
+↓
+log_trace
+```
+
+页面会展示 Agent 的任务类型、检索策略、上下文充分性、Query Rewrite 结果和工具调用轨迹，便于面试和调试时解释系统行为。
+
+### 2. 会话记忆与多轮追问
+
+系统新增轻量会话记忆，用于记录当前学习主题、最近问题、上一轮回答摘要、引用来源、检索策略和历史 Query Rewrite。
+
+当用户进行多轮追问时，Agent 会使用记忆完成指代消解，例如：
+
+```text
+第一轮：什么是 RAG？
+第二轮：它为什么可以减少幻觉？
+记忆补全：RAG 为什么可以减少幻觉？
+```
+
+该能力主要用于提升多轮学习助手体验和 Query Rewrite 质量，不作为单轮检索指标提升来包装。
+
+### 3. 基础 RAG 问答
 
 系统支持读取本地教育资料文档，将文档切分为多个 chunk，并使用 Embedding 模型将文本片段转换为向量后写入 ChromaDB。
 
 用户输入问题后，系统会检索相关知识片段，构造 RAG Prompt，并调用大模型生成回答。
 
-### 2. 来源引用返回
+### 4. 垂直领域知识库构建
+
+系统新增 `domain_kb_importer.py`，用于从 `../ch-3/knowledge_base_builder/data/textbooks/初中科学/沪教版初中科学` 导入教材语料。
+
+导入策略：
+
+* 从 1288 篇候选 Markdown 教材文档中抽样；
+* 默认导入 80 篇，按 7-9 年级上下册均衡覆盖；
+* 保留教材、年级、册次、出版社、章节、内容类型和原始文件路径；
+* 写入 `data/raw_docs/science_textbooks/`；
+* 生成 `data/science_textbook_manifest.json` 作为导入清单。
+
+这样项目可以从“泛学习资料 Demo”升级为“初中科学教材垂直领域问答系统”，同时仍保留原来的大模型技术资料问答能力。
+
+### 5. Long-text RAG：Small-to-Big
+
+系统新增 Small-to-Big 长文本 RAG 能力：
+
+* 小 chunk：默认 500 字左右，用于向量检索、BM25 召回和 Rerank 排序；
+* 大 chunk：默认 1600 字左右，按 Markdown 段落优先切分，用于回答阶段提供更完整上下文；
+* 父子映射：每个小 chunk 保存 `parent_chunk_id`，命中后可扩展到对应父级大段落；
+* 可观测性：返回 `small_retrieved_chunks`、`long_context`、`trigger_chunk_ids`，展示哪些小 chunk 触发了父段落；
+* 可切换：API 和 Streamlit 均支持 `context_mode=small` 或 `context_mode=small_to_big`。
+
+该能力解决“召回片段太碎、答案缺少上下文”的问题，适合教材、政策、公文制度等长文本问答场景。
+
+### 6. 来源引用返回
 
 系统会返回回答所依据的来源文档和 chunk_id，便于追溯答案依据，提高问答结果的可信度。
 
-### 3. BM25 Hybrid 检索优化
+### 7. BM25 Hybrid 检索优化
 
 系统在基础向量检索基础上新增 BM25 稀疏召回能力，将向量召回结果和 BM25 召回结果通过 RRF 进行融合，形成 BM25 Hybrid 候选召回结果。
 
-### 4. Dense-Preserving BM25 Hybrid + Rerank
+### 8. Hybrid-First BM25 Hybrid + Rerank
 
 系统提供 `dense_rerank` 和 `bm25_hybrid` 两种优化实验模式，用于对比无稀疏召回和 BM25 稀疏召回的效果。
 
-因此系统采用 Dense-Preserving BM25 Hybrid + Rerank 策略：
+针对垂直领域知识库，系统采用 Hybrid-First BM25 Hybrid + Rerank 策略：
 
 ```text
-基础向量检索兜底
+向量召回 + BM25 稀疏召回
 ↓
-BM25 Hybrid 扩大候选召回
+RRF 融合候选
 ↓
 轻量级 Rerank 重排序
 ↓
-保留 dense top2
+融合 Rerank 分与 BM25/Hybrid 检索分
 ↓
-使用 rerank 后的候选结果补充最终上下文
+优先选择 Hybrid/Rerank 结果，dense 仅作兜底补充
 ```
 
-该策略既保留了向量检索的语义稳定性，也利用 BM25 和 Rerank 提升候选片段的覆盖度和排序效果。
+该策略既保留了向量检索的语义兜底能力，也让教材术语、章节名和专有名词的 BM25 精确命中在最终排序中有更高权重。
 
-### 5. 自动评测
+### 9. 自动评测
 
-系统构建了 50 条 RAG 测试问题，覆盖概念解释、原理机制、对比辨析、教育应用和资料缺失等类型。
+系统构建了 60 条 RAG 测试问题，覆盖概念解释、原理机制、对比辨析、教育应用和资料缺失等类型。
+
+系统同时新增 `data/science_rag_test_questions.json`，用于验证初中科学教材知识库的来源命中、关键词覆盖和资料缺失拒答能力。科学测试集当前包含 30 条问题，覆盖概念解释、机制说明、实验现象、对比分析、生活应用和资料缺失。
 
 评测指标包括：
 
@@ -75,16 +160,19 @@ BM25 Hybrid 扩大候选召回
 * 平均回答长度
 * 平均检索片段数
 
-### 6. 日志记录与失败样例分析
+### 10. 日志记录与失败样例分析
 
-系统会记录 RAG 问答日志和检索日志，包括检索模式、候选片段、最终上下文、来源引用和回答长度等信息。
+系统会记录 RAG 问答日志、检索日志和 Agent 执行日志，包括检索模式、候选片段、最终上下文、来源引用、回答长度、工具调用轨迹和上下文判断结果等信息。
 
-同时，项目提供失败样例分析脚本，用于定位检索失败、回答覆盖不足、Prompt 约束不足、知识库缺失等问题。
+同时，项目提供失败样例分析脚本，用于定位检索失败、回答覆盖不足、Prompt 约束不足、知识库缺失等问题。科学教材评测会额外生成 `eval_results/science_failure_cases.md`，区分硬性失败和“严格关键词未命中但同义关键词命中”的软性观察。
 
-### 7. Streamlit 可视化展示
+### 11. Streamlit 可视化展示
 
 项目提供 Streamlit 页面，支持：
 
+* Agent 问答演示
+* 启用或清空 Agent 会话记忆
+* 展示 Agent 问题类型、检索策略和工具调用轨迹
 * 输入问题
 * 选择检索模式：vector / dense_rerank / bm25_hybrid
 * 设置 top_k
@@ -105,11 +193,17 @@ BM25 Hybrid 扩大候选召回
 edu-rag-assistant/
 ├── app.py
 ├── web_demo.py
+├── agent_memory.py
+├── agent_session_store.py
+├── agent_state.py
+├── rag_agent.py
 ├── llm_client.py
 ├── config.py
 ├── prompt_templates.py
 ├── document_loader.py
 ├── text_splitter.py
+├── domain_kb_importer.py
+├── long_text_context.py
 ├── embedding_client.py
 ├── vector_store.py
 ├── hybrid_retriever.py
@@ -118,23 +212,34 @@ edu-rag-assistant/
 ├── rag_logger.py
 ├── rag_evaluator.py
 ├── experiment_runner.py
+├── agent_experiment_runner.py
+├── memory_experiment_runner.py
 ├── log_analyzer.py
 ├── DEV_SPEC.md
 ├── data/
 │   ├── raw_docs/
+│   │   └── science_textbooks/
 │   ├── chunks/
-│   └── rag_test_questions.json
+│   │   ├── chunks.json
+│   │   └── big_chunks.json
+│   ├── rag_test_questions.json
+│   ├── science_rag_test_questions.json
+│   ├── science_textbook_manifest.json
+│   └── memory_eval_questions.json
 ├── vector_db/
 ├── logs/
 │   ├── rag_log.json
-│   └── retrieval_log.json
+│   ├── retrieval_log.json
+│   ├── agent_trace_log.json
+│   └── agent_sessions.json
 ├── eval_results/
 │   ├── baseline_eval.csv
 │   ├── no_keyword_dense_rerank_eval.csv
 │   ├── bm25_hybrid_rerank_eval.csv
 │   ├── bm25_comparison_summary.json
 │   ├── bm25_comparison_report.md
-│   └── bm25_failure_cases.md
+│   ├── bm25_failure_cases.md
+│   └── science_failure_cases.md
 ├── assets/
 │   └── rag_demo.png
 ├── requirements.txt
@@ -146,10 +251,38 @@ edu-rag-assistant/
 
 ## 五、核心流程
 
+Agent 主流程：
+
+```text
+用户问题
+↓
+读取会话记忆并补全多轮追问
+↓
+问题类型识别
+↓
+检索策略选择
+↓
+Query Rewrite（可选）
+↓
+向量召回 / BM25 Hybrid / Rerank
+↓
+上下文充分性判断
+↓
+回答生成或资料不足拒答
+↓
+来源引用
+↓
+Agent Trace 日志
+```
+
+RAG 检索流程：
+
 ```text
 文档读取
 ↓
 文本切分
+↓
+生成 small chunks 和 big chunks
 ↓
 Embedding 向量化
 ↓
@@ -160,6 +293,8 @@ Embedding 向量化
 BM25 Hybrid Search
 ↓
 Rerank 重排序
+↓
+Small-to-Big 父段落扩展
 ↓
 Prompt 构造
 ↓
@@ -172,6 +307,24 @@ Prompt 构造
 自动评测
 ↓
 Dashboard 展示
+```
+
+垂直知识库构建流程：
+
+```text
+ch-3 初中科学教材 Markdown
+↓
+均衡抽样与元数据提取
+↓
+写入 data/raw_docs/science_textbooks/
+↓
+document_loader 递归读取
+↓
+text_splitter 生成 chunks.json
+↓
+vector_store 写入 ChromaDB
+↓
+Agent / RAG 检索问答
 ```
 
 ---
@@ -212,9 +365,10 @@ USE_MOCK=false
 
 ```text
 data/rag_test_questions.json
+data/science_rag_test_questions.json
 ```
 
-测试集共 50 条问题，覆盖以下类型：
+主测试集共 60 条问题，科学教材测试集共 30 条问题，覆盖以下类型：
 
 | 问题类型        | 说明    |
 | ----------- | ----- |
@@ -258,6 +412,7 @@ eval_results/bm25_comparison_report.md
 
 ```text
 eval_results/bm25_failure_cases.md
+eval_results/science_failure_cases.md
 ```
 
 ---
@@ -287,19 +442,43 @@ API_KEY=your_api_key_here
 BASE_URL=https://api.siliconflow.cn/v1/chat/completions
 ```
 
-### 3. 构建 chunks
+### 3. 一键构建知识库（推荐）
+
+Mock 模式下跑通完整构建链路：
+
+```bash
+USE_MOCK=true python build_kb.py
+```
+
+同时运行 Small-to-Big 对比评测：
+
+```bash
+USE_MOCK=true python build_kb.py --run-eval
+```
+
+脚本会依次完成：导入 ch-3 教材语料、生成 small/big chunks、构建 Chroma 向量索引、运行 Small-to-Big 冒烟测试，并可选运行科学教材 small vs small_to_big 对比评测。
+
+真实 API 模式下运行：
+
+```bash
+USE_MOCK=false python build_kb.py --run-eval
+```
+
+真实模式需要配置 `SILICONFLOW_API_KEY`，并会调用 Embedding、Rerank 和 Chat 模型。
+
+### 4. 手动构建 chunks
 
 ```bash
 python text_splitter.py
 ```
 
-### 4. 构建向量库
+### 5. 手动构建向量库
 
 ```bash
 python vector_store.py
 ```
 
-### 5. 启动 FastAPI
+### 6. 启动 FastAPI
 
 ```bash
 uvicorn app:app --reload
@@ -311,22 +490,57 @@ uvicorn app:app --reload
 http://127.0.0.1:8000/docs
 ```
 
-### 6. 调用 RAG 接口
+### 7. 调用 RAG 接口
 
 ```json
 {
   "question": "什么是 RAG？",
   "top_k": 3,
   "retriever_mode": "bm25_hybrid",
+  "context_mode": "small_to_big",
   "candidate_k": 10,
   "use_rerank": true
 }
 ```
 
-### 7. 启动 Streamlit 页面
+### 8. 调用 Agent 接口
+
+`POST /agent/chat`
+
+```json
+{
+  "question": "它为什么可以减少幻觉？",
+  "session_id": "demo-session-001",
+  "top_k": 3,
+  "candidate_k": 10,
+  "max_rewrites": 1,
+  "use_rerank": true,
+  "context_mode": "small_to_big",
+  "reset_memory": false
+}
+```
+
+Agent 接口会通过 `session_id` 复用会话记忆，并返回 `resolved_question`、`memory_used`、`memory_snapshot` 和 `agent_trace`。
+
+会话管理接口：
+
+```text
+GET /agent/session/{session_id}
+DELETE /agent/session/{session_id}
+```
+
+### 9. 启动 Streamlit 页面
 
 ```bash
 streamlit run web_demo.py
+```
+
+页面默认提供 Agent 问答演示，支持输入或复用 `session_id`，同时保留原始 RAG 问答、评测结果和日志查看。
+
+### 10. 直接运行 Agent
+
+```bash
+python rag_agent.py
 ```
 
 ---
@@ -339,6 +553,30 @@ streamlit run web_demo.py
 python experiment_runner.py
 ```
 
+运行 Agent 版本评测：
+
+```bash
+python agent_experiment_runner.py
+```
+
+运行多轮记忆评测：
+
+```bash
+python memory_experiment_runner.py
+```
+
+运行科学教材 Small-to-Big 对比评测：
+
+```bash
+python science_long_text_eval_runner.py
+```
+
+科学教材评测会同时输出 `exact_keyword_hit` 和 `semantic_keyword_hit`：
+
+* `exact_keyword_hit`：严格字面关键词命中；
+* `semantic_keyword_hit`：支持少量领域同义表达，例如“固态 ≈ 固体形态”、“气态 ≈ 气体形态”。
+* `no_context_reject`：资料缺失题是否明确拒答，不参与来源命中率和关键词命中率统计。
+
 输出文件：
 
 ```text
@@ -346,6 +584,16 @@ eval_results/no_keyword_dense_rerank_eval.csv
 eval_results/bm25_hybrid_rerank_eval.csv
 eval_results/bm25_comparison_summary.json
 eval_results/bm25_comparison_report.md
+eval_results/agent_rag_eval.csv
+eval_results/agent_rag_summary.json
+eval_results/agent_memory_eval.csv
+eval_results/agent_memory_summary.json
+eval_results/science_small_context_eval.csv
+eval_results/science_small_to_big_eval.csv
+eval_results/science_small_to_big_summary.json
+eval_results/science_small_to_big_report.md
+eval_results/build_kb_summary.json
+eval_results/science_failure_cases.md
 ```
 
 生成失败样例分析：
@@ -364,7 +612,7 @@ eval_results/bm25_failure_cases.md
 
 ## 十一、页面展示
 
-Streamlit 页面支持展示问答结果、引用来源、检索片段、检索分数、评测结果和检索日志。
+Streamlit 页面支持展示 Agent 问答、会话记忆、工具调用轨迹、问答结果、引用来源、检索片段、检索分数、评测结果和检索日志。
 
 示例截图：
 ### RAG 问答与检索片段展示
@@ -381,20 +629,23 @@ Streamlit 页面支持展示问答结果、引用来源、检索片段、检索�
 
 1. 调整 BM25 与向量召回的 RRF 权重，观察召回稳定性变化；
 2. 使用 Cross-Encoder Rerank 模型替代规则打分，提高候选片段排序效果；
-3. 增加 Query Rewrite，提高复杂问题和模糊问题的检索效果；
+3. 继续扩充 LLM Query Rewrite 评测集，对比规则改写和 LLM 改写在模糊问题上的检索效果；
 4. 扩充教育资料知识库，引入更多课程资料、论文笔记和教学案例；
 5. 接入 Ragas 等更完整的 RAG 评测框架，补充上下文相关性、忠实度等指标；
-6. 后续扩展 Agent 或 MCP Server，增强复杂任务处理能力。
+6. 后续扩展 Multi-Agent 或 MCP Server，增强复杂任务处理能力。
 
 ---
 
 ## 十三、项目亮点
 
-1. 实现了教育资料 RAG 问答完整链路；
-2. 支持 vector、dense_rerank 和 bm25_hybrid 三种检索模式；
-3. 设计了 Dense-Preserving BM25 Hybrid + Rerank 策略；
-4. 支持答案来源引用和检索日志记录；
-5. 构建 50 条测试问题集并完成自动评测；
-6. 输出实验报告和失败样例分析；
-7. 使用 Streamlit 搭建可视化演示页面；
-8. 项目具备可展示、可评测、可复盘和可写入简历的完整工程闭环。
+1. 实现了教育资料 RAG Agent 问答完整链路；
+2. 新增本地状态机 Agent，支持问题分类、策略路由、Query Rewrite、上下文判断和工具轨迹记录；
+3. 新增轻量会话记忆，支持多轮追问中的指代消解和主题延续；
+4. 支持 vector、dense_rerank 和 bm25_hybrid 三种检索模式；
+5. 设计了 Hybrid-First BM25 Hybrid + Rerank 策略；
+6. 新增 Long-text RAG / Small-to-Big，上下文从小 chunk 扩展到父级大段落；
+7. 支持答案来源引用、检索日志和 Agent Trace 日志；
+8. 构建 60 条单轮测试问题集、30 条科学教材测试集和多轮记忆评测集；
+9. 输出实验报告、科学失败样例分析和边界说明；
+10. 使用 Streamlit 搭建可视化演示页面；
+11. 项目具备可展示、可评测、可复盘和可写入简历的完整工程闭环。

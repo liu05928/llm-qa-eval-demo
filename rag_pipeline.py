@@ -7,11 +7,13 @@ from vector_store import VectorStore
 from prompt_templates import build_rag_prompt
 from llm_client import call_llm
 from hybrid_retriever import dense_search, hybrid_search
+from long_text_context import expand_chunks_to_big_context
 from reranker import rerank_chunks
 
 
 RETRIEVAL_LOG_FILE = Path("logs/retrieval_log.json")
 VALID_RETRIEVER_MODES = {"vector", "dense_rerank", "bm25_hybrid"}
+VALID_CONTEXT_MODES = {"small", "small_to_big"}
 
 
 def format_context(retrieved_chunks):
@@ -64,7 +66,7 @@ def append_retrieval_log(log_data):
         try:
             with RETRIEVAL_LOG_FILE.open("r", encoding="utf-8") as f:
                 logs = json.load(f)
-        except json.JSONDecodeError:
+        except (json.JSONDecodeError, UnicodeDecodeError):
             logs = []
     else:
         logs = []
@@ -115,8 +117,18 @@ def build_chunk_log_item(chunk):
         "bm25_score": chunk.get("bm25_score"),
         "hybrid_score": chunk.get("hybrid_score"),
         "rerank_score": chunk.get("rerank_score"),
+        "rerank_combined_score": chunk.get("rerank_combined_score"),
         "rerank_model": chunk.get("rerank_model"),
         "retrieval_type": chunk.get("retrieval_type"),
+        "chunk_type": chunk.get("chunk_type"),
+        "parent_chunk_id": chunk.get("parent_chunk_id"),
+        "parent_index": chunk.get("parent_index"),
+        "small_index": chunk.get("small_index"),
+        "context_mode": chunk.get("context_mode"),
+        "trigger_chunk_id": chunk.get("trigger_chunk_id"),
+        "trigger_chunk_ids": chunk.get("trigger_chunk_ids"),
+        "trigger_count": chunk.get("trigger_count"),
+        "char_count": chunk.get("char_count"),
         "dense_rank": chunk.get("dense_rank"),
         "bm25_rank": chunk.get("bm25_rank"),
     }
@@ -157,6 +169,7 @@ def add_final_rerank_scores(question, final_chunks, use_rerank=True):
 
         score_map[chunk_id] = {
             "rerank_score": chunk.get("rerank_score"),
+            "rerank_combined_score": chunk.get("rerank_combined_score"),
             "rerank_model": chunk.get("rerank_model"),
         }
 
@@ -168,11 +181,30 @@ def add_final_rerank_scores(question, final_chunks, use_rerank=True):
 
         if chunk_id in score_map:
             new_chunk["rerank_score"] = score_map[chunk_id].get("rerank_score")
+            new_chunk["rerank_combined_score"] = score_map[chunk_id].get("rerank_combined_score")
             new_chunk["rerank_model"] = score_map[chunk_id].get("rerank_model")
 
         updated_chunks.append(new_chunk)
 
     return updated_chunks
+
+
+def apply_context_mode(
+    final_small_chunks,
+    top_k: int,
+    context_mode: str = "small_to_big",
+):
+    if context_mode == "small":
+        return final_small_chunks, {
+            "enabled": False,
+            "expanded": False,
+            "reason": "使用小 chunk 直接回答。",
+        }
+
+    return expand_chunks_to_big_context(
+        small_chunks=final_small_chunks,
+        max_big_chunks=top_k,
+    )
 
 
 def retrieve_chunks(
@@ -181,6 +213,7 @@ def retrieve_chunks(
     retriever_mode: str = "vector",
     candidate_k: int = 10,
     use_rerank: bool = True,
+    context_mode: str = "small_to_big",
 ):
     """
     统一检索入口。
@@ -194,14 +227,18 @@ def retrieve_chunks(
     retriever_mode = "bm25_hybrid"：
         使用向量召回 + BM25 稀疏召回 + RRF 融合，再进行模型 Rerank。
 
-    dense_rerank 和 bm25_hybrid 都采用 Dense-Preserving 策略：
-    先保留 dense top2，再用 rerank 后的候选结果补足最终上下文。
+    dense_rerank 采用 Dense-Preserving 策略。
+    bm25_hybrid 采用 Hybrid/Rerank 优先策略，dense 结果只作为兜底补充，
+    避免垂直领域术语命中的 BM25 结果被低质量 dense 结果挤掉。
     """
 
     if retriever_mode not in VALID_RETRIEVER_MODES:
         raise ValueError(
             "retriever_mode 只能是 'vector'、'dense_rerank' 或 'bm25_hybrid'"
         )
+
+    if context_mode not in VALID_CONTEXT_MODES:
+        raise ValueError("context_mode 只能是 'small' 或 'small_to_big'")
 
     if retriever_mode == "vector":
         vector_store = VectorStore()
@@ -212,20 +249,28 @@ def retrieve_chunks(
         )
 
         retrieved_chunks = add_scores_for_vector_results(retrieved_chunks)
+        final_chunks, long_context = apply_context_mode(
+            final_small_chunks=retrieved_chunks,
+            top_k=top_k,
+            context_mode=context_mode,
+        )
 
         retrieval_log = {
             "time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             "question": question,
             "retriever_mode": retriever_mode,
+            "context_mode": context_mode,
             "candidate_k": top_k,
             "final_top_k": top_k,
             "use_rerank": False,
             "strategy": "vector_only",
+            "long_context": long_context,
             "retrieved_candidates": build_chunk_log_list(retrieved_chunks),
-            "final_context": build_chunk_log_list(retrieved_chunks),
+            "small_final_context": build_chunk_log_list(retrieved_chunks),
+            "final_context": build_chunk_log_list(final_chunks),
         }
 
-        return retrieved_chunks, retrieval_log
+        return final_chunks, retrieval_log
 
     dense_candidates = dense_search(
         query=question,
@@ -255,7 +300,11 @@ def retrieve_chunks(
     else:
         reranked_chunks = candidate_chunks
 
-    keep_dense_k = min(2, top_k)
+    if retriever_mode == "dense_rerank":
+        keep_dense_k = min(2, top_k)
+    else:
+        keep_dense_k = 0
+
     final_chunks = []
     seen_chunk_ids = set()
 
@@ -273,23 +322,43 @@ def retrieve_chunks(
         if len(final_chunks) >= top_k:
             break
 
+    for chunk in dense_base_chunks:
+        if len(final_chunks) >= top_k:
+            break
+
+        chunk_id = chunk.get("chunk_id")
+
+        if chunk_id not in seen_chunk_ids:
+            final_chunks.append(chunk)
+            seen_chunk_ids.add(chunk_id)
+
     final_chunks = add_final_rerank_scores(
         question=question,
         final_chunks=final_chunks,
         use_rerank=use_rerank,
     )
 
+    final_small_chunks = final_chunks
+    final_chunks, long_context = apply_context_mode(
+        final_small_chunks=final_small_chunks,
+        top_k=top_k,
+        context_mode=context_mode,
+    )
+
     retrieval_log = {
         "time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         "question": question,
         "retriever_mode": retriever_mode,
+        "context_mode": context_mode,
         "candidate_k": candidate_k,
         "final_top_k": top_k,
         "use_rerank": use_rerank,
         "strategy": strategy,
+        "long_context": long_context,
         "dense_base_chunks": build_chunk_log_list(dense_base_chunks),
         "retrieved_candidates": build_chunk_log_list(candidate_chunks),
         "reranked_candidates": build_chunk_log_list(reranked_chunks),
+        "small_final_context": build_chunk_log_list(final_small_chunks),
         "final_context": build_chunk_log_list(final_chunks),
     }
 
@@ -302,6 +371,7 @@ def rag_answer(
     retriever_mode: str = "vector",
     candidate_k: int = 10,
     use_rerank: bool = True,
+    context_mode: str = "small_to_big",
 ):
     """
     RAG 问答主流程。
@@ -310,10 +380,11 @@ def rag_answer(
     1. 根据用户问题检索相关 chunks；
     2. 支持 vector、dense_rerank 和 bm25_hybrid 三种检索模式；
     3. dense_rerank / bm25_hybrid 模式下支持模型 Rerank；
-    4. 将 chunks 拼接成 context；
-    5. 构造 RAG Prompt；
-    6. 调用大模型或 Mock 模型生成回答；
-    7. 返回 answer、sources、retrieved_chunks。
+    4. 支持 small_to_big：小 chunk 召回，父级大 chunk 用于回答；
+    5. 将 chunks 拼接成 context；
+    6. 构造 RAG Prompt；
+    7. 调用大模型或 Mock 模型生成回答；
+    8. 返回 answer、sources、retrieved_chunks。
     """
 
     retrieved_chunks, retrieval_log = retrieve_chunks(
@@ -322,6 +393,7 @@ def rag_answer(
         retriever_mode=retriever_mode,
         candidate_k=candidate_k,
         use_rerank=use_rerank,
+        context_mode=context_mode,
     )
 
     context = format_context(retrieved_chunks)
@@ -342,19 +414,25 @@ def rag_answer(
         "sources": build_sources(retrieved_chunks),
         "retrieved_chunks": retrieved_chunks,
         "retriever_mode": retriever_mode,
+        "context_mode": context_mode,
         "candidate_k": candidate_k,
         "top_k": top_k,
         "use_rerank": use_rerank,
+        "small_retrieved_chunks": retrieval_log.get("small_final_context", []),
+        "long_context": retrieval_log.get("long_context", {}),
     }
 
     rag_log_data = {
         "question": question,
         "top_k": top_k,
         "retriever_mode": retriever_mode,
+        "context_mode": context_mode,
         "candidate_k": candidate_k,
         "use_rerank": use_rerank,
         "answer": answer,
         "sources": result["sources"],
+        "small_retrieved_chunks": result["small_retrieved_chunks"],
+        "long_context": result["long_context"],
         "retrieved_chunks": [
             build_chunk_log_item(chunk)
             for chunk in retrieved_chunks

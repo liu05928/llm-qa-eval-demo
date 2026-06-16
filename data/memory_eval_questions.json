@@ -1,0 +1,181 @@
+[
+  {
+    "case_id": "memory_001",
+    "title": "RAG 指代追问",
+    "turns": [
+      {
+        "turn_id": 1,
+        "question": "什么是 RAG？",
+        "expected_topic": "RAG",
+        "expected_source": "rag_intro.md",
+        "expected_memory_used": false,
+        "expected_resolved_keywords": ["RAG"]
+      },
+      {
+        "turn_id": 2,
+        "question": "它为什么可以减少幻觉？",
+        "expected_topic": "RAG",
+        "expected_source": "rag_intro.md",
+        "expected_memory_used": true,
+        "expected_resolved_keywords": ["RAG", "幻觉"]
+      },
+      {
+        "turn_id": 3,
+        "question": "这个技术和普通问答有什么区别？",
+        "expected_topic": "RAG",
+        "expected_source": "rag_intro.md",
+        "expected_memory_used": true,
+        "expected_resolved_keywords": ["RAG", "普通问答"]
+      }
+    ]
+  },
+  {
+    "case_id": "memory_002",
+    "title": "Agent 主题延续",
+    "turns": [
+      {
+        "turn_id": 1,
+        "question": "什么是 Agent？",
+        "expected_topic": "Agent",
+        "expected_source": "agent_intro.md",
+        "expected_memory_used": false,
+        "expected_resolved_keywords": ["Agent"]
+      },
+      {
+        "turn_id": 2,
+        "question": "它的基本循环是什么？",
+        "expected_topic": "Agent",
+        "expected_source": "agent_intro.md",
+        "expected_memory_used": true,
+        "expected_resolved_keywords": ["Agent", "基本循环"]
+      },
+      {
+        "turn_id": 3,
+        "question": "那它在教育场景中可以做什么？",
+        "expected_topic": "Agent",
+        "expected_source": "agent_intro.md",
+        "expected_memory_used": true,
+        "expected_resolved_keywords": ["Agent", "教育场景"]
+      }
+    ]
+  },
+  {
+    "case_id": "memory_003",
+    "title": "Prompt 追问与前者指代",
+    "turns": [
+      {
+        "turn_id": 1,
+        "question": "Prompt Engineering 和模型微调有什么区别？",
+        "expected_topic": "Prompt Engineering",
+        "expected_source": "prompt_engineering.md",
+        "expected_memory_used": false,
+        "expected_resolved_keywords": ["Prompt Engineering", "模型微调"]
+      },
+      {
+        "turn_id": 2,
+        "question": "那什么时候应该优先用前者？",
+        "expected_topic": "Prompt Engineering",
+        "expected_source": "prompt_engineering.md",
+        "expected_memory_used": true,
+        "expected_resolved_keywords": ["Prompt Engineering", "优先"]
+      }
+    ]
+  },
+  {
+    "case_id": "memory_004",
+    "title": "检索参数连续追问",
+    "turns": [
+      {
+        "turn_id": 1,
+        "question": "RAG 项目中的 top_k 参数是什么意思？",
+        "expected_topic": "RAG",
+        "expected_source": "retrieval_optimization.md",
+        "expected_memory_used": false,
+        "expected_resolved_keywords": ["top_k"]
+      },
+      {
+        "turn_id": 2,
+        "question": "candidate_k 呢？",
+        "expected_topic": "RAG",
+        "expected_source": "retrieval_optimization.md",
+        "expected_memory_used": true,
+        "expected_resolved_keywords": ["RAG", "candidate_k"]
+      },
+      {
+        "turn_id": 3,
+        "question": "它们有什么区别？",
+        "expected_topic": "RAG",
+        "expected_source": "retrieval_optimization.md",
+        "expected_memory_used": true,
+        "expected_resolved_keywords": ["RAG", "区别"]
+      }
+    ]
+  },
+  {
+    "case_id": "memory_005",
+    "title": "Rerank 资料缺失追问",
+    "turns": [
+      {
+        "turn_id": 1,
+        "question": "什么是 Rerank？",
+        "expected_topic": "Rerank",
+        "expected_source": "rerank_intro.md",
+        "expected_memory_used": false,
+        "expected_resolved_keywords": ["Rerank"]
+      },
+      {
+        "turn_id": 2,
+        "question": "资料里有没有说它最新的商业定价？",
+        "expected_topic": "Rerank",
+        "expected_source": null,
+        "expected_memory_used": true,
+        "expected_resolved_keywords": ["Rerank", "商业定价"],
+        "expect_no_context_reject": true
+      }
+    ]
+  },
+  {
+    "case_id": "memory_006",
+    "title": "Hybrid Search 追问",
+    "turns": [
+      {
+        "turn_id": 1,
+        "question": "Hybrid Search 为什么能改善 RAG 检索效果？",
+        "expected_topic": "Hybrid Search",
+        "expected_source": "hybrid_search.md",
+        "expected_memory_used": false,
+        "expected_resolved_keywords": ["Hybrid Search"]
+      },
+      {
+        "turn_id": 2,
+        "question": "这个方法和纯向量检索有什么区别？",
+        "expected_topic": "Hybrid Search",
+        "expected_source": "hybrid_search.md",
+        "expected_memory_used": true,
+        "expected_resolved_keywords": ["Hybrid Search", "向量检索"]
+      }
+    ]
+  },
+  {
+    "case_id": "memory_007",
+    "title": "教育 AI 主题延续",
+    "turns": [
+      {
+        "turn_id": 1,
+        "question": "大模型可以如何辅助教学？",
+        "expected_topic": "教育 AI",
+        "expected_source": "education_ai.md",
+        "expected_memory_used": false,
+        "expected_resolved_keywords": ["大模型", "辅助教学"]
+      },
+      {
+        "turn_id": 2,
+        "question": "它可能有哪些风险？",
+        "expected_topic": "教育 AI",
+        "expected_source": "education_ai.md",
+        "expected_memory_used": true,
+        "expected_resolved_keywords": ["教育 AI", "风险"]
+      }
+    ]
+  }
+]

@@ -26,7 +26,7 @@ def save_rag_log(log_data: dict, log_file: Path = RAG_LOG_FILE):
         try:
             with log_file.open("r", encoding="utf-8") as f:
                 logs = json.load(f)
-        except json.JSONDecodeError:
+        except (json.JSONDecodeError, UnicodeDecodeError):
             logs = []
     else:
         logs = []

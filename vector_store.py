@@ -67,6 +67,10 @@ class VectorStore:
             {
                 "source": chunk["source"],
                 "chunk_id": chunk["chunk_id"],
+                "chunk_type": chunk.get("chunk_type", "small"),
+                "parent_chunk_id": chunk.get("parent_chunk_id", ""),
+                "parent_index": int(chunk.get("parent_index") or 0),
+                "small_index": int(chunk.get("small_index") or 0),
             }
             for chunk in chunks
         ]
@@ -124,14 +128,12 @@ class VectorStore:
         for chunk_id, document, metadata, distance in zip(
             ids, documents, metadatas, distances
         ):
-            retrieved_chunks.append(
-                {
-                    "chunk_id": chunk_id,
-                    "source": metadata.get("source"),
-                    "content": document,
-                    "distance": distance,
-                }
-            )
+            item = dict(metadata)
+            item["chunk_id"] = metadata.get("chunk_id") or chunk_id
+            item["source"] = metadata.get("source")
+            item["content"] = document
+            item["distance"] = distance
+            retrieved_chunks.append(item)
 
         return retrieved_chunks
 

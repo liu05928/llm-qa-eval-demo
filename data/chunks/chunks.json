@@ -1,132 +1,1982 @@
 [
   {
-    "chunk_id": "prompt_engineering_001",
-    "source": "prompt_engineering.md",
-    "content": "# Prompt Engineering 入门介绍\n\nPrompt Engineering 通常翻译为提示词工程，指的是通过设计输入给大模型的提示词，引导模型按照指定目标、格式和风格生成回答。\n\n在大模型应用中，Prompt 不只是简单的一句话问题。一个较完整的 Prompt 通常会包含角色设定、任务说明、输入内容、输出格式要求、限制条件和示例。\n\n例如，在教育解释场景中，可以要求模型扮演“耐心的老师”，用通俗语言解释概念，并分步骤说明。在论文总结场景中，可以要求模型从研究背景、方法、实验、结论和不足几个方面进行总结。\n\n第一周项目中已经设计了 mode 参数，包括 general、education 和 paper_summary 三种模式。这个设计体现了 Prompt 模板管理思想：不同任务使用不同模板，而不是所有问题都用同一种提示方式。\n\nPrompt Engineering 的作用包括：\n\n1. 控制回答风格；\n2. 规范输出格式；\n3. 降低模型答非所问的概率；\n4. 提高复杂任务的稳定性；\n5. 让系统更容易接入接口和前端；\n6. 为后续评测提供统一输出结构。\n\n在 RAG"
-  },
-  {
-    "chunk_id": "prompt_engineering_002",
-    "source": "prompt_engineering.md",
-    "content": "范输出格式；\n3. 降低模型答非所问的概率；\n4. 提高复杂任务的稳定性；\n5. 让系统更容易接入接口和前端；\n6. 为后续评测提供统一输出结构。\n\n在 RAG 系统中，Prompt Engineering 更加重要。因为系统需要告诉模型：回答必须优先依据检索到的参考资料。如果参考资料没有相关信息，就应该明确说明资料中未提及，而不是编造答案。\n\n一个好的 RAG Prompt 通常会包含：\n\n1. 角色：你是一个知识库问答助手；\n2. 资料约束：请严格根据参考资料回答；\n3. 缺失处理：资料没有提到时，不要编造；\n4. 输出要求：回答要清晰，可以分点；\n5. 来源要求：最后给出参考来源。\n\n因此，Prompt Engineering 是大模型应用开发中的基础能力，也是 RAG 和 Agent 项目的重要组成部分。"
-  },
-  {
-    "chunk_id": "retrieval_optimization_001",
-    "source": "retrieval_optimization.md",
-    "content": "# RAG 检索优化与召回\n\nRAG 系统的回答质量很大程度取决于检索质量。大模型只能基于传入的上下文生成答案，如果检索阶段没有找到相关资料，后续 Prompt 写得再好也很难回答准确。因此，检索优化的目标不是让分数看起来更高，而是让真正有用的 chunks 更稳定地进入最终上下文。\n\n向量检索通常使用 Top-K 参数控制返回数量。Top-K 表示从向量数据库中取回最相关的 K 个文本块。较小的 Top-K 可以减少噪声，让答案更聚焦；较大的 Top-K 可以提升召回，降低漏掉关键资料的概率。当前项目在 RAG 问答中使用 top_k 控制最终上下文数量，在 Hybrid Search 中还使用 candidate_k 扩大候选召回范围。\n\n召回和精度需要平衡。召回强调“有没有把相关资料找回来”，精度强调“返回结果里无关内容少不少”。例如用户问“Rerank 的作用是什么”，如果 Top-K 结果全部来自 RAG 入门文档而没有重排序内容，说明召回不足；如果结果里混入和向量检索主线无关的资料，说明精度不足。优化检索时要同时观察这两个方向。\n\n影响检索效果的因素主要包括：\n\n- chu"
-  },
-  {
-    "chunk_id": "retrieval_optimization_002",
-    "source": "retrieval_optimization.md",
-    "content": "有重排序内容，说明召回不足；如果结果里混入和向量检索主线无关的资料，说明精度不足。优化检索时要同时观察这两个方向。\n\n影响检索效果的因素主要包括：\n\n- chunk_size：文本块过小会缺少上下文，过大会混入多个主题；\n- chunk_overlap：适当重叠可以避免关键信息被切断；\n- Embedding 模型：模型要适合中文语义和当前领域；\n- 文档结构：标题、小标题和列表能帮助文本块保留主题信息；\n- Top-K 和 candidate_k：候选数量决定召回范围；\n- 去噪和筛选：无关主题进入知识库会干扰检索。\n\n当前项目的一个优化思路是先进行基础向量检索，保证语义相关结果的稳定性；再使用 Hybrid Search 扩大候选范围；最后用 Rerank 模型对候选 chunks 重新排序。这个流程把“召回更多可能相关内容”和“筛选更适合回答的问题片段”拆成两个阶段，适合教育资料问答这种要求依据明确的场景。\n\n检索优化还需要日志和评测支持。项目会记录检索到的 chunk_id、source、distance、dense_score、sparse_score、hybrid_scor"
-  },
-  {
-    "chunk_id": "retrieval_optimization_003",
-    "source": "retrieval_optimization.md",
-    "content": "要日志和评测支持。项目会记录检索到的 chunk_id、source、distance、dense_score、sparse_score、hybrid_score 和 rerank_score。通过这些日志，可以分析某个问题为什么召回失败，是向量检索没有命中，还是 Hybrid Search 引入噪声，或者 Rerank 没有把正确片段排到前面。持续观察失败案例，是改进 RAG 系统的重要方法。"
-  },
-  {
-    "chunk_id": "education_ai_001",
-    "source": "education_ai.md",
-    "content": "# 大模型在教育场景中的应用\n\n大模型在教育场景中有很多应用方向，包括智能问答、学习辅导、作业讲解、论文辅助阅读、教学设计、学习资源推荐和个性化学习路径规划。\n\n在智能问答场景中，大模型可以根据学生的问题生成解释，帮助学生理解概念。例如，学生可以询问“什么是 RAG”或“Agent 和普通聊天机器人有什么区别”，系统可以用通俗语言进行讲解。\n\n在学习辅导场景中，大模型可以根据学生的基础水平调整解释方式。对于零基础学生，模型可以使用生活化例子、分步骤讲解和简单类比。对于有一定基础的学生，模型可以加入更多专业术语和实现细节。\n\n在论文辅助阅读场景中，大模型可以帮助学生总结论文结构、解释核心方法、梳理实验设计和指出论文局限。但需要注意的是，模型回答必须尽量基于论文原文，不能随意编造论文中不存在的内容。\n\n在教学设计场景中，大模型可以辅助教师生成教学目标、教学活动、课堂提问、练习题和评价方式。对于教育技术学专业的学生来说，大模型可以和教学设计、学习分析、智能教育系统等方向结合。\n\nRAG 在教育场景中尤其有价值。因为教育问答通常需要依据教材、课件、讲义或论文等具体资料。如果只依赖大模型自身知识"
-  },
-  {
-    "chunk_id": "education_ai_002",
-    "source": "education_ai.md",
-    "content": "学设计、学习分析、智能教育系统等方向结合。\n\nRAG 在教育场景中尤其有价值。因为教育问答通常需要依据教材、课件、讲义或论文等具体资料。如果只依赖大模型自身知识，可能会出现解释不准确、脱离课程内容或编造细节的问题。通过 RAG，系统可以先检索课程资料，再基于资料生成回答，并返回参考来源。\n\n因此，一个教育资料 RAG 知识库问答系统可以作为大模型应用开发项目，体现文档处理、向量检索、Prompt 设计、接口开发、日志记录和效果评测等能力。"
-  },
-  {
-    "chunk_id": "rerank_intro_001",
-    "source": "rerank_intro.md",
-    "content": "# Rerank 重排序入门\n\nRerank 是 RAG 检索流程中的二阶段排序方法。第一阶段通常由向量检索或 Hybrid Search 负责召回候选 chunks，目标是尽量把可能相关的资料找回来。第二阶段由 Rerank 模型对“用户问题”和“候选文本块”逐对判断相关性，再按相关性分数重新排序。Rerank 的重点是提高最终上下文质量。\n\n当前项目使用 BAAI/bge-reranker-v2-m3 作为重排序模型。系统会先通过 Hybrid Search 获得 candidate_k 个候选 chunks，再把每个 chunk 的 content 和用户问题一起发送给 Rerank 客户端。模型返回 relevance_score，表示该候选文本对当前问题的相关程度。项目会把这个分数保存为 rerank_score，并记录 rerank_model，方便在日志和 Streamlit 页面中观察检索效果。\n\nRerank 和 Embedding 检索的区别在于计算方式不同。Embedding 检索会先把文本预先编码成向量，查询时通过向量距离快速召回；Rerank 通常在候选集上逐"
-  },
-  {
-    "chunk_id": "rerank_intro_002",
-    "source": "rerank_intro.md",
-    "content": "和 Embedding 检索的区别在于计算方式不同。Embedding 检索会先把文本预先编码成向量，查询时通过向量距离快速召回；Rerank 通常在候选集上逐条比较问题和文档，计算更精细，但成本更高。因此 Rerank 不适合直接对整个知识库排序，而适合放在候选召回之后，对几十条以内的候选结果做精排。\n\n在当前 RAG 流程中，Rerank 的位置是：\n\n1. 用户提出问题；\n2. 系统进行向量检索或 Hybrid Search；\n3. 得到 candidate_k 个候选 chunks；\n4. Rerank 模型为每个候选 chunk 打相关性分；\n5. 系统按 rerank_score 选择更适合进入上下文的片段；\n6. 最终 chunks 被拼接成 context，交给大模型生成答案。\n\nRerank 可以改善几类常见问题。第一，向量检索召回了语义相近但不能直接回答问题的片段，Rerank 可以把更匹配问题意图的片段排到前面。第二，Hybrid Search 引入了关键词噪声，Rerank 可以降低只包含少量关键词但上下文不相关的结果。第三，当多个候选都来自同一主题时，Rera"
-  },
-  {
-    "chunk_id": "rerank_intro_003",
-    "source": "rerank_intro.md",
-    "content": "前面。第二，Hybrid Search 引入了关键词噪声，Rerank 可以降低只包含少量关键词但上下文不相关的结果。第三，当多个候选都来自同一主题时，Rerank 可以选择更完整、更直接回答问题的 chunk。\n\n当前项目还使用 Dense-Preserving 策略：最终结果中会优先保留一部分基础向量检索结果，再用 Rerank 后的 Hybrid 候选补充剩余位置。这样做是为了避免关键词检索或重排序波动导致语义检索的稳定结果完全丢失。对于教育资料 RAG，这种策略可以在召回扩展和回答稳定性之间取得更好的平衡。"
-  },
-  {
-    "chunk_id": "rag_intro_001",
-    "source": "rag_intro.md",
-    "content": "# RAG 入门介绍\n\nRAG 的全称是 Retrieval-Augmented Generation，中文通常叫“检索增强生成”。它是一种将外部知识检索和大模型生成能力结合起来的方法。\n\n普通大模型在回答问题时，主要依赖模型训练阶段学到的知识。如果用户提出的问题涉及最新资料、企业内部文档、课程资料或某个特定知识库，模型可能无法准确回答，甚至可能编造不存在的信息。这种现象通常被称为“幻觉”。\n\nRAG 的核心思想是：在大模型回答问题之前，先根据用户问题从外部知识库中检索相关内容，再把检索到的内容作为参考资料提供给大模型，让模型基于这些资料生成答案。\n\n一个基础的 RAG 系统通常包括以下步骤：\n\n1. 文档读取：读取本地文档、网页、PDF 或数据库中的资料；\n2. 文本切分：把长文档切分成多个较短的文本块；\n3. 向量化：使用 embedding 模型把文本块转换成向量；\n4. 向量存储：把文本向量保存到向量数据库中；\n5. 相似度检索：用户提问后，将问题也转换成向量，并检索最相关的文本块；\n6. Prompt 构造：把用户问题和检索到的文本块组合成提示词；\n7. 答案生成：调用大模型"
-  },
-  {
-    "chunk_id": "rag_intro_002",
-    "source": "rag_intro.md",
-    "content": "似度检索：用户提问后，将问题也转换成向量，并检索最相关的文本块；\n6. Prompt 构造：把用户问题和检索到的文本块组合成提示词；\n7. 答案生成：调用大模型生成最终回答；\n8. 来源引用：返回答案时附带参考资料来源。\n\nRAG 可以减少幻觉的原因在于，它让模型的回答有明确的资料依据。模型不再完全依赖自身记忆，而是优先参考检索到的知识片段。如果资料中没有相关信息，系统可以要求模型明确说明“资料中未提及”，而不是强行编造答案。\n\n在教育场景中，RAG 可以用于课程资料问答、论文辅助阅读、学习笔记查询、教学资源检索和个性化学习辅导。例如，学生上传课程讲义后，可以向系统提问，系统先从课程资料中检索相关段落，再基于这些内容生成解释。"
-  },
-  {
-    "chunk_id": "vector_database_001",
-    "source": "vector_database.md",
-    "content": "# 向量数据库在 RAG 中的作用\n\n向量数据库用于存储和检索 Embedding 向量，是 RAG 系统的核心基础设施之一。普通数据库更擅长按字段精确查询，例如按标题、时间或编号查询；向量数据库更擅长按语义相似度查询，例如用户问“RAG 检索流程是什么”，系统可以找到包含“问题向量化、相似度检索、Top-K 召回、上下文拼接”的资料片段。\n\n当前项目使用 ChromaDB 作为向量数据库。构建索引时，系统会读取 `data/chunks/chunks.json`，取出每个 chunk 的 content 生成 Embedding，并把向量、文本、chunk_id 和 source 写入 Chroma collection。ChromaDB 会把向量库持久化到 `vector_db/` 目录，因此构建完成后，后续问答可以直接加载已经保存的向量索引。\n\n向量数据库检索的基本流程是：先把用户问题转换成查询向量，再在 collection 中查找距离最近的若干文本向量。这个返回数量通常叫 Top-K。Top-K 越小，返回内容越精简，但可能漏掉有用资料；Top-K 越大，召回更充分，但也可能"
-  },
-  {
-    "chunk_id": "vector_database_002",
-    "source": "vector_database.md",
-    "content": "on 中查找距离最近的若干文本向量。这个返回数量通常叫 Top-K。Top-K 越小，返回内容越精简，但可能漏掉有用资料；Top-K 越大，召回更充分，但也可能带来噪声，增加大模型上下文压力。当前项目默认会根据配置或调用参数返回若干条最相关 chunks。\n\nChromaDB 返回的检索结果中包含 distance。distance 表示查询向量和文档向量之间的距离，通常距离越小，语义越相关。为了便于展示和融合，项目会把 distance 转换为 dense_score，例如使用 `1 / (1 + distance)` 得到一个越大越相关的分数。\n\n一个向量数据库中的每条记录通常包含：\n\n- id：文本块唯一标识，例如 chunk_id；\n- document：原始文本块内容；\n- embedding：由 Embedding 模型生成的向量；\n- metadata：来源文件、chunk_id 或其他辅助字段；\n- distance 或 score：查询时返回的相关性信息。\n\n向量数据库不是知识库的全部。它只保存向量和可检索文本，真正的知识组织还依赖文档质量、切分策略、元数据和检索流程"
-  },
-  {
-    "chunk_id": "vector_database_003",
-    "source": "vector_database.md",
-    "content": "ce 或 score：查询时返回的相关性信息。\n\n向量数据库不是知识库的全部。它只保存向量和可检索文本，真正的知识组织还依赖文档质量、切分策略、元数据和检索流程。如果 raw_docs 中加入了新的 Markdown 文件，需要先运行文本切分脚本生成新的 chunks，再删除旧的 `vector_db/` 并重新构建索引。这样新增资料才会进入 ChromaDB，被后续 RAG 问答检索到。"
-  },
-  {
-    "chunk_id": "vector_knowledge_base_001",
-    "source": "vector_knowledge_base.md",
-    "content": "# 向量知识库构建流程\n\n向量知识库是把原始文档整理成“可被语义检索的资料库”的过程。它不是简单地把文件放进目录，而是要经过文档读取、文本切分、Embedding 向量化、向量数据库写入和检索验证等步骤。当前项目的知识库主线围绕教育资料问答，因此适合加入概念清晰、主题集中的 Markdown 文档。\n\n在当前项目中，原始资料放在 `data/raw_docs/`。文档读取模块会读取这些 Markdown 文件，并保留文件名作为 source。随后文本切分模块会把长文档切成多个 chunks。每个 chunk 都有自己的 chunk_id，例如某个文件的第一个片段会生成类似 `embedding_intro_001` 的编号。chunk_id 的作用是让检索结果能够追溯到具体片段，方便日志分析、页面展示和答案引用。\n\n切分后的 chunks 会保存到 `data/chunks/chunks.json`。向量库构建脚本会读取这个 JSON 文件，提取每个 chunk 的 content，调用 BAAI/bge-m3 生成 Embedding，然后写入 ChromaDB。写入时通常会保存三类"
-  },
-  {
-    "chunk_id": "vector_knowledge_base_002",
-    "source": "vector_knowledge_base.md",
-    "content": "SON 文件，提取每个 chunk 的 content，调用 BAAI/bge-m3 生成 Embedding，然后写入 ChromaDB。写入时通常会保存三类信息：文本内容、向量表示和元数据。文本内容用于拼接 RAG 上下文，向量表示用于相似度检索，元数据用于显示来源和定位片段。\n\n适合进入向量知识库的文档应满足以下条件：\n\n- 主题和系统定位一致，例如 RAG、Embedding、向量数据库、检索优化；\n- 每篇文档有明确标题和小标题，便于切分后仍保留语义；\n- 内容不宜过度发散，一个段落最好只讲一个技术点；\n- 避免加入和当前向量检索主线关系不大的扩展主题；\n- 避免大量代码堆叠，优先写清楚概念、流程、输入输出和使用场景。\n\n向量知识库的质量会影响 RAG 的最终回答。若原始文档主题混杂，检索阶段可能召回无关 chunks；若文档过短，模型可能缺少足够上下文；若文档过长，切分后可能产生重复或边界模糊的问题。对于教育资料 RAG，推荐把每个技术主题整理成独立 Markdown 文件，让每个 chunk 都能回答一个相对完整的问题。\n\n构建完成后，需要用典型问题验证检索结果。例如询问"
-  },
-  {
-    "chunk_id": "vector_knowledge_base_003",
-    "source": "vector_knowledge_base.md",
-    "content": "AG，推荐把每个技术主题整理成独立 Markdown 文件，让每个 chunk 都能回答一个相对完整的问题。\n\n构建完成后，需要用典型问题验证检索结果。例如询问“什么是 Top-K 检索”“Hybrid Search 为什么能提升召回”“Rerank 在 RAG 中解决什么问题”。如果返回的 chunks 能稳定命中相关文档，说明向量知识库的主题覆盖和切分质量比较合适。"
-  },
-  {
-    "chunk_id": "hybrid_search_001",
-    "source": "hybrid_search.md",
-    "content": "# Hybrid Search 混合检索\n\nHybrid Search 是把多种检索方式结合起来的一种 RAG 检索策略。单纯向量检索擅长语义匹配，可以找到表达不同但意思相近的内容；关键词检索擅长精确匹配，可以抓住模型名称、缩写、专有名词和具体术语。混合检索的目标是利用两者优势，提高候选 chunks 的召回质量。\n\n当前项目中的 Hybrid Search 包含两个通道。第一个通道是 dense search，也就是向量检索。系统调用 ChromaDB，根据用户问题的 Embedding 向量查找相似 chunks，并把 Chroma 返回的 distance 转换为 dense_score。第二个通道是 sparse search，也就是轻量关键词检索。项目使用简单分词函数提取英文、数字和中文字符，计算 query 与 chunk 的关键词重叠数量，得到 sparse_score。\n\n两个通道各自返回 candidate_k 条候选结果后，系统使用 RRF 排名融合。RRF 的核心思想不是直接比较原始分数，而是比较排名位置。排名越靠前，贡献越大。当前项目还使用加权 RRF，让 de"
-  },
-  {
-    "chunk_id": "hybrid_search_002",
-    "source": "hybrid_search.md",
-    "content": "条候选结果后，系统使用 RRF 排名融合。RRF 的核心思想不是直接比较原始分数，而是比较排名位置。排名越靠前，贡献越大。当前项目还使用加权 RRF，让 dense search 权重更高，sparse search 权重更低。这样可以保持语义检索为主，同时让关键词检索补充专有名词和精确表达。\n\nHybrid Search 的基本流程如下：\n\n1. 将用户问题送入 dense search，得到向量检索候选；\n2. 将用户问题送入 sparse search，得到关键词候选；\n3. 对两个候选列表按 chunk_id 合并去重；\n4. 使用 RRF 计算 hybrid_score；\n5. 按 hybrid_score 排序，返回 Top-K 或 candidate_k 结果；\n6. 如启用 Rerank，再把候选结果交给重排序模型。\n\n混合检索适合处理两类问题。第一类是语义表达变化较大的问题，例如“向量库怎么帮 RAG 找资料”和“向量数据库在检索增强生成中的作用”。第二类是包含明确术语的问题，例如“BAAI/bge-m3”“Top-K”“RRF”“ChromaDB”。向量检索能覆盖"
-  },
-  {
-    "chunk_id": "hybrid_search_003",
-    "source": "hybrid_search.md",
-    "content": "”和“向量数据库在检索增强生成中的作用”。第二类是包含明确术语的问题，例如“BAAI/bge-m3”“Top-K”“RRF”“ChromaDB”。向量检索能覆盖语义相近表达，关键词检索能避免专有词被语义模型弱化。\n\nHybrid Search 也可能引入噪声。关键词重叠并不总是代表语义相关，尤其是中文按单字匹配时，常见字可能造成误召回。因此当前项目采用 dense 权重更高的策略，并在后续加入 Rerank。这样系统既能扩大候选范围，又能尽量避免无关关键词结果直接进入最终上下文。"
-  },
-  {
-    "chunk_id": "embedding_intro_001",
-    "source": "embedding_intro.md",
-    "content": "# Embedding 向量化入门\n\nEmbedding 是 RAG 系统中连接“自然语言文本”和“向量检索”的关键步骤。它的作用是把一段文本转换成一组数字向量。向量不是给人直接阅读的内容，而是给向量数据库和相似度算法使用的表示方式。语义越接近的文本，在向量空间中的距离通常越近；语义差异越大的文本，距离通常越远。\n\n在当前教育资料 RAG 项目中，文档会先被读取并切分成 chunks。每个 chunk 的正文会交给 Embedding 模型生成向量，然后和 chunk_id、source、content 等信息一起写入 ChromaDB。用户提问时，问题本身也会被同一个 Embedding 模型转换成查询向量。系统再用查询向量去匹配知识库中的文本块向量，找出最相关的 Top-K 片段。\n\n本项目使用的向量模型是 BAAI/bge-m3。bge-m3 适合中文和多语言语义表示，常用于 RAG 检索、文本相似度计算和问答系统。对于教育资料问答来说，它可以把“什么是向量数据库”和“向量库有什么作用”这类表达不同但语义接近的问题映射到相近的向量位置，从而提升召回效果。\n\nEmbedding 的"
-  },
-  {
-    "chunk_id": "embedding_intro_002",
-    "source": "embedding_intro.md",
-    "content": "育资料问答来说，它可以把“什么是向量数据库”和“向量库有什么作用”这类表达不同但语义接近的问题映射到相近的向量位置，从而提升召回效果。\n\nEmbedding 的质量会直接影响检索质量。如果文本块太短，向量可能缺少上下文；如果文本块太长，向量可能混合多个主题，导致检索结果不够聚焦。因此当前项目在切分阶段使用固定 chunk_size 和 chunk_overlap，让相邻文本块保留一定重叠，减少关键信息被切断的风险。\n\n构建向量知识库时要注意几个问题：\n\n- 文档和问题必须使用同一个或兼容的 Embedding 模型；\n- 文本块内容应尽量围绕一个主题，避免一个 chunk 同时讲多个无关概念；\n- 向量维度必须和向量数据库集合配置一致；\n- 空文本、重复文本和噪声文本会降低检索质量；\n- 更新原始文档后，需要重新切分并重建向量索引。\n\n在 RAG 中，Embedding 不负责生成答案，它只负责把文本变成可比较的语义表示。真正的回答生成发生在检索之后：系统把 Top-K 检索结果拼接成参考上下文，再交给大模型生成最终回答。因此，Embedding 的核心价值是提高“找资料”的准确性，而"
-  },
-  {
-    "chunk_id": "embedding_intro_003",
-    "source": "embedding_intro.md",
-    "content": "回答生成发生在检索之后：系统把 Top-K 检索结果拼接成参考上下文，再交给大模型生成最终回答。因此，Embedding 的核心价值是提高“找资料”的准确性，而不是直接回答用户问题。"
-  },
-  {
-    "chunk_id": "agent_intro_001",
+    "chunk_id": "agent_intro_72c411dd_big_001_small_001",
     "source": "agent_intro.md",
-    "content": "# Agent 入门介绍\n\nAgent 通常指具有一定自主决策能力的智能体。和普通聊天机器人相比，Agent 不只是根据用户输入生成一句回答，而是可以根据任务目标进行观察、思考、行动，并根据行动结果继续调整下一步。\n\n一个常见的 Agent 基本循环是：\n\n1. Observe：观察当前环境或接收用户输入；\n2. Think：分析当前任务，判断下一步应该做什么；\n3. Act：调用工具、执行操作或生成输出；\n4. Observe：再次观察执行结果；\n5. Continue：根据结果继续推理或结束任务。\n\n普通 chatbot 更像是“问一句答一句”。用户问什么，它就直接回答什么。workflow 更像是固定流程，例如按照预设步骤完成表单填写、信息提取或报告生成。Agent 则更强调根据任务动态选择工具和行动路径。\n\n例如，用户说“帮我整理最近三天的重要邮件并生成待办事项”。普通聊天机器人无法直接完成，因为它不能主动访问工具。一个 Agent 系统则可以先调用邮件搜索工具，读取邮件内容，判断哪些邮件重要，再生成待办事项。\n\n但是，并不是所有任务都适合使用 Agent。如果任务流程非常稳定"
+    "content": "# Agent 入门介绍\n\nAgent 通常指具有一定自主决策能力的智能体。和普通聊天机器人相比，Agent 不只是根据用户输入生成一句回答，而是可以根据任务目标进行观察、思考、行动，并根据行动结果继续调整下一步。\n\n一个常见的 Agent 基本循环是：\n\n1. Observe：观察当前环境或接收用户输入；\n2. Think：分析当前任务，判断下一步应该做什么；\n3. Act：调用工具、执行操作或生成输出；\n4. Observe：再次观察执行结果；\n5. Continue：根据结果继续推理或结束任务。\n\n普通 chatbot 更像是“问一句答一句”。用户问什么，它就直接回答什么。workflow 更像是固定流程，例如按照预设步骤完成表单填写、信息提取或报告生成。Agent 则更强调根据任务动态选择工具和行动路径。\n\n例如，用户说“帮我整理最近三天的重要邮件并生成待办事项”。普通聊天机器人无法直接完成，因为它不能主动访问工具。一个 Agent 系统则可以先调用邮件搜索工具，读取邮件内容，判断哪些邮件重要，再生成待办事项。\n\n但是，并不是所有任务都适合使用 Agent。如果任务流程非常稳定",
+    "chunk_type": "small",
+    "parent_chunk_id": "agent_intro_72c411dd_big_001",
+    "parent_index": 1,
+    "small_index": 1
   },
   {
-    "chunk_id": "agent_intro_002",
+    "chunk_id": "agent_intro_72c411dd_big_001_small_002",
     "source": "agent_intro.md",
-    "content": "Agent 系统则可以先调用邮件搜索工具，读取邮件内容，判断哪些邮件重要，再生成待办事项。\n\n但是，并不是所有任务都适合使用 Agent。如果任务流程非常稳定、规则非常明确，用普通脚本或 workflow 反而更可靠。Agent 适合任务步骤不完全固定、需要根据中间结果动态决策、可能需要调用多个工具的场景。\n\n在大模型应用开发中，Agent 常见于智能办公助手、自动资料分析、代码助手、数据分析助手和复杂任务规划等场景。学习 Agent 时，不能只关注概念，还要理解它和 chatbot、workflow、multi-agent 的区别。"
+    "content": "Agent 系统则可以先调用邮件搜索工具，读取邮件内容，判断哪些邮件重要，再生成待办事项。\n\n但是，并不是所有任务都适合使用 Agent。如果任务流程非常稳定、规则非常明确，用普通脚本或 workflow 反而更可靠。Agent 适合任务步骤不完全固定、需要根据中间结果动态决策、可能需要调用多个工具的场景。\n\n在大模型应用开发中，Agent 常见于智能办公助手、自动资料分析、代码助手、数据分析助手和复杂任务规划等场景。学习 Agent 时，不能只关注概念，还要理解它和 chatbot、workflow、multi-agent 的区别。",
+    "chunk_type": "small",
+    "parent_chunk_id": "agent_intro_72c411dd_big_001",
+    "parent_index": 1,
+    "small_index": 2
+  },
+  {
+    "chunk_id": "education_ai_4904c7bd_big_001_small_001",
+    "source": "education_ai.md",
+    "content": "# 大模型在教育场景中的应用\n\n大模型在教育场景中有很多应用方向，包括智能问答、学习辅导、作业讲解、论文辅助阅读、教学设计、学习资源推荐和个性化学习路径规划。\n\n在智能问答场景中，大模型可以根据学生的问题生成解释，帮助学生理解概念。例如，学生可以询问“什么是 RAG”或“Agent 和普通聊天机器人有什么区别”，系统可以用通俗语言进行讲解。\n\n在学习辅导场景中，大模型可以根据学生的基础水平调整解释方式。对于零基础学生，模型可以使用生活化例子、分步骤讲解和简单类比。对于有一定基础的学生，模型可以加入更多专业术语和实现细节。\n\n在论文辅助阅读场景中，大模型可以帮助学生总结论文结构、解释核心方法、梳理实验设计和指出论文局限。但需要注意的是，模型回答必须尽量基于论文原文，不能随意编造论文中不存在的内容。\n\n在教学设计场景中，大模型可以辅助教师生成教学目标、教学活动、课堂提问、练习题和评价方式。对于教育技术学专业的学生来说，大模型可以和教学设计、学习分析、智能教育系统等方向结合。\n\nRAG 在教育场景中尤其有价值。因为教育问答通常需要依据教材、课件、讲义或论文等具体资料。如果只依赖大模型自身知识",
+    "chunk_type": "small",
+    "parent_chunk_id": "education_ai_4904c7bd_big_001",
+    "parent_index": 1,
+    "small_index": 1
+  },
+  {
+    "chunk_id": "education_ai_4904c7bd_big_001_small_002",
+    "source": "education_ai.md",
+    "content": "学设计、学习分析、智能教育系统等方向结合。\n\nRAG 在教育场景中尤其有价值。因为教育问答通常需要依据教材、课件、讲义或论文等具体资料。如果只依赖大模型自身知识，可能会出现解释不准确、脱离课程内容或编造细节的问题。通过 RAG，系统可以先检索课程资料，再基于资料生成回答，并返回参考来源。\n\n因此，一个教育资料 RAG 知识库问答系统可以作为大模型应用开发项目，体现文档处理、向量检索、Prompt 设计、接口开发、日志记录和效果评测等能力。",
+    "chunk_type": "small",
+    "parent_chunk_id": "education_ai_4904c7bd_big_001",
+    "parent_index": 1,
+    "small_index": 2
+  },
+  {
+    "chunk_id": "embedding_intro_f68a3fcf_big_001_small_001",
+    "source": "embedding_intro.md",
+    "content": "# Embedding 向量化入门\n\nEmbedding 是 RAG 系统中连接“自然语言文本”和“向量检索”的关键步骤。它的作用是把一段文本转换成一组数字向量。向量不是给人直接阅读的内容，而是给向量数据库和相似度算法使用的表示方式。语义越接近的文本，在向量空间中的距离通常越近；语义差异越大的文本，距离通常越远。\n\n在当前教育资料 RAG 项目中，文档会先被读取并切分成 chunks。每个 chunk 的正文会交给 Embedding 模型生成向量，然后和 chunk_id、source、content 等信息一起写入 ChromaDB。用户提问时，问题本身也会被同一个 Embedding 模型转换成查询向量。系统再用查询向量去匹配知识库中的文本块向量，找出最相关的 Top-K 片段。\n\n本项目使用的向量模型是 BAAI/bge-m3。bge-m3 适合中文和多语言语义表示，常用于 RAG 检索、文本相似度计算和问答系统。对于教育资料问答来说，它可以把“什么是向量数据库”和“向量库有什么作用”这类表达不同但语义接近的问题映射到相近的向量位置，从而提升召回效果。\n\nEmbedding 的",
+    "chunk_type": "small",
+    "parent_chunk_id": "embedding_intro_f68a3fcf_big_001",
+    "parent_index": 1,
+    "small_index": 1
+  },
+  {
+    "chunk_id": "embedding_intro_f68a3fcf_big_001_small_002",
+    "source": "embedding_intro.md",
+    "content": "育资料问答来说，它可以把“什么是向量数据库”和“向量库有什么作用”这类表达不同但语义接近的问题映射到相近的向量位置，从而提升召回效果。\n\nEmbedding 的质量会直接影响检索质量。如果文本块太短，向量可能缺少上下文；如果文本块太长，向量可能混合多个主题，导致检索结果不够聚焦。因此当前项目在切分阶段使用固定 chunk_size 和 chunk_overlap，让相邻文本块保留一定重叠，减少关键信息被切断的风险。\n\n构建向量知识库时要注意几个问题：\n\n- 文档和问题必须使用同一个或兼容的 Embedding 模型；\n- 文本块内容应尽量围绕一个主题，避免一个 chunk 同时讲多个无关概念；\n- 向量维度必须和向量数据库集合配置一致；\n- 空文本、重复文本和噪声文本会降低检索质量；\n- 更新原始文档后，需要重新切分并重建向量索引。\n\n在 RAG 中，Embedding 不负责生成答案，它只负责把文本变成可比较的语义表示。真正的回答生成发生在检索之后：系统把 Top-K 检索结果拼接成参考上下文，再交给大模型生成最终回答。因此，Embedding 的核心价值是提高“找资料”的准确性，而",
+    "chunk_type": "small",
+    "parent_chunk_id": "embedding_intro_f68a3fcf_big_001",
+    "parent_index": 1,
+    "small_index": 2
+  },
+  {
+    "chunk_id": "embedding_intro_f68a3fcf_big_001_small_003",
+    "source": "embedding_intro.md",
+    "content": "回答生成发生在检索之后：系统把 Top-K 检索结果拼接成参考上下文，再交给大模型生成最终回答。因此，Embedding 的核心价值是提高“找资料”的准确性，而不是直接回答用户问题。",
+    "chunk_type": "small",
+    "parent_chunk_id": "embedding_intro_f68a3fcf_big_001",
+    "parent_index": 1,
+    "small_index": 3
+  },
+  {
+    "chunk_id": "hybrid_search_1e18d7fc_big_001_small_001",
+    "source": "hybrid_search.md",
+    "content": "# Hybrid Search 混合检索\n\nHybrid Search 是把多种检索方式结合起来的一种 RAG 检索策略。单纯向量检索擅长语义匹配，可以找到表达不同但意思相近的内容；关键词检索擅长精确匹配，可以抓住模型名称、缩写、专有名词和具体术语。混合检索的目标是利用两者优势，提高候选 chunks 的召回质量。\n\n当前项目中的 Hybrid Search 包含两个通道。第一个通道是 dense search，也就是向量检索。系统调用 ChromaDB，根据用户问题的 Embedding 向量查找相似 chunks，并把 Chroma 返回的 distance 转换为 dense_score。第二个通道是 sparse search，也就是轻量关键词检索。项目使用简单分词函数提取英文、数字和中文字符，计算 query 与 chunk 的关键词重叠数量，得到 sparse_score。\n\n两个通道各自返回 candidate_k 条候选结果后，系统使用 RRF 排名融合。RRF 的核心思想不是直接比较原始分数，而是比较排名位置。排名越靠前，贡献越大。当前项目还使用加权 RRF，让 de",
+    "chunk_type": "small",
+    "parent_chunk_id": "hybrid_search_1e18d7fc_big_001",
+    "parent_index": 1,
+    "small_index": 1
+  },
+  {
+    "chunk_id": "hybrid_search_1e18d7fc_big_001_small_002",
+    "source": "hybrid_search.md",
+    "content": "条候选结果后，系统使用 RRF 排名融合。RRF 的核心思想不是直接比较原始分数，而是比较排名位置。排名越靠前，贡献越大。当前项目还使用加权 RRF，让 dense search 权重更高，sparse search 权重更低。这样可以保持语义检索为主，同时让关键词检索补充专有名词和精确表达。\n\nHybrid Search 的基本流程如下：\n\n1. 将用户问题送入 dense search，得到向量检索候选；\n2. 将用户问题送入 sparse search，得到关键词候选；\n3. 对两个候选列表按 chunk_id 合并去重；\n4. 使用 RRF 计算 hybrid_score；\n5. 按 hybrid_score 排序，返回 Top-K 或 candidate_k 结果；\n6. 如启用 Rerank，再把候选结果交给重排序模型。\n\n混合检索适合处理两类问题。第一类是语义表达变化较大的问题，例如“向量库怎么帮 RAG 找资料”和“向量数据库在检索增强生成中的作用”。第二类是包含明确术语的问题，例如“BAAI/bge-m3”“Top-K”“RRF”“ChromaDB”。向量检索能覆盖",
+    "chunk_type": "small",
+    "parent_chunk_id": "hybrid_search_1e18d7fc_big_001",
+    "parent_index": 1,
+    "small_index": 2
+  },
+  {
+    "chunk_id": "hybrid_search_1e18d7fc_big_001_small_003",
+    "source": "hybrid_search.md",
+    "content": "”和“向量数据库在检索增强生成中的作用”。第二类是包含明确术语的问题，例如“BAAI/bge-m3”“Top-K”“RRF”“ChromaDB”。向量检索能覆盖语义相近表达，关键词检索能避免专有词被语义模型弱化。\n\nHybrid Search 也可能引入噪声。关键词重叠并不总是代表语义相关，尤其是中文按单字匹配时，常见字可能造成误召回。因此当前项目采用 dense 权重更高的策略，并在后续加入 Rerank。这样系统既能扩大候选范围，又能尽量避免无关关键词结果直接进入最终上下文。",
+    "chunk_type": "small",
+    "parent_chunk_id": "hybrid_search_1e18d7fc_big_001",
+    "parent_index": 1,
+    "small_index": 3
+  },
+  {
+    "chunk_id": "prompt_engineering_e0e52686_big_001_small_001",
+    "source": "prompt_engineering.md",
+    "content": "# Prompt Engineering 入门介绍\n\nPrompt Engineering 通常翻译为提示词工程，指的是通过设计输入给大模型的提示词，引导模型按照指定目标、格式和风格生成回答。\n\n在大模型应用中，Prompt 不只是简单的一句话问题。一个较完整的 Prompt 通常会包含角色设定、任务说明、输入内容、输出格式要求、限制条件和示例。\n\n例如，在教育解释场景中，可以要求模型扮演“耐心的老师”，用通俗语言解释概念，并分步骤说明。在论文总结场景中，可以要求模型从研究背景、方法、实验、结论和不足几个方面进行总结。\n\n第一周项目中已经设计了 mode 参数，包括 general、education 和 paper_summary 三种模式。这个设计体现了 Prompt 模板管理思想：不同任务使用不同模板，而不是所有问题都用同一种提示方式。\n\nPrompt Engineering 的作用包括：\n\n1. 控制回答风格；\n2. 规范输出格式；\n3. 降低模型答非所问的概率；\n4. 提高复杂任务的稳定性；\n5. 让系统更容易接入接口和前端；\n6. 为后续评测提供统一输出结构。\n\n在 RAG",
+    "chunk_type": "small",
+    "parent_chunk_id": "prompt_engineering_e0e52686_big_001",
+    "parent_index": 1,
+    "small_index": 1
+  },
+  {
+    "chunk_id": "prompt_engineering_e0e52686_big_001_small_002",
+    "source": "prompt_engineering.md",
+    "content": "范输出格式；\n3. 降低模型答非所问的概率；\n4. 提高复杂任务的稳定性；\n5. 让系统更容易接入接口和前端；\n6. 为后续评测提供统一输出结构。\n\n在 RAG 系统中，Prompt Engineering 更加重要。因为系统需要告诉模型：回答必须优先依据检索到的参考资料。如果参考资料没有相关信息，就应该明确说明资料中未提及，而不是编造答案。\n\n一个好的 RAG Prompt 通常会包含：\n\n1. 角色：你是一个知识库问答助手；\n2. 资料约束：请严格根据参考资料回答；\n3. 缺失处理：资料没有提到时，不要编造；\n4. 输出要求：回答要清晰，可以分点；\n5. 来源要求：最后给出参考来源。\n\n因此，Prompt Engineering 是大模型应用开发中的基础能力，也是 RAG 和 Agent 项目的重要组成部分。",
+    "chunk_type": "small",
+    "parent_chunk_id": "prompt_engineering_e0e52686_big_001",
+    "parent_index": 1,
+    "small_index": 2
+  },
+  {
+    "chunk_id": "rag_intro_3d590c8e_big_001_small_001",
+    "source": "rag_intro.md",
+    "content": "# RAG 入门介绍\n\nRAG 的全称是 Retrieval-Augmented Generation，中文通常叫“检索增强生成”。它是一种将外部知识检索和大模型生成能力结合起来的方法。\n\n普通大模型在回答问题时，主要依赖模型训练阶段学到的知识。如果用户提出的问题涉及最新资料、企业内部文档、课程资料或某个特定知识库，模型可能无法准确回答，甚至可能编造不存在的信息。这种现象通常被称为“幻觉”。\n\nRAG 的核心思想是：在大模型回答问题之前，先根据用户问题从外部知识库中检索相关内容，再把检索到的内容作为参考资料提供给大模型，让模型基于这些资料生成答案。\n\n一个基础的 RAG 系统通常包括以下步骤：\n\n1. 文档读取：读取本地文档、网页、PDF 或数据库中的资料；\n2. 文本切分：把长文档切分成多个较短的文本块；\n3. 向量化：使用 embedding 模型把文本块转换成向量；\n4. 向量存储：把文本向量保存到向量数据库中；\n5. 相似度检索：用户提问后，将问题也转换成向量，并检索最相关的文本块；\n6. Prompt 构造：把用户问题和检索到的文本块组合成提示词；\n7. 答案生成：调用大模型",
+    "chunk_type": "small",
+    "parent_chunk_id": "rag_intro_3d590c8e_big_001",
+    "parent_index": 1,
+    "small_index": 1
+  },
+  {
+    "chunk_id": "rag_intro_3d590c8e_big_001_small_002",
+    "source": "rag_intro.md",
+    "content": "似度检索：用户提问后，将问题也转换成向量，并检索最相关的文本块；\n6. Prompt 构造：把用户问题和检索到的文本块组合成提示词；\n7. 答案生成：调用大模型生成最终回答；\n8. 来源引用：返回答案时附带参考资料来源。\n\nRAG 可以减少幻觉的原因在于，它让模型的回答有明确的资料依据。模型不再完全依赖自身记忆，而是优先参考检索到的知识片段。如果资料中没有相关信息，系统可以要求模型明确说明“资料中未提及”，而不是强行编造答案。\n\n在教育场景中，RAG 可以用于课程资料问答、论文辅助阅读、学习笔记查询、教学资源检索和个性化学习辅导。例如，学生上传课程讲义后，可以向系统提问，系统先从课程资料中检索相关段落，再基于这些内容生成解释。",
+    "chunk_type": "small",
+    "parent_chunk_id": "rag_intro_3d590c8e_big_001",
+    "parent_index": 1,
+    "small_index": 2
+  },
+  {
+    "chunk_id": "rerank_intro_a9496932_big_001_small_001",
+    "source": "rerank_intro.md",
+    "content": "# Rerank 重排序入门\n\nRerank 是 RAG 检索流程中的二阶段排序方法。第一阶段通常由向量检索或 Hybrid Search 负责召回候选 chunks，目标是尽量把可能相关的资料找回来。第二阶段由 Rerank 模型对“用户问题”和“候选文本块”逐对判断相关性，再按相关性分数重新排序。Rerank 的重点是提高最终上下文质量。\n\n当前项目使用 BAAI/bge-reranker-v2-m3 作为重排序模型。系统会先通过 Hybrid Search 获得 candidate_k 个候选 chunks，再把每个 chunk 的 content 和用户问题一起发送给 Rerank 客户端。模型返回 relevance_score，表示该候选文本对当前问题的相关程度。项目会把这个分数保存为 rerank_score，并记录 rerank_model，方便在日志和 Streamlit 页面中观察检索效果。\n\nRerank 和 Embedding 检索的区别在于计算方式不同。Embedding 检索会先把文本预先编码成向量，查询时通过向量距离快速召回；Rerank 通常在候选集上逐",
+    "chunk_type": "small",
+    "parent_chunk_id": "rerank_intro_a9496932_big_001",
+    "parent_index": 1,
+    "small_index": 1
+  },
+  {
+    "chunk_id": "rerank_intro_a9496932_big_001_small_002",
+    "source": "rerank_intro.md",
+    "content": "和 Embedding 检索的区别在于计算方式不同。Embedding 检索会先把文本预先编码成向量，查询时通过向量距离快速召回；Rerank 通常在候选集上逐条比较问题和文档，计算更精细，但成本更高。因此 Rerank 不适合直接对整个知识库排序，而适合放在候选召回之后，对几十条以内的候选结果做精排。\n\n在当前 RAG 流程中，Rerank 的位置是：\n\n1. 用户提出问题；\n2. 系统进行向量检索或 Hybrid Search；\n3. 得到 candidate_k 个候选 chunks；\n4. Rerank 模型为每个候选 chunk 打相关性分；\n5. 系统按 rerank_score 选择更适合进入上下文的片段；\n6. 最终 chunks 被拼接成 context，交给大模型生成答案。\n\nRerank 可以改善几类常见问题。第一，向量检索召回了语义相近但不能直接回答问题的片段，Rerank 可以把更匹配问题意图的片段排到前面。第二，Hybrid Search 引入了关键词噪声，Rerank 可以降低只包含少量关键词但上下文不相关的结果。第三，当多个候选都来自同一主题时，Rera",
+    "chunk_type": "small",
+    "parent_chunk_id": "rerank_intro_a9496932_big_001",
+    "parent_index": 1,
+    "small_index": 2
+  },
+  {
+    "chunk_id": "rerank_intro_a9496932_big_001_small_003",
+    "source": "rerank_intro.md",
+    "content": "前面。第二，Hybrid Search 引入了关键词噪声，Rerank 可以降低只包含少量关键词但上下文不相关的结果。第三，当多个候选都来自同一主题时，Rerank 可以选择更完整、更直接回答问题的 chunk。\n\n当前项目还使用 Dense-Preserving 策略：最终结果中会优先保留一部分基础向量检索结果，再用 Rerank 后的 Hybrid 候选补充剩余位置。这样做是为了避免关键词检索或重排序波动导致语义检索的稳定结果完全丢失。对于教育资料 RAG，这种策略可以在召回扩展和回答稳定性之间取得更好的平衡。",
+    "chunk_type": "small",
+    "parent_chunk_id": "rerank_intro_a9496932_big_001",
+    "parent_index": 1,
+    "small_index": 3
+  },
+  {
+    "chunk_id": "retrieval_optimization_a9926a56_big_001_small_001",
+    "source": "retrieval_optimization.md",
+    "content": "# RAG 检索优化与召回\n\nRAG 系统的回答质量很大程度取决于检索质量。大模型只能基于传入的上下文生成答案，如果检索阶段没有找到相关资料，后续 Prompt 写得再好也很难回答准确。因此，检索优化的目标不是让分数看起来更高，而是让真正有用的 chunks 更稳定地进入最终上下文。\n\n向量检索通常使用 Top-K 参数控制返回数量。Top-K 表示从向量数据库中取回最相关的 K 个文本块。较小的 Top-K 可以减少噪声，让答案更聚焦；较大的 Top-K 可以提升召回，降低漏掉关键资料的概率。当前项目在 RAG 问答中使用 top_k 控制最终上下文数量，在 Hybrid Search 中还使用 candidate_k 扩大候选召回范围。\n\n召回和精度需要平衡。召回强调“有没有把相关资料找回来”，精度强调“返回结果里无关内容少不少”。例如用户问“Rerank 的作用是什么”，如果 Top-K 结果全部来自 RAG 入门文档而没有重排序内容，说明召回不足；如果结果里混入和向量检索主线无关的资料，说明精度不足。优化检索时要同时观察这两个方向。\n\n影响检索效果的因素主要包括：\n\n- chu",
+    "chunk_type": "small",
+    "parent_chunk_id": "retrieval_optimization_a9926a56_big_001",
+    "parent_index": 1,
+    "small_index": 1
+  },
+  {
+    "chunk_id": "retrieval_optimization_a9926a56_big_001_small_002",
+    "source": "retrieval_optimization.md",
+    "content": "有重排序内容，说明召回不足；如果结果里混入和向量检索主线无关的资料，说明精度不足。优化检索时要同时观察这两个方向。\n\n影响检索效果的因素主要包括：\n\n- chunk_size：文本块过小会缺少上下文，过大会混入多个主题；\n- chunk_overlap：适当重叠可以避免关键信息被切断；\n- Embedding 模型：模型要适合中文语义和当前领域；\n- 文档结构：标题、小标题和列表能帮助文本块保留主题信息；\n- Top-K 和 candidate_k：候选数量决定召回范围；\n- 去噪和筛选：无关主题进入知识库会干扰检索。\n\n当前项目的一个优化思路是先进行基础向量检索，保证语义相关结果的稳定性；再使用 Hybrid Search 扩大候选范围；最后用 Rerank 模型对候选 chunks 重新排序。这个流程把“召回更多可能相关内容”和“筛选更适合回答的问题片段”拆成两个阶段，适合教育资料问答这种要求依据明确的场景。\n\n检索优化还需要日志和评测支持。项目会记录检索到的 chunk_id、source、distance、dense_score、sparse_score、hybrid_scor",
+    "chunk_type": "small",
+    "parent_chunk_id": "retrieval_optimization_a9926a56_big_001",
+    "parent_index": 1,
+    "small_index": 2
+  },
+  {
+    "chunk_id": "retrieval_optimization_a9926a56_big_001_small_003",
+    "source": "retrieval_optimization.md",
+    "content": "要日志和评测支持。项目会记录检索到的 chunk_id、source、distance、dense_score、sparse_score、hybrid_score 和 rerank_score。通过这些日志，可以分析某个问题为什么召回失败，是向量检索没有命中，还是 Hybrid Search 引入噪声，或者 Rerank 没有把正确片段排到前面。持续观察失败案例，是改进 RAG 系统的重要方法。",
+    "chunk_type": "small",
+    "parent_chunk_id": "retrieval_optimization_a9926a56_big_001",
+    "parent_index": 1,
+    "small_index": 3
+  },
+  {
+    "chunk_id": "science_textbooks_001_科学_7年级上册_沪教版_2012版_一_从实验室到校园_main_004_aa297c1b_big_001_small_001",
+    "source": "science_textbooks/001_科学_7年级上册_沪教版_2012版_一_从实验室到校园_main_004.md",
+    "content": "# 初中科学教材：科学_7年级上册_沪教版_2012版 - 一、从实验室到校园\n\n## 教材元信息\n- 教材：科学_7年级上册_沪教版_2012版\n- 年级：7\n- 册次：上册\n- 出版社：沪教版\n- 学段：初中\n- 章节：一、从实验室到校园\n- 内容类型：experiment\n- 原始 token 数：677\n- 原始文件：../ch-3/knowledge_base_builder/data/textbooks/初中科学/沪教版初中科学/科学_7年级上册_沪教版_2012版_一、从实验室到校园_main_004.md\n\n## 教材正文\n# 一、从实验室到校园\n\n观察（observation）是科学的基本活动之一，带着问题进行观察，可以使你有更多的收获。\n\n# 认识实验室\n\n实验室（laboratory）（图1-1-1）是我们学习科学的重要场所。它有什么特点？和你平时上课的教室有什么不同？实验室里最吸引你的是什么？\n\n图1-1-1 实验室\n\n注意：请首先阅读实验室守则，在观察过程中要遵照守则和老师的要求，保证安全。\n\n在观察过程中，你是通过什么来获取信息的？分析一下你和同学观察的结果",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_001_科学_7年级上册_沪教版_2012版_一_从实验室到校园_main_004_aa297c1b_big_001",
+    "parent_index": 1,
+    "small_index": 1
+  },
+  {
+    "chunk_id": "science_textbooks_001_科学_7年级上册_沪教版_2012版_一_从实验室到校园_main_004_aa297c1b_big_001_small_002",
+    "source": "science_textbooks/001_科学_7年级上册_沪教版_2012版_一_从实验室到校园_main_004.md",
+    "content": "-1 实验室\n\n注意：请首先阅读实验室守则，在观察过程中要遵照守则和老师的要求，保证安全。\n\n在观察过程中，你是通过什么来获取信息的？分析一下你和同学观察的结果，填入下表。\n\n<table><tr><td>获取信息的途径</td><td>信息内容</td></tr><tr><td>眼睛看到的（通过视觉获取）</td><td></td></tr><tr><td>耳朵听到的（通过听觉获取）</td><td></td></tr><tr><td>鼻子闻到的（通过嗅觉获取）</td><td></td></tr><tr><td>手摸到的（通过触觉获取）</td><td></td></tr></table>\n\n在上面的观察结果中，通过什么感官获取的信息最多？还有什么感官没有用到？为什么？\n\n眼睛、耳朵、鼻子、舌头和皮肤等是我们感知外部世界的窗口，其中眼睛的作用尤其重要。据统计，我们所获取的信息有  $80\\%$  以上来自视觉。\n\n# 观察·思考\n\n1. 观察图1-1-2中两条线段，思考回答：\n\n图1-1-2 两条线段是否一样长？\n\n图1-1-3 鹅鹕头还是羚羊头？\n\n(1) 两条线段一样长吗?",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_001_科学_7年级上册_沪教版_2012版_一_从实验室到校园_main_004_aa297c1b_big_001",
+    "parent_index": 1,
+    "small_index": 2
+  },
+  {
+    "chunk_id": "science_textbooks_001_科学_7年级上册_沪教版_2012版_一_从实验室到校园_main_004_aa297c1b_big_001_small_003",
+    "source": "science_textbooks/001_科学_7年级上册_沪教版_2012版_一_从实验室到校园_main_004.md",
+    "content": "思考\n\n1. 观察图1-1-2中两条线段，思考回答：\n\n图1-1-2 两条线段是否一样长？\n\n图1-1-3 鹅鹕头还是羚羊头？\n\n(1) 两条线段一样长吗?  \n（2）你是如何判断的？  \n（3）怎样才能做出正确的判断？\n\n2. 观察图1-1-3中的图形，思考回答：\n\n（1）图中画的是什么动物的头？  \n(2) 你和同学的答案一样吗?  \n（3）为什么会出现不同的答案？",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_001_科学_7年级上册_沪教版_2012版_一_从实验室到校园_main_004_aa297c1b_big_001",
+    "parent_index": 1,
+    "small_index": 3
+  },
+  {
+    "chunk_id": "science_textbooks_002_科学_7年级下册_沪教版_2012版_一_动物的呼吸_main_078_efc1b45f_big_001_small_001",
+    "source": "science_textbooks/002_科学_7年级下册_沪教版_2012版_一_动物的呼吸_main_078.md",
+    "content": "# 初中科学教材：科学_7年级下册_沪教版_2012版 - 一、动物的呼吸\n\n## 教材元信息\n- 教材：科学_7年级下册_沪教版_2012版\n- 年级：7\n- 册次：下册\n- 出版社：沪教版\n- 学段：初中\n- 章节：一、动物的呼吸\n- 内容类型：experiment\n- 原始 token 数：384\n- 原始文件：../ch-3/knowledge_base_builder/data/textbooks/初中科学/沪教版初中科学/科学_7年级下册_沪教版_2012版_一、动物的呼吸_main_078.md\n\n## 教材正文\n# 一、动物的呼吸\n\n人如果几分钟不呼吸就会有生命危险。我们为什么一定要呼吸呢？你或许会说：“呼吸使我们获得了氧气，排出了二氧化碳。”事实到底是不是这样呢？\n\n# 人为什么要呼吸\n\n我们无法直接看到吸进去的空气在身体内发生了哪些变化，就像站在一个设备复杂的工厂外面，无法确切地知道里面所发生的事一样。但是通过对比呼出的气体和吸入的气体成分有什么不同，也可以间接地得知吸进去的空气在身体内发生了哪些变化，这就是所谓的“黑箱实验”。科学家们曾经利用这种类型的实验获得过许",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_002_科学_7年级下册_沪教版_2012版_一_动物的呼吸_main_078_efc1b45f_big_001",
+    "parent_index": 1,
+    "small_index": 1
+  },
+  {
+    "chunk_id": "science_textbooks_002_科学_7年级下册_沪教版_2012版_一_动物的呼吸_main_078_efc1b45f_big_001_small_002",
+    "source": "science_textbooks/002_科学_7年级下册_沪教版_2012版_一_动物的呼吸_main_078.md",
+    "content": "过对比呼出的气体和吸入的气体成分有什么不同，也可以间接地得知吸进去的空气在身体内发生了哪些变化，这就是所谓的“黑箱实验”。科学家们曾经利用这种类型的实验获得过许多重要的发现。\n\n在前面的学习中我们已经知道要想检验像氧气、二氧化碳之类的无色、无气味气体的存在和含量，最好的方法就是根据它们特有的性质来进行检测。比如：氧气能支持燃烧，二氧化碳会使澄清的石灰水变浑浊，等等。",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_002_科学_7年级下册_沪教版_2012版_一_动物的呼吸_main_078_efc1b45f_big_001",
+    "parent_index": 1,
+    "small_index": 2
+  },
+  {
+    "chunk_id": "science_textbooks_003_科学_8年级上册_沪教版_2013版_一_压力与压强_main_036_b0f932bd_big_001_small_001",
+    "source": "science_textbooks/003_科学_8年级上册_沪教版_2013版_一_压力与压强_main_036.md",
+    "content": "# 初中科学教材：科学_8年级上册_沪教版_2013版 - 一、压力与压强\n\n## 教材元信息\n- 教材：科学_8年级上册_沪教版_2013版\n- 年级：8\n- 册次：上册\n- 出版社：沪教版\n- 学段：初中\n- 章节：一、压力与压强\n- 内容类型：discussion\n- 原始 token 数：741\n- 原始文件：../ch-3/knowledge_base_builder/data/textbooks/初中科学/沪教版初中科学/科学_8年级上册_沪教版_2013版_一、压力与压强_main_036.md\n\n## 教材正文\n# 一、压力与压强\n\n很多人都有过这种体验：在马路或者操场上可以健步飞奔，但在雪地或沙滩上就变得步履维艰，这是为什么呢？回答这个问题要从压力和压强说起。\n\n用手掌托起重物，你能够感受到它对你的手掌产生的向下的力的作用（图3-1-1）；站在地面上的人，也会对地面施加一个向下的力（图3-1-2）。这种垂直作用于物体表面的力叫做压力。\n\n图3-1-1 重物对手掌施加压力\n\n图3-1-2 人对地面施加压力\n\n用拇指使劲按压书面，看不出书面有什么变化，如果用同样的力量按一",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_003_科学_8年级上册_沪教版_2013版_一_压力与压强_main_036_b0f932bd_big_001",
+    "parent_index": 1,
+    "small_index": 1
+  },
+  {
+    "chunk_id": "science_textbooks_003_科学_8年级上册_沪教版_2013版_一_压力与压强_main_036_b0f932bd_big_001_small_002",
+    "source": "science_textbooks/003_科学_8年级上册_沪教版_2013版_一_压力与压强_main_036.md",
+    "content": "于物体表面的力叫做压力。\n\n图3-1-1 重物对手掌施加压力\n\n图3-1-2 人对地面施加压力\n\n用拇指使劲按压书面，看不出书面有什么变化，如果用同样的力量按一枚图钉，就会很轻松地在书面上钻出一个小洞。你能说出压力作用效果不同的原因吗？\n\n压力的作用效果可以用压强来描述。压强（pressure）等于作用于物体单位面积上的压力，用公式表示为：\n\n$$\n\\text {压 强} = \\frac {\\text {力}}{\\text {受 力 面 积}}\n$$\n\n如果用  $F$  表示力, 用  $S$  表示受力面积, 用  $P$  表示压强, 则\n\n$$\nP = \\frac {F}{S}\n$$\n\n压强的国际单位是帕斯卡（Pa）。\n\n如果作用力相同，受力面积小时压强大，受力面积大时压强小。我们日常所用的图钉就是通过减小力的作用面积来增大压强的。\n\n# 交流·研讨\n\n# 冰面救援\n\n在寒冷的冬季，很多小朋友都喜欢在冰冻的河面或湖面上进行冰上运动（图3-1-3）。注意一定要在冰层达到安全厚度时才能上去活动，而且要听从管理人员的指挥。如果私自到无人管理的冰面上玩耍，就可能会出现危险。如果有人不慎",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_003_科学_8年级上册_沪教版_2013版_一_压力与压强_main_036_b0f932bd_big_001",
+    "parent_index": 1,
+    "small_index": 2
+  },
+  {
+    "chunk_id": "science_textbooks_003_科学_8年级上册_沪教版_2013版_一_压力与压强_main_036_b0f932bd_big_001_small_003",
+    "source": "science_textbooks/003_科学_8年级上册_沪教版_2013版_一_压力与压强_main_036.md",
+    "content": "行冰上运动（图3-1-3）。注意一定要在冰层达到安全厚度时才能上去活动，而且要听从管理人员的指挥。如果私自到无人管理的冰面上玩耍，就可能会出现危险。如果有人不慎落入冰窟窿里，救援人员在救援时，可以采取哪些措施防止自己掉入水中？为什么？\n\n图3-1-3 冰上运动",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_003_科学_8年级上册_沪教版_2013版_一_压力与压强_main_036_b0f932bd_big_001",
+    "parent_index": 1,
+    "small_index": 3
+  },
+  {
+    "chunk_id": "science_textbooks_004_科学_8年级下册_沪教版_2013版_一_人类的繁殖_main_132_41f8ce25_big_001_small_001",
+    "source": "science_textbooks/004_科学_8年级下册_沪教版_2013版_一_人类的繁殖_main_132.md",
+    "content": "# 初中科学教材：科学_8年级下册_沪教版_2013版 - 一、人类的繁殖\n\n## 教材元信息\n- 教材：科学_8年级下册_沪教版_2013版\n- 年级：8\n- 册次：下册\n- 出版社：沪教版\n- 学段：初中\n- 章节：一、人类的繁殖\n- 内容类型：concept\n- 原始 token 数：789\n- 原始文件：../ch-3/knowledge_base_builder/data/textbooks/初中科学/沪教版初中科学/科学_8年级下册_沪教版_2013版_一、人类的繁殖_main_132.md\n\n## 教材正文\n# 一、人类的繁殖\n\n从生物学角度来说，每一个个体，重中之重的使命就是存活下去并繁衍后代。生殖也是人类得以生生不息、繁衍至今的重要保障。你了解人类的生殖过程吗？你了解妈妈在孕育子女时所承受的艰辛吗？今天的少男少女就是未来的爸爸妈妈，只有了解了生育过程，才能真正认识到妈妈孕育子女的艰辛，真正认识到生命的崇高价值。\n\n# 生殖细胞的产生\n\n发育成熟的人类个体开始具有繁殖的能力。人有雌雄两种不同的生殖细胞：卵细胞（ovum）和精子（sperm）（图6-1-1）。\n\n卵细胞呈",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_004_科学_8年级下册_沪教版_2013版_一_人类的繁殖_main_132_41f8ce25_big_001",
+    "parent_index": 1,
+    "small_index": 1
+  },
+  {
+    "chunk_id": "science_textbooks_004_科学_8年级下册_沪教版_2013版_一_人类的繁殖_main_132_41f8ce25_big_001_small_002",
+    "source": "science_textbooks/004_科学_8年级下册_沪教版_2013版_一_人类的繁殖_main_132.md",
+    "content": "# 生殖细胞的产生\n\n发育成熟的人类个体开始具有繁殖的能力。人有雌雄两种不同的生殖细胞：卵细胞（ovum）和精子（sperm）（图6-1-1）。\n\n卵细胞呈球形，是人体最大的细胞，含有丰富的卵黄\n\n精子很小，形似蝌蚪，有长的尾，可以游动\n\n健康成熟的男性生殖系统具有产生精子的能力。组成男性生殖系统的器官包括：睾丸、附睾、输精管、精囊腺、前列腺以及阴茎和阴囊（图6-1-2）。\n\n睾丸是男性最主要的性器官，左右各一个。精子首先在睾丸中产生，加上精囊腺和前列腺分泌的黏液成为精液。\n\n图6-1-1 两种生殖细胞  \n图6-1-2 男性生殖系统\n\n一个成年男子每天产生约300万个成熟的精子。\n\n女性生殖系统主要包括卵巢、输卵管、子宫、阴道和外阴（图6-1-3）。\n\n图6-1-3 女性生殖系统及局部放大示意图\n\n卵巢是女性最主要的性器官，左右各一个，女性在出生前卵巢中就有约200万个尚未发育的卵，这些卵细胞大部分被分解和消化，进入青春期以后只含有约4万个卵细胞，大约每28天～30天就有一个卵发育成熟，并从卵巢的表面释放出去，这个过程叫做排卵。\n\n排出的卵细胞将会进入输卵管的喇叭口，并沿着输卵管",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_004_科学_8年级下册_沪教版_2013版_一_人类的繁殖_main_132_41f8ce25_big_001",
+    "parent_index": 1,
+    "small_index": 2
+  },
+  {
+    "chunk_id": "science_textbooks_004_科学_8年级下册_沪教版_2013版_一_人类的繁殖_main_132_41f8ce25_big_001_small_003",
+    "source": "science_textbooks/004_科学_8年级下册_沪教版_2013版_一_人类的繁殖_main_132.md",
+    "content": "以后只含有约4万个卵细胞，大约每28天～30天就有一个卵发育成熟，并从卵巢的表面释放出去，这个过程叫做排卵。\n\n排出的卵细胞将会进入输卵管的喇叭口，并沿着输卵管进入子宫。",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_004_科学_8年级下册_沪教版_2013版_一_人类的繁殖_main_132_41f8ce25_big_001",
+    "parent_index": 1,
+    "small_index": 3
+  },
+  {
+    "chunk_id": "science_textbooks_005_科学_9年级上册_沪教版_2013版_一_广泛存在的酸_main_036_539c37db_big_001_small_001",
+    "source": "science_textbooks/005_科学_9年级上册_沪教版_2013版_一_广泛存在的酸_main_036.md",
+    "content": "# 初中科学教材：科学_9年级上册_沪教版_2013版 - 一、广泛存在的酸\n\n## 教材元信息\n- 教材：科学_9年级上册_沪教版_2013版\n- 年级：9\n- 册次：上册\n- 出版社：沪教版\n- 学段：初中\n- 章节：一、广泛存在的酸\n- 内容类型：discussion\n- 原始 token 数：769\n- 原始文件：../ch-3/knowledge_base_builder/data/textbooks/初中科学/沪教版初中科学/科学_9年级上册_沪教版_2013版_一、广泛存在的酸_main_036.md\n\n## 教材正文\n# 一、广泛存在的酸\n\n在七年级下册的学习中，我们用酸碱指示剂测试了溶液的酸碱性，知道了有些溶液呈酸性，你还知道哪些呈酸性的溶液吗？在科学课和其他课程的学习以及生活中，你遇到过哪些酸？酸具有哪些性质？\n\n图2-1-1 测试溶液的酸性\n\n# 生活中的酸\n\n# 交流·研讨\n\n在日常生活中，我们会经常接触到“酸”这个字，例如酸雨，碳酸饮料，醋是酸的，橘子很酸等等。你认为什么是“酸”？怎样识别某种物质是不是酸？\n\n食醋有酸味，西红柿、柠檬汁、橘子等也有酸味，酸雨具",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_005_科学_9年级上册_沪教版_2013版_一_广泛存在的酸_main_036_539c37db_big_001",
+    "parent_index": 1,
+    "small_index": 1
+  },
+  {
+    "chunk_id": "science_textbooks_005_科学_9年级上册_沪教版_2013版_一_广泛存在的酸_main_036_539c37db_big_001_small_002",
+    "source": "science_textbooks/005_科学_9年级上册_沪教版_2013版_一_广泛存在的酸_main_036.md",
+    "content": "到“酸”这个字，例如酸雨，碳酸饮料，醋是酸的，橘子很酸等等。你认为什么是“酸”？怎样识别某种物质是不是酸？\n\n食醋有酸味，西红柿、柠檬汁、橘子等也有酸味，酸雨具有一定的腐蚀性。科学家研究了这些物质，发现它们都含有一类特殊的化合物——酸。\n\n汽车常用的电瓶（蓄电池）  \n里有硫酸\n\n食醋中含有醋酸\n\n酸雨中含有硫酸、硝酸，会腐蚀建筑物\n\n一些水果中含有有机酸  \n图2-1-2 生活中见到的不同的酸\n\n酸在生命活动中起着重要的作用，也在生产生活中有广泛的应用。橘子和西红柿中含有抗坏血酸，又称维生素C，缺乏维生素C会引起坏血病。叶酸是细胞生长所必需的物质，广泛存在于植物类食品中。酸在人体中有非常重要的作用，同时也是细胞代谢的废弃物。人的胃液里含有盐酸（hydrochloric acid），\n\n能帮助消化蛋白质。锻炼时，经过激烈运动的肌肉会产生乳酸。汽车常用的电瓶（蓄电池）里含有硫酸（sulfuric acid）。食醋中含有  $3\\% \\sim 5\\%$  的醋酸。酸雨中含有极少量的硫酸和硝酸。",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_005_科学_9年级上册_沪教版_2013版_一_广泛存在的酸_main_036_539c37db_big_001",
+    "parent_index": 1,
+    "small_index": 2
+  },
+  {
+    "chunk_id": "science_textbooks_005_科学_9年级上册_沪教版_2013版_一_广泛存在的酸_main_036_539c37db_big_001_small_003",
+    "source": "science_textbooks/005_科学_9年级上册_沪教版_2013版_一_广泛存在的酸_main_036.md",
+    "content": "\\sim 5\\%$  的醋酸。酸雨中含有极少量的硫酸和硝酸。",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_005_科学_9年级上册_沪教版_2013版_一_广泛存在的酸_main_036_539c37db_big_001",
+    "parent_index": 1,
+    "small_index": 3
+  },
+  {
+    "chunk_id": "science_textbooks_006_科学_9年级下册_沪教版_2013版_一_什么是健康_main_073_a3004abe_big_001_small_001",
+    "source": "science_textbooks/006_科学_9年级下册_沪教版_2013版_一_什么是健康_main_073.md",
+    "content": "# 初中科学教材：科学_9年级下册_沪教版_2013版 - 一、什么是健康\n\n## 教材元信息\n- 教材：科学_9年级下册_沪教版_2013版\n- 年级：9\n- 册次：下册\n- 出版社：沪教版\n- 学段：初中\n- 章节：一、什么是健康\n- 内容类型：discussion\n- 原始 token 数：684\n- 原始文件：../ch-3/knowledge_base_builder/data/textbooks/初中科学/沪教版初中科学/科学_9年级下册_沪教版_2013版_一、什么是健康_main_073.md\n\n## 教材正文\n# 一、什么是健康\n\n“健康”一词似乎不用讨论就懂得。但实际上，“健康”的含义并不容易说清，在科学的意义上，“健康”的概念与我们日常的理解是有所不同的，而且，从历史角度来看，“健康”也是一个始终在不断发展演变着的概念。\n\n# 不生病就是健康吗？\n\n# 资料卡\n\n# 人类对健康的早期认识\n\n在经常面临野兽的袭击或外伤带来的伤害与死亡，而又无法对自然现象和意外事故做出正确解释的古代，由于人们无法理解好好的人怎么会生病，于是把疾病看作是和野兽一样独立存在于世界上的一种",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_006_科学_9年级下册_沪教版_2013版_一_什么是健康_main_073_a3004abe_big_001",
+    "parent_index": 1,
+    "small_index": 1
+  },
+  {
+    "chunk_id": "science_textbooks_006_科学_9年级下册_沪教版_2013版_一_什么是健康_main_073_a3004abe_big_001_small_002",
+    "source": "science_textbooks/006_科学_9年级下册_沪教版_2013版_一_什么是健康_main_073.md",
+    "content": "袭击或外伤带来的伤害与死亡，而又无法对自然现象和意外事故做出正确解释的古代，由于人们无法理解好好的人怎么会生病，于是把疾病看作是和野兽一样独立存在于世界上的一种东西，是恶魔、是鬼神，它们附着在谁身上，谁就会生病。\n\n后来，人们在对自然现象的解释过程中发展了自然哲学（如：我国提出了“五行学说”，古印度、古希腊等提出了“四元素说”等），并将其用于对疾病的解释和治疗，发展出了认为病就是“外邪”侵入的各种传统医学。\n\n而在解剖学和生理学基础之上发展起来的现代医学，由于在很长的\n\n时间里主要面对的是因维生素等营养素缺乏引起的疾病和传染病，所以认为疾病是因为身体里少了什么物质或外面的什么致病因子进入了人体所引起的，只要补充缺少的物质或消灭致病因子，人体就能恢复健康。\n\n可见，在相当漫长的历史阶段中，人们没有独立的、全面的健康概念，而是认为没有生病就是健康，认为疾病和健康就好像是一个钱币的两面，截然分开，非此即彼。",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_006_科学_9年级下册_沪教版_2013版_一_什么是健康_main_073_a3004abe_big_001",
+    "parent_index": 1,
+    "small_index": 2
+  },
+  {
+    "chunk_id": "science_textbooks_007_科学_7年级上册_沪教版_2012版_一_地球的自转运动_main_102_b49a9893_big_001_small_001",
+    "source": "science_textbooks/007_科学_7年级上册_沪教版_2012版_一_地球的自转运动_main_102.md",
+    "content": "# 初中科学教材：科学_7年级上册_沪教版_2012版 - 一、地球的自转运动\n\n## 教材元信息\n- 教材：科学_7年级上册_沪教版_2012版\n- 年级：7\n- 册次：上册\n- 出版社：沪教版\n- 学段：初中\n- 章节：一、地球的自转运动\n- 内容类型：experiment\n- 原始 token 数：570\n- 原始文件：../ch-3/knowledge_base_builder/data/textbooks/初中科学/沪教版初中科学/科学_7年级上册_沪教版_2012版_一、地球的自转运动_main_102.md\n\n## 教材正文\n# 活动-探究\n\n# 模拟地球自转与日月星辰东升西落\n\n剪四个小纸人，在地球仪上沿赤道每隔  $90^{\\circ}$  贴一个纸人。请六位同学围成一个大圆圈，代表星空。中间悬挂一个灯泡，代表太阳。将\n\n地球仪置于圈内离开“太阳”的位置，请一位同学转动地球仪，面向太阳的纸人就处在白天，背向太阳的纸人就处在夜晚。\n\n图7-1-6 学生活动示意图\n\n# 讨论：\n\n1. 对于地球仪上的四个纸人，应该怎样规定东西方向？  \n2. 地球仪应该怎样转动，才能表现",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_007_科学_7年级上册_沪教版_2012版_一_地球的自转运动_main_102_b49a9893_big_001",
+    "parent_index": 1,
+    "small_index": 1
+  },
+  {
+    "chunk_id": "science_textbooks_007_科学_7年级上册_沪教版_2012版_一_地球的自转运动_main_102_b49a9893_big_001_small_002",
+    "source": "science_textbooks/007_科学_7年级上册_沪教版_2012版_一_地球的自转运动_main_102.md",
+    "content": "的纸人就处在夜晚。\n\n图7-1-6 学生活动示意图\n\n# 讨论：\n\n1. 对于地球仪上的四个纸人，应该怎样规定东西方向？  \n2. 地球仪应该怎样转动，才能表现太阳、星星的东升西落？  \n3. 白天星星在哪里？为什么我们看不到它们？  \n4. 对于地球仪上的任何一个纸人，分别转动到什么位置代表当地的早晨、正午、傍晚和子夜？  \n5. 你对不同地点的时间规定有什么想法？\n\n# 结论：\n\n1. 昼夜的交替，是由于 _______ 引起的。  \n2. 日月星辰东升西落的现象，是由于 _______ 引起的。  \n3. 白天我们看不到星星，是由于________的缘故。\n\n由于地球自西向东自转，我们看到太阳每天东升西落，当太阳位于正南方（当天太阳的最高点）时，人们往往会说：现在是中午12点了。这句话对一个确定的地方来说是对的。但是，地球上经度不同的地点看到太阳升起的时间是不同的，于是不同地方就有了不同的地方时间，也就是通常所说的地方时。",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_007_科学_7年级上册_沪教版_2012版_一_地球的自转运动_main_102_b49a9893_big_001",
+    "parent_index": 1,
+    "small_index": 2
+  },
+  {
+    "chunk_id": "science_textbooks_008_科学_7年级下册_沪教版_2012版_一_水的不同形态_main_097_4e57a70c_big_001_small_001",
+    "source": "science_textbooks/008_科学_7年级下册_沪教版_2012版_一_水的不同形态_main_097.md",
+    "content": "# 初中科学教材：科学_7年级下册_沪教版_2012版 - 一、水的不同形态\n\n## 教材元信息\n- 教材：科学_7年级下册_沪教版_2012版\n- 年级：7\n- 册次：下册\n- 出版社：沪教版\n- 学段：初中\n- 章节：一、水的不同形态\n- 内容类型：discussion\n- 原始 token 数：614\n- 原始文件：../ch-3/knowledge_base_builder/data/textbooks/初中科学/沪教版初中科学/科学_7年级下册_沪教版_2012版_一、水的不同形态_main_097.md\n\n## 教材正文\n# 拓展视野\n\n# 蒸汽机的发明\n\n1690年，法国工程师巴本（ $1647\\sim 1712$ 年）发明了单缸活塞式蒸汽机。1705年，英国工程师纽可门（ $1663\\sim 1729$ 年）对蒸汽机做了改进。在此基础上，瓦特(1736～1819年)从1765年开始，坚持不懈地改进蒸汽机，逐渐使它成了效率显著，可用于一切动力机械的万能原动机，而瓦特本人也被公认为通用蒸汽机的发明人。\n\n蒸汽机是人类在学会使用火之后一项划时代的重要发明，它使人类在传统的人力",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_008_科学_7年级下册_沪教版_2012版_一_水的不同形态_main_097_4e57a70c_big_001",
+    "parent_index": 1,
+    "small_index": 1
+  },
+  {
+    "chunk_id": "science_textbooks_008_科学_7年级下册_沪教版_2012版_一_水的不同形态_main_097_4e57a70c_big_001_small_002",
+    "source": "science_textbooks/008_科学_7年级下册_沪教版_2012版_一_水的不同形态_main_097.md",
+    "content": "成了效率显著，可用于一切动力机械的万能原动机，而瓦特本人也被公认为通用蒸汽机的发明人。\n\n蒸汽机是人类在学会使用火之后一项划时代的重要发明，它使人类在传统的人力、畜力和水力之外获得了一种强大而方便的动力，极大地推动了纺织\n\n图6-1-7 蒸汽机推动技术革命\n\n业、采矿业、机器制造业乃至整个近代工业的发展，而19世纪20年代以后蒸汽动力列车的运营又带来了运输业的革命。\n\n# 其他物质的三态变化\n\n从生活中我们知道，蜡受热会熔化，油冷冻会凝固。实际上，除了上面讨论的水，其他物质随着温度的变化，也可以在固体、液体和气体之间转化。有的固体吸热后可以直接变为气体，这个过程叫升华。有的气体也可以直接变为固体，这个过程叫凝华，凝华过程中放出热量。使用久了的灯泡的玻璃上会有一层黑色物质（钨），放在衣柜中的樟脑球会慢慢消失，这都是升华过程。霜和北方冬天出现的“树挂”是凝华现象。",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_008_科学_7年级下册_沪教版_2012版_一_水的不同形态_main_097_4e57a70c_big_001",
+    "parent_index": 1,
+    "small_index": 2
+  },
+  {
+    "chunk_id": "science_textbooks_009_科学_8年级上册_沪教版_2013版_一_地球的外衣_大气_main_023_c3cc9c36_big_001_small_001",
+    "source": "science_textbooks/009_科学_8年级上册_沪教版_2013版_一_地球的外衣_大气_main_023.md",
+    "content": "# 初中科学教材：科学_8年级上册_沪教版_2013版 - 一、地球的外衣——大气\n\n## 教材元信息\n- 教材：科学_8年级上册_沪教版_2013版\n- 年级：8\n- 册次：上册\n- 出版社：沪教版\n- 学段：初中\n- 章节：一、地球的外衣——大气\n- 内容类型：experiment\n- 原始 token 数：721\n- 原始文件：../ch-3/knowledge_base_builder/data/textbooks/初中科学/沪教版初中科学/科学_8年级上册_沪教版_2013版_一、地球的外衣——大气_main_023.md\n\n## 教材正文\n# 拓展视野\n\n# 近代以来人类对地球大气的探索\n\n在16世纪以前，人们对于大气的认识主要停留在通过目测进行定\n\n性观察的水平上。\n\n1593年，意大利物理学家和天文学家伽利略发明了气体温度计。此后，一系列地面气象观测仪器被发明出来。例如，1643年，意大利物理学家托里拆利发明水银气压表；1662年，英国科学家雷恩发明了虹吸式自记雨量计；1667年，英国物理学家胡克发明了压板式风速器。这些仪器以及其他观测仪器的陆续发明和不断改进，使得对气",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_009_科学_8年级上册_沪教版_2013版_一_地球的外衣_大气_main_023_c3cc9c36_big_001",
+    "parent_index": 1,
+    "small_index": 1
+  },
+  {
+    "chunk_id": "science_textbooks_009_科学_8年级上册_沪教版_2013版_一_地球的外衣_大气_main_023_c3cc9c36_big_001_small_002",
+    "source": "science_textbooks/009_科学_8年级上册_沪教版_2013版_一_地球的外衣_大气_main_023.md",
+    "content": "气压表；1662年，英国科学家雷恩发明了虹吸式自记雨量计；1667年，英国物理学家胡克发明了压板式风速器。这些仪器以及其他观测仪器的陆续发明和不断改进，使得对气压、气温、大气湿度、风速等实现了定量观测。\n\n18世纪中叶，人们开始进行高空探测的尝试。1748年，英国的威尔逊等人开始用风筝携带温度表观测低空温度；1752年，美国科学家富兰克林利用风筝等研究雷暴云中电的性质；1783年，法国的查理第一次用氢气球携带温度、气压等自记气象仪器测量各个高度的温度和气压等；1804年，法国科学家盖-吕萨克乘坐热气球上升到  $7 \\mathrm{~km}$  的高空，对大气的温度、湿度和气压进行了研究。\n\n1919年，法国人巴洛第一次施放无线电探空仪，极大地提高了人类对高空大气的探测能力。20世纪40年代中期，气象火箭探测技术进一步把探测高度提高到  $100\\mathrm{km}$  左右；随后天气雷达也投入使用。\n\n1960年4月，美国成功发射第一颗气象卫星，标志着人类对大气的研究进入了大气遥感的新阶段。1994年，航天飞机已能进入  $300\\mathrm{km}$  高空，研究太阳对地球大气",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_009_科学_8年级上册_沪教版_2013版_一_地球的外衣_大气_main_023_c3cc9c36_big_001",
+    "parent_index": 1,
+    "small_index": 2
+  },
+  {
+    "chunk_id": "science_textbooks_009_科学_8年级上册_沪教版_2013版_一_地球的外衣_大气_main_023_c3cc9c36_big_001_small_003",
+    "source": "science_textbooks/009_科学_8年级上册_沪教版_2013版_一_地球的外衣_大气_main_023.md",
+    "content": "功发射第一颗气象卫星，标志着人类对大气的研究进入了大气遥感的新阶段。1994年，航天飞机已能进入  $300\\mathrm{km}$  高空，研究太阳对地球大气的影响。",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_009_科学_8年级上册_沪教版_2013版_一_地球的外衣_大气_main_023_c3cc9c36_big_001",
+    "parent_index": 1,
+    "small_index": 3
+  },
+  {
+    "chunk_id": "science_textbooks_010_科学_8年级下册_沪教版_2013版_一_开花与结果_main_113_3f22579f_big_001_small_001",
+    "source": "science_textbooks/010_科学_8年级下册_沪教版_2013版_一_开花与结果_main_113.md",
+    "content": "# 初中科学教材：科学_8年级下册_沪教版_2013版 - 一、开花与结果\n\n## 教材元信息\n- 教材：科学_8年级下册_沪教版_2013版\n- 年级：8\n- 册次：下册\n- 出版社：沪教版\n- 学段：初中\n- 章节：一、开花与结果\n- 内容类型：reading\n- 原始 token 数：666\n- 原始文件：../ch-3/knowledge_base_builder/data/textbooks/初中科学/沪教版初中科学/科学_8年级下册_沪教版_2013版_一、开花与结果_main_113.md\n\n## 教材正文\n# 拓展视野\n\n# 果实的分类\n\n有的植物的花像草莓一样有许多雌蕊, 这些植物形成的果实叫做聚合果。草莓上的小硬点就是由于子房发育成的果实, 食用的 “果肉”是由草莓的花托部分发育成的 (图5-1-9)。想一想, 这样的果实都有哪些呢?\n\n有的果实是由许多小花聚成的花序发育成的，如菠萝。这样的果实称作聚花果（图5-1-9）。\n\n有的植物（如苹果）花的子房与花托长在一起，因此在发育果实的过程中，花托就包在子房外面一起发育，并变成果实的一部分。将苹果从中心位置横切并观察，",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_010_科学_8年级下册_沪教版_2013版_一_开花与结果_main_113_3f22579f_big_001",
+    "parent_index": 1,
+    "small_index": 1
+  },
+  {
+    "chunk_id": "science_textbooks_010_科学_8年级下册_沪教版_2013版_一_开花与结果_main_113_3f22579f_big_001_small_002",
+    "source": "science_textbooks/010_科学_8年级下册_沪教版_2013版_一_开花与结果_main_113.md",
+    "content": "5-1-9）。\n\n有的植物（如苹果）花的子房与花托长在一起，因此在发育果实的过程中，花托就包在子房外面一起发育，并变成果实的一部分。将苹果从中心位置横切并观察，可以看到，中央有一个像五角星状的部分，并且在它附近有一个不太明显的圆形分界线（图5-1-9）。这就是由苹果花中的子房发育成的果实部分。在这以外就是由花托发育成的部分。注意观察一下，还有哪些果实与苹果相似呢？\n\n草莓的聚合果\n\n苹果 a.花托形成的部分 b.子房形成的部分 c.种子\n\n菠萝的聚花果  \n图5-1-9 几种果实\n\n有的果实成熟后果皮干燥，称作干果，如坚果、颖果、瘦果、翅果。有的果实成熟后果皮是肉质的，并且多汁，称作肉果（图5-1-10），包括浆果、瓠果、梨果等。注意观察你能见到的果实，并试着将它们分类。\n\n玉米的颖果\n\n槭树的翅果\n\n栗子的坚果\n\n向日葵的瘦果\n\n黄瓜的瓠果\n\n梨的梨果\n\n番茄的浆果  \n图5-1-10 几种果实",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_010_科学_8年级下册_沪教版_2013版_一_开花与结果_main_113_3f22579f_big_001",
+    "parent_index": 1,
+    "small_index": 2
+  },
+  {
+    "chunk_id": "science_textbooks_011_科学_9年级上册_沪教版_2013版_一_磁体和磁场_main_221_a99ba2a6_big_001_small_001",
+    "source": "science_textbooks/011_科学_9年级上册_沪教版_2013版_一_磁体和磁场_main_221.md",
+    "content": "# 初中科学教材：科学_9年级上册_沪教版_2013版 - 一、磁体和磁场\n\n## 教材元信息\n- 教材：科学_9年级上册_沪教版_2013版\n- 年级：9\n- 册次：上册\n- 出版社：沪教版\n- 学段：初中\n- 章节：一、磁体和磁场\n- 内容类型：concept\n- 原始 token 数：182\n- 原始文件：../ch-3/knowledge_base_builder/data/textbooks/初中科学/沪教版初中科学/科学_9年级上册_沪教版_2013版_一、磁体和磁场_main_221.md\n\n## 教材正文\n把螺丝刀在磁铁上摩擦几下（注意要沿同一个方向摩擦），它就可以吸住细小的螺丝。你会发现，有磁性的螺丝刀使用起来会更方便（图8-1-8）。\n\n图8-1-8 磁化的利用\n\n有些磁铁是由钢制造的。将熔化的钢水倒入模具中，然后将其放入强磁场中冷却。随着钢水冷却变硬，它就变成了磁铁。",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_011_科学_9年级上册_沪教版_2013版_一_磁体和磁场_main_221_a99ba2a6_big_001",
+    "parent_index": 1,
+    "small_index": 1
+  },
+  {
+    "chunk_id": "science_textbooks_012_科学_9年级下册_沪教版_2013版_一_生物的遗传_main_040_a763f5cb_big_001_small_001",
+    "source": "science_textbooks/012_科学_9年级下册_沪教版_2013版_一_生物的遗传_main_040.md",
+    "content": "# 初中科学教材：科学_9年级下册_沪教版_2013版 - 一、生物的遗传\n\n## 教材元信息\n- 教材：科学_9年级下册_沪教版_2013版\n- 年级：9\n- 册次：下册\n- 出版社：沪教版\n- 学段：初中\n- 章节：一、生物的遗传\n- 内容类型：exercise\n- 原始 token 数：787\n- 原始文件：../ch-3/knowledge_base_builder/data/textbooks/初中科学/沪教版初中科学/科学_9年级下册_沪教版_2013版_一、生物的遗传_main_040.md\n\n## 教材正文\n开始时，他们根据美国化学家鲍林的研究，对DNA分子的结构建立了一个三链的模型，但很快他们就发现这是错误的。之后，在1953年2月，他们看到了由英国皇家学院威尔金斯（M.H.Wilkins， $1916\\sim 2004$ ）小组的一些科学家拍摄到的非常清晰的DNA的X射线衍射照片，其中英国女科学家弗兰克林（R.Franklin， $1920\\sim 1958$ ）作出了重要贡献，这给了他们新的研究思想，并立刻开始研究。不到几个星期，他们通过分析DNA的X射线衍射的照",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_012_科学_9年级下册_沪教版_2013版_一_生物的遗传_main_040_a763f5cb_big_001",
+    "parent_index": 1,
+    "small_index": 1
+  },
+  {
+    "chunk_id": "science_textbooks_012_科学_9年级下册_沪教版_2013版_一_生物的遗传_main_040_a763f5cb_big_001_small_002",
+    "source": "science_textbooks/012_科学_9年级下册_沪教版_2013版_一_生物的遗传_main_040.md",
+    "content": ".Franklin， $1920\\sim 1958$ ）作出了重要贡献，这给了他们新的研究思想，并立刻开始研究。不到几个星期，他们通过分析DNA的X射线衍射的照片发现了DNA分子的双螺旋结构。\n\n沃森和克里克把他们的研究结果和威尔金斯小组提供的DNA照片，一起发表在1953年4月号的英国《Science》杂志上。由于这个成就，沃森、克里克和威尔金斯三人共同获得了1962年诺贝尔医学或生理学奖。\n\n由于DNA分子的双螺旋结构模型是沃森和克里克共同提出来的，因此后人又把这个模型称为沃森-克里克模型。\n\n# 操作:实践\n\n# 用彩色回形针制作DNA分子双螺旋结构模型（选做）\n\n目的：通过制作DNA分子的双螺旋结构模型，了解DNA分子的空间结构。\n\n材料与用具：回形针（黑色的20个、白色的20个、红色的16个、绿色的16个、无色的50个、黄色的50个），2根小木棍（长度略长于两个回形针的长度）。\n\n# 步骤：\n\n1. 分别用不同的回形针代表DNA分子上的不同化学成分。\n\n黑色的回形针：A\n\n白色的回形针：T\n\n绿色的回形针：G\n\n红色的回形针：C\n\n无色的回形针：糖\n\n黄色的回形针：磷酸根",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_012_科学_9年级下册_沪教版_2013版_一_生物的遗传_main_040_a763f5cb_big_001",
+    "parent_index": 1,
+    "small_index": 2
+  },
+  {
+    "chunk_id": "science_textbooks_012_科学_9年级下册_沪教版_2013版_一_生物的遗传_main_040_a763f5cb_big_001_small_003",
+    "source": "science_textbooks/012_科学_9年级下册_沪教版_2013版_一_生物的遗传_main_040.md",
+    "content": "代表DNA分子上的不同化学成分。\n\n黑色的回形针：A\n\n白色的回形针：T\n\n绿色的回形针：G\n\n红色的回形针：C\n\n无色的回形针：糖\n\n黄色的回形针：磷酸根\n\n2. 将代表侧链组成成分的无色回形针和黄色回形针交替地“别”在一起，制作成DNA分子的两条侧链。\n\n3. 按照下列的顺序，先在一条侧链（链1）上连接代表相应碱基\n\n的回形针：\n\nAAA\n\nGGT\n\nCTC\n\nCTC\n\nTAA\n\nCTT",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_012_科学_9年级下册_沪教版_2013版_一_生物的遗传_main_040_a763f5cb_big_001",
+    "parent_index": 1,
+    "small_index": 3
+  },
+  {
+    "chunk_id": "science_textbooks_013_科学_7年级上册_沪教版_2012版_一_形形色色的植物_main_042_4ac0e211_big_001_small_001",
+    "source": "science_textbooks/013_科学_7年级上册_沪教版_2012版_一_形形色色的植物_main_042.md",
+    "content": "# 初中科学教材：科学_7年级上册_沪教版_2012版 - 一、形形色色的植物\n\n## 教材元信息\n- 教材：科学_7年级上册_沪教版_2012版\n- 年级：7\n- 册次：上册\n- 出版社：沪教版\n- 学段：初中\n- 章节：一、形形色色的植物\n- 内容类型：exercise\n- 原始 token 数：207\n- 原始文件：../ch-3/knowledge_base_builder/data/textbooks/初中科学/沪教版初中科学/科学_7年级上册_沪教版_2012版_一、形形色色的植物_main_042.md\n\n## 教材正文\n3. 在池塘或小溪中常可见到一些绿色丝状的藻类, 用手触摸, 有的感觉粗糙 (如刚毛藻); 有的感觉黏滑 (如水绵)。水绵有时集结成团块漂浮在水面上。挑取少许刚毛藻或水绵, 做成装片, 放在显微镜下观察, 你有哪些发现?  \n4. 海带和紫菜也是藻类植物，观察它们的形态和颜色，试着将你观察到的藻类植物画下来。",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_013_科学_7年级上册_沪教版_2012版_一_形形色色的植物_main_042_4ac0e211_big_001",
+    "parent_index": 1,
+    "small_index": 1
+  },
+  {
+    "chunk_id": "science_textbooks_013_科学_7年级上册_沪教版_2012版_一_形形色色的植物_main_042_4ac0e211_big_001_small_002",
+    "source": "science_textbooks/013_科学_7年级上册_沪教版_2012版_一_形形色色的植物_main_042.md",
+    "content": "植物画下来。",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_013_科学_7年级上册_沪教版_2012版_一_形形色色的植物_main_042_4ac0e211_big_001",
+    "parent_index": 1,
+    "small_index": 2
+  },
+  {
+    "chunk_id": "science_textbooks_014_科学_7年级下册_沪教版_2012版_一_生命活动离不开水_main_135_65cb3bd1_big_001_small_001",
+    "source": "science_textbooks/014_科学_7年级下册_沪教版_2012版_一_生命活动离不开水_main_135.md",
+    "content": "# 初中科学教材：科学_7年级下册_沪教版_2012版 - 一、生命活动离不开水\n\n## 教材元信息\n- 教材：科学_7年级下册_沪教版_2012版\n- 年级：7\n- 册次：下册\n- 出版社：沪教版\n- 学段：初中\n- 章节：一、生命活动离不开水\n- 内容类型：reading\n- 原始 token 数：739\n- 原始文件：../ch-3/knowledge_base_builder/data/textbooks/初中科学/沪教版初中科学/科学_7年级下册_沪教版_2012版_一、生命活动离不开水_main_135.md\n\n## 教材正文\n# 水在生物体内有什么作用？\n\n首先，水是一种良好的溶剂。从本质上讲，生命活动都是各种不同的化学变化。生物体内的水溶解有很多物质，这些物质在体内的变化，只有在溶液状态下才能够很好地进行。例如，呼吸作用发生时，有机物在细胞质中静静地“燃烧”，转化为水和二氧化碳，同时释放出能量；生物体将从外界环境中摄取的无机物或其他有机物转化成自身的有机物，供生长、发育和运动等生命活动过程所用。离开水溶液，这些变化很难进行。\n\n其次，水是体内物质运输的良好载体。如果将物",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_014_科学_7年级下册_沪教版_2012版_一_生命活动离不开水_main_135_65cb3bd1_big_001",
+    "parent_index": 1,
+    "small_index": 1
+  },
+  {
+    "chunk_id": "science_textbooks_014_科学_7年级下册_沪教版_2012版_一_生命活动离不开水_main_135_65cb3bd1_big_001_small_002",
+    "source": "science_textbooks/014_科学_7年级下册_沪教版_2012版_一_生命活动离不开水_main_135.md",
+    "content": "中摄取的无机物或其他有机物转化成自身的有机物，供生长、发育和运动等生命活动过程所用。离开水溶液，这些变化很难进行。\n\n其次，水是体内物质运输的良好载体。如果将物质比作货物，水就是转载货物的车。水能将溶解于水中的物质运输到生物体全身各处。例如，植物不能直接从土壤中摄取养分，只有当这些养分被水溶解后，才能被根吸收；这些物质被吸收到植物体内后，又随水被运输到各处。\n\n第三，水是许多生命活动的原料。例如，我们熟知的光合作用，就是用水和二氧化碳为原料，在光的作用下合成有机物的过程。\n\n所以我们说生物的生命活动离不开水。\n\n# 水是生命的摇篮和家乡\n\n多数科学家认为，生命是在水中孕育的，水是生命的摇篮和家乡。后来生命的活动范围从水里扩展到了陆地，但是许多生物的生活和行为都离不开水，特\n\n别是生命过程中的几个重要环节，例如，生殖、幼体的发育等，更离不开水。\n\n我们所熟知的鱼、虾、蚌、蟹生活在水里；海豚、海豹和鲸等大型的哺乳动物也生活在水中（图8-1-3）；青蛙、蝾螈等两栖动物的生殖和幼体发育必须在水中进行；有些陆生的动物，如蜻蜓、蚊子的幼虫，必须生活在水中。\n\n图8-1-3 几种生活在水中的动物",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_014_科学_7年级下册_沪教版_2012版_一_生命活动离不开水_main_135_65cb3bd1_big_001",
+    "parent_index": 1,
+    "small_index": 2
+  },
+  {
+    "chunk_id": "science_textbooks_014_科学_7年级下册_沪教版_2012版_一_生命活动离不开水_main_135_65cb3bd1_big_001_small_003",
+    "source": "science_textbooks/014_科学_7年级下册_沪教版_2012版_一_生命活动离不开水_main_135.md",
+    "content": "8-1-3）；青蛙、蝾螈等两栖动物的生殖和幼体发育必须在水中进行；有些陆生的动物，如蜻蜓、蚊子的幼虫，必须生活在水中。\n\n图8-1-3 几种生活在水中的动物",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_014_科学_7年级下册_沪教版_2012版_一_生命活动离不开水_main_135_65cb3bd1_big_001",
+    "parent_index": 1,
+    "small_index": 3
+  },
+  {
+    "chunk_id": "science_textbooks_015_科学_8年级上册_沪教版_2013版_一_生物圈为生物的生存提供了什_main_123_05936588_big_001_small_001",
+    "source": "science_textbooks/015_科学_8年级上册_沪教版_2013版_一_生物圈为生物的生存提供了什_main_123.md",
+    "content": "# 初中科学教材：科学_8年级上册_沪教版_2013版 - 一、生物圈为生物的生存提供了什么\n\n## 教材元信息\n- 教材：科学_8年级上册_沪教版_2013版\n- 年级：8\n- 册次：上册\n- 出版社：沪教版\n- 学段：初中\n- 章节：一、生物圈为生物的生存提供了什么\n- 内容类型：exercise\n- 原始 token 数：753\n- 原始文件：../ch-3/knowledge_base_builder/data/textbooks/初中科学/沪教版初中科学/科学_8年级上册_沪教版_2013版_一、生物圈为生物的生存提供了什_main_123.md\n\n## 教材正文\n# 一、生物圈为生物的生存提供了什么\n\n科学家从未停止过对地外生命的探寻。但是在茫茫宇宙中，在人类至今能够探测到的地球之外的地方，都还没有发现生命的迹象，你知道这是为什么吗？地球上的哪些地方有生物的生存呢？\n\n# 生物圈（biosphere）是地球表面有生命的地带\n\n地球上并不是所有的地方都有生物的分布，适合生物生存的地方其实只是表面薄薄的一层，其最深处在大西洋的底部，最高处大约在大气层距地面  $10 \\math",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_015_科学_8年级上册_沪教版_2013版_一_生物圈为生物的生存提供了什_main_123_05936588_big_001",
+    "parent_index": 1,
+    "small_index": 1
+  },
+  {
+    "chunk_id": "science_textbooks_015_科学_8年级上册_沪教版_2013版_一_生物圈为生物的生存提供了什_main_123_05936588_big_001_small_002",
+    "source": "science_textbooks/015_科学_8年级上册_沪教版_2013版_一_生物圈为生物的生存提供了什_main_123.md",
+    "content": "的地带\n\n地球上并不是所有的地方都有生物的分布，适合生物生存的地方其实只是表面薄薄的一层，其最深处在大西洋的底部，最高处大约在大气层距地面  $10 \\mathrm{~km}$  的地方。这个厚度约  $20 \\mathrm{~km}$  的圈层就是所有生物的家——生物圈。\n\n也许你觉得生物圈很厚，因为生物圈的范围包含了水圈的大部分、岩石圈的表面和大气圈的底部。但实际上，如果把地球比作一个苹果，生物圈是比苹果皮还要薄的一层。正是在这薄薄的一层里生存繁衍着千姿百态的生命形式，上演着丰富多彩的生命故事（图7-1-1）。\n\n破土而出的幼苗\n\n雄狮捕食猎物\n\n越水而出的海豚\n\n飞翔的雄鹰  \n图7-1-1 千姿百态的生命\n\n雨后悄然生长的蘑菇\n\n# 生物的生存需要哪些基本条件？\n\n# 交流·研讨\n\n# 生物的生存需要哪些基本条件\n\n1. 生物圈所占的空间只相当于地球表面的一薄层，生物圈以外的地方为什么没有生物生存呢？你认为地球上有生物生存的地方有什么特点？  \n2. 你喂养过小动物吗？你是如何照顾它的？小动物的正常生活需要哪些条件？  \n3. 你养过盆栽吗？你为心爱的盆栽提供了哪些生长必需的条",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_015_科学_8年级上册_沪教版_2013版_一_生物圈为生物的生存提供了什_main_123_05936588_big_001",
+    "parent_index": 1,
+    "small_index": 2
+  },
+  {
+    "chunk_id": "science_textbooks_015_科学_8年级上册_沪教版_2013版_一_生物圈为生物的生存提供了什_main_123_05936588_big_001_small_003",
+    "source": "science_textbooks/015_科学_8年级上册_沪教版_2013版_一_生物圈为生物的生存提供了什_main_123.md",
+    "content": "存的地方有什么特点？  \n2. 你喂养过小动物吗？你是如何照顾它的？小动物的正常生活需要哪些条件？  \n3. 你养过盆栽吗？你为心爱的盆栽提供了哪些生长必需的条件呢？  \n4. 联系我们自己，想想人类的生存需要什么条件。\n\n汇总小组讨论的结果，然后概括一下生物的生存需要哪些基本条件。",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_015_科学_8年级上册_沪教版_2013版_一_生物圈为生物的生存提供了什_main_123_05936588_big_001",
+    "parent_index": 1,
+    "small_index": 3
+  },
+  {
+    "chunk_id": "science_textbooks_016_科学_8年级下册_沪教版_2013版_一_杠杆_main_038_f81ce2f4_big_001_small_001",
+    "source": "science_textbooks/016_科学_8年级下册_沪教版_2013版_一_杠杆_main_038.md",
+    "content": "# 初中科学教材：科学_8年级下册_沪教版_2013版 - 一、杠杆\n\n## 教材元信息\n- 教材：科学_8年级下册_沪教版_2013版\n- 年级：8\n- 册次：下册\n- 出版社：沪教版\n- 学段：初中\n- 章节：一、杠杆\n- 内容类型：experiment\n- 原始 token 数：772\n- 原始文件：../ch-3/knowledge_base_builder/data/textbooks/初中科学/沪教版初中科学/科学_8年级下册_沪教版_2013版_一、杠杆_main_038.md\n\n## 教材正文\n1. 动力臂大于阻力臂  $(l_{1} > l_{2})$ , 平衡时动力小于阻力  $(F_{1} < F_{2})$  。这时用较小的动力就可以克服较大的阻力, 这种杠杆是省力杠杆。  \n2. 动力臂小于阻力臂  $(l_{1} < l_{2})$  ，平衡时动力大于阻力  $(F_{1} > F_{2})$  。这种杠杆是费力杠杆。  \n3. 动力臂等于阻力臂  $(l_{1} = l_{2})$ , 平衡时阻力等于动力  $(F_{1} = F_{2})$  。这种杠杆",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_016_科学_8年级下册_沪教版_2013版_一_杠杆_main_038_f81ce2f4_big_001",
+    "parent_index": 1,
+    "small_index": 1
+  },
+  {
+    "chunk_id": "science_textbooks_016_科学_8年级下册_沪教版_2013版_一_杠杆_main_038_f81ce2f4_big_001_small_002",
+    "source": "science_textbooks/016_科学_8年级下册_沪教版_2013版_一_杠杆_main_038.md",
+    "content": "种杠杆是费力杠杆。  \n3. 动力臂等于阻力臂  $(l_{1} = l_{2})$ , 平衡时阻力等于动力  $(F_{1} = F_{2})$  。这种杠杆是等臂杠杆, 既不省力也不费力。实验室中使用的天平就是等臂杠杆。\n\n所以，要想用较小的力撬起大石头，则动力臂必须大，撬棒、羊角锤就是利用这个原理制成的。省力杠杆虽然好，但是动力作用点移动的距离却比阻力作用点移动的距离大，省了力，却费了距离。因此我们有时也需要利用杠杆来省距离。钓鱼竿是费力杠杆，动力臂小于阻力臂，用较大的力才能钓起鱼，但是使用钓鱼竿，只要手握住竿移动较小的距离，就可以把鱼从水里钓出水面。这时虽然费了力，却省了距离。\n\n# 人体中的杠杆\n\n人体中有206块骨，其中有许多起着杠杆作用，当然这些起杠杆作用的骨不可能自动地绕支点转动，必须受到动力的作用，这种动力来自附着在它上面的肌肉。\n\n人的前臂就是一个典型的杠杆（图2-1-3）。它的支点在肘关节。当肱二头肌收缩、肱三头肌松弛时，前臂向上转，引起屈肘动作；而当肱三头肌收缩、肱二\n\n图2-1-3 人体中的杠杆\n\n头肌松弛时，前臂向下转，引起伸肘动作。可以看出，前臂是个费力杠",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_016_科学_8年级下册_沪教版_2013版_一_杠杆_main_038_f81ce2f4_big_001",
+    "parent_index": 1,
+    "small_index": 2
+  },
+  {
+    "chunk_id": "science_textbooks_016_科学_8年级下册_沪教版_2013版_一_杠杆_main_038_f81ce2f4_big_001_small_003",
+    "source": "science_textbooks/016_科学_8年级下册_沪教版_2013版_一_杠杆_main_038.md",
+    "content": "肱三头肌松弛时，前臂向上转，引起屈肘动作；而当肱三头肌收缩、肱二\n\n图2-1-3 人体中的杠杆\n\n头肌松弛时，前臂向下转，引起伸肘动作。可以看出，前臂是个费力杠杆，但是肱二头肌只要缩短一点距离就可以使手移动较大的距离。",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_016_科学_8年级下册_沪教版_2013版_一_杠杆_main_038_f81ce2f4_big_001",
+    "parent_index": 1,
+    "small_index": 3
+  },
+  {
+    "chunk_id": "science_textbooks_017_科学_9年级上册_沪教版_2013版_一_金属的冶炼_main_013_a3d75cf7_big_001_small_001",
+    "source": "science_textbooks/017_科学_9年级上册_沪教版_2013版_一_金属的冶炼_main_013.md",
+    "content": "# 初中科学教材：科学_9年级上册_沪教版_2013版 - 一、金属的冶炼\n\n## 教材元信息\n- 教材：科学_9年级上册_沪教版_2013版\n- 年级：9\n- 册次：上册\n- 出版社：沪教版\n- 学段：初中\n- 章节：一、金属的冶炼\n- 内容类型：exercise\n- 原始 token 数：710\n- 原始文件：../ch-3/knowledge_base_builder/data/textbooks/初中科学/沪教版初中科学/科学_9年级上册_沪教版_2013版_一、金属的冶炼_main_013.md\n\n## 教材正文\n# 交流·研讨\n\n1. 请用质量守恒定律解释下列现象：\n\n(1) 木炭燃烧后生成的灰比原来木炭的质量减少了。  \n(2) 铁钉生锈后质量增加了。  \n2. “水变汽油、柴油（含碳、氢等元素），经济收入惊人，技术转让，请有识之士加盟。”这是一则广告。你会相信这种技术吗？请做出科学、准确的判断。\n\n根据化学方程式所表示的化学反应中各物质的质量关系，可以进行定量计算。这种计算在日常生活和生产中有重要的实际应用。例如，在冶炼金属时要知道多少矿石原料能生产出多少金属，生产化肥",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_017_科学_9年级上册_沪教版_2013版_一_金属的冶炼_main_013_a3d75cf7_big_001",
+    "parent_index": 1,
+    "small_index": 1
+  },
+  {
+    "chunk_id": "science_textbooks_017_科学_9年级上册_沪教版_2013版_一_金属的冶炼_main_013_a3d75cf7_big_001_small_002",
+    "source": "science_textbooks/017_科学_9年级上册_沪教版_2013版_一_金属的冶炼_main_013.md",
+    "content": "所表示的化学反应中各物质的质量关系，可以进行定量计算。这种计算在日常生活和生产中有重要的实际应用。例如，在冶炼金属时要知道多少矿石原料能生产出多少金属，生产化肥时要知道需要投入的各种原料的比例等，这些都要根据所发生的化学反应进行必要的计算。\n\n例1: 电解水可以得到氢气。若电解  $9 \\mathrm{~kg}$  水, 能得到多少千克氢气?\n\n解：设得到氢气的质量为  $x$ 。\n\n$$\n\\begin{array}{l} 2 \\mathrm {H} _ {2} \\mathrm {O} \\xlongequal {\\text {通 电}} 2 \\mathrm {H} _ {2} \\uparrow + \\mathrm {O} _ {2} \\uparrow \\\\ 1 8 \\times 2 = 3 6 \\quad 2 \\times 2 = 4 \\\\ 9 \\mathrm {k g} \\quad x \\\\ \\frac {3 6}{9 \\mathrm {k g}} = \\frac {4}{x} \\\\ x = 1 \\mathrm {k g} \\\\ \\end{array}\n$$\n\n答：可以得到氢气  $",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_017_科学_9年级上册_沪教版_2013版_一_金属的冶炼_main_013_a3d75cf7_big_001",
+    "parent_index": 1,
+    "small_index": 2
+  },
+  {
+    "chunk_id": "science_textbooks_017_科学_9年级上册_沪教版_2013版_一_金属的冶炼_main_013_a3d75cf7_big_001_small_003",
+    "source": "science_textbooks/017_科学_9年级上册_沪教版_2013版_一_金属的冶炼_main_013.md",
+    "content": "thrm {k g}} = \\frac {4}{x} \\\\ x = 1 \\mathrm {k g} \\\\ \\end{array}\n$$\n\n答：可以得到氢气  $1\\mathrm{kg}$  。\n\n例2：高炉炼铁的主要化学反应是： $\\mathrm{Fe_2O_3 + 3CO \\xrightarrow{\\text{高温}} 2Fe + 3CO_2}$ 。若要得到  $120\\mathrm{kg}$  含杂质  $3\\%$  的生铁，需要氧化铁多少千克？\n\n解：设需要氧化铁的质量为  $x$\n\n$120\\mathrm{kg}$  含杂质  $3 \\%$  的生铁中铁为：  $120\\mathrm{kg}\\times (1 - 3\\%) = 116.4\\mathrm{kg}$",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_017_科学_9年级上册_沪教版_2013版_一_金属的冶炼_main_013_a3d75cf7_big_001",
+    "parent_index": 1,
+    "small_index": 3
+  },
+  {
+    "chunk_id": "science_textbooks_018_科学_9年级下册_沪教版_2013版_一_计算机革命_main_210_dd2387ae_big_001_small_001",
+    "source": "science_textbooks/018_科学_9年级下册_沪教版_2013版_一_计算机革命_main_210.md",
+    "content": "# 初中科学教材：科学_9年级下册_沪教版_2013版 - 一、计算机革命\n\n## 教材元信息\n- 教材：科学_9年级下册_沪教版_2013版\n- 年级：9\n- 册次：下册\n- 出版社：沪教版\n- 学段：初中\n- 章节：一、计算机革命\n- 内容类型：concept\n- 原始 token 数：777\n- 原始文件：../ch-3/knowledge_base_builder/data/textbooks/初中科学/沪教版初中科学/科学_9年级下册_沪教版_2013版_一、计算机革命_main_210.md\n\n## 教材正文\n# 电子计算机的诞生和发展\n\n根据目前较为流行的说法，世界上第一台通用数字电子计算机是1945年12月在美国宾州大学研制成功的“埃尼亚克”［ENIAC，电子数值积分计算机（Electronic Numerical Integrator and Computer）的英文缩写］（图10-1-5）。该机使用了\n\n图10-1-5 埃尼亚克\n\n18800个电子管、1500个继电器和8000个阻容元件，体积达  $90\\mathrm{m}^3$  ，重 $30t$  ，耗电  $",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_018_科学_9年级下册_沪教版_2013版_一_计算机革命_main_210_dd2387ae_big_001",
+    "parent_index": 1,
+    "small_index": 1
+  },
+  {
+    "chunk_id": "science_textbooks_018_科学_9年级下册_沪教版_2013版_一_计算机革命_main_210_dd2387ae_big_001_small_002",
+    "source": "science_textbooks/018_科学_9年级下册_沪教版_2013版_一_计算机革命_main_210.md",
+    "content": "0-1-5 埃尼亚克\n\n18800个电子管、1500个继电器和8000个阻容元件，体积达  $90\\mathrm{m}^3$  ，重 $30t$  ，耗电  $140\\mathrm{kw}$  ，每秒钟能完成5000次运算。它的最初设想是两名年轻的美国工程师莫克利和埃克特提出的，最初目的是解决枪炮的弹道计算和火力表的测试中遇到的大量数值计算问题。这一设计后来在大数学家冯·诺依曼的指点下得以完成。1945年春，“埃尼亚克”开始试运行，用它来计算弹道参数时，对60秒钟射程的弹道计算，所花时间由原来的20分钟一下子提高到30秒。经冯·诺依曼介绍，曼哈顿工程的两位研究人员来到宾州大学，在“埃尼亚克”上进行了有关原子核裂变的能量计算，从而加速了原子弹的研制。1946年2月10日，美国陆军军械部和摩尔学院共同举行新闻发布会，宣布了第一台电子计算机“埃尼亚克”研制成功的消息。1946年2月15日举行了公开表演，1947年它被运往阿伯丁做科学计算。\n\n另一方面，在第二次世界大战中，为破译德军的电报密码，图灵在英国已经领导研制成功了数字电子计算机“巨人”，但直到20世纪90年代，有关资料才正式对外公布。",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_018_科学_9年级下册_沪教版_2013版_一_计算机革命_main_210_dd2387ae_big_001",
+    "parent_index": 1,
+    "small_index": 2
+  },
+  {
+    "chunk_id": "science_textbooks_018_科学_9年级下册_沪教版_2013版_一_计算机革命_main_210_dd2387ae_big_001_small_003",
+    "source": "science_textbooks/018_科学_9年级下册_沪教版_2013版_一_计算机革命_main_210.md",
+    "content": "算。\n\n另一方面，在第二次世界大战中，为破译德军的电报密码，图灵在英国已经领导研制成功了数字电子计算机“巨人”，但直到20世纪90年代，有关资料才正式对外公布。此外，还有说法认为美国依阿华州立学院的阿塔纳索夫（Atanasoff）是第一台电子计算机的发明者，而且莫克利最初的方案是根据阿塔纳索夫的设计思想做出的。\n\n无论如何，我们可以说是第二次世界大战催生了电子计算机，人类从此走进了电子计算机时代。",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_018_科学_9年级下册_沪教版_2013版_一_计算机革命_main_210_dd2387ae_big_001",
+    "parent_index": 1,
+    "small_index": 3
+  },
+  {
+    "chunk_id": "science_textbooks_019_科学_7年级上册_沪教版_2012版_一_水中生活的动物_main_067_9120e275_big_001_small_001",
+    "source": "science_textbooks/019_科学_7年级上册_沪教版_2012版_一_水中生活的动物_main_067.md",
+    "content": "# 初中科学教材：科学_7年级上册_沪教版_2012版 - 一、水中生活的动物\n\n## 教材元信息\n- 教材：科学_7年级上册_沪教版_2012版\n- 年级：7\n- 册次：上册\n- 出版社：沪教版\n- 学段：初中\n- 章节：一、水中生活的动物\n- 内容类型：exercise\n- 原始 token 数：417\n- 原始文件：../ch-3/knowledge_base_builder/data/textbooks/初中科学/沪教版初中科学/科学_7年级上册_沪教版_2012版_一、水中生活的动物_main_067.md\n\n## 教材正文\n# 多种多样的水生动物\n\n除了鱼以外，还有许多动物能够生活在水中，它们或身躯柔软，或身背硬壳，有的善于捕食，有的善于逃跑，都有适合在水中生活的结构和特征。\n\n水螅（图5-1-4）和水母（图5-1-5）属于腔肠动物，它们结构简单，直接通过身体的细胞进行呼吸和排泄。\n\n图5-1-4 水螅\n\n图5-1-5水母\n\n软体动物（图5-1-6）的肢体柔软，通常有壳。部分软体动物常常利用喷出水流的推动力移动身体，完成捕食或逃跑。\n\n螃蟹（图5-1-7）、海星（图5-1-",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_019_科学_7年级上册_沪教版_2012版_一_水中生活的动物_main_067_9120e275_big_001",
+    "parent_index": 1,
+    "small_index": 1
+  },
+  {
+    "chunk_id": "science_textbooks_019_科学_7年级上册_沪教版_2012版_一_水中生活的动物_main_067_9120e275_big_001_small_002",
+    "source": "science_textbooks/019_科学_7年级上册_沪教版_2012版_一_水中生活的动物_main_067.md",
+    "content": "5水母\n\n软体动物（图5-1-6）的肢体柔软，通常有壳。部分软体动物常常利用喷出水流的推动力移动身体，完成捕食或逃跑。\n\n螃蟹（图5-1-7）、海星（图5-1-8）和虾都可以运用自己特别的“足”进行运动和捕食。\n\n图5-1-6 软体动物\n\n图5-1-7 螃蟹\n\n图5-1-8 海星\n\n# 思考·练习\n\n1. 请你列举出鱼适合生活在水中的3种特征。  \n2. 利用图书馆和网络查阅资料，了解一下日常生活中常见的水生动物如螃蟹、虾等的生活习性。",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_019_科学_7年级上册_沪教版_2012版_一_水中生活的动物_main_067_9120e275_big_001",
+    "parent_index": 1,
+    "small_index": 2
+  },
+  {
+    "chunk_id": "science_textbooks_020_科学_7年级下册_沪教版_2012版_一_空气的组成_main_049_a8abce5d_big_001_small_001",
+    "source": "science_textbooks/020_科学_7年级下册_沪教版_2012版_一_空气的组成_main_049.md",
+    "content": "# 初中科学教材：科学_7年级下册_沪教版_2012版 - 一、空气的组成\n\n## 教材元信息\n- 教材：科学_7年级下册_沪教版_2012版\n- 年级：7\n- 册次：下册\n- 出版社：沪教版\n- 学段：初中\n- 章节：一、空气的组成\n- 内容类型：reading\n- 原始 token 数：731\n- 原始文件：../ch-3/knowledge_base_builder/data/textbooks/初中科学/沪教版初中科学/科学_7年级下册_沪教版_2012版_一、空气的组成_main_049.md\n\n## 教材正文\n# 拓展视野\n\n# 植物对氮的吸收\n\n氮是植物的重要营养元素，动植物生长都需要吸收含氮的养料。如果缺少氮，植物就会长得瘦小，叶子发黄，果实很小。虽然空气中含有大量的氮气，但不能被多数生物吸收，因此需要把空气中的氮气转变成氮的化合物，才能作为动植物的养料。在自然界，大豆、蚕豆等豆科植物的根部都有根瘤（图3-1-6），它是由生活在土壤中的根瘤菌侵入到根内形成的。根瘤菌能把空气中的氮气转变成含氮化合物，所以，种植这些植物时不需施用或只需施用少量氮肥。另外，也可以通过化学方法",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_020_科学_7年级下册_沪教版_2012版_一_空气的组成_main_049_a8abce5d_big_001",
+    "parent_index": 1,
+    "small_index": 1
+  },
+  {
+    "chunk_id": "science_textbooks_020_科学_7年级下册_沪教版_2012版_一_空气的组成_main_049_a8abce5d_big_001_small_002",
+    "source": "science_textbooks/020_科学_7年级下册_沪教版_2012版_一_空气的组成_main_049.md",
+    "content": "），它是由生活在土壤中的根瘤菌侵入到根内形成的。根瘤菌能把空气中的氮气转变成含氮化合物，所以，种植这些植物时不需施用或只需施用少量氮肥。另外，也可以通过化学方法以自然界中的氮气为原料生产各种氮肥（图3-1-7）。\n\n图3-1-6 根瘤\n\n图3-1-7 合成氨工业装置\n\n稀有气体一般不跟其他物质发生反应，常被称作“惰性气体”。但在一定条件下，它们也能跟某些物质发生化学反应。在生产和科学研究方面稀有气体有不少用途。\n\n# 科学·技术·社会·环境\n\n# 稀有气体的用途\n\n稀有气体在通电时，会发出有色的光。五光十色的霓虹灯（图3-1-8）就是利用这种性质制成的。例如，灯管里充入氩气，通电时发出紫蓝色光；充入氦气，通电时发出粉红色光；充入氖气，通电\n\n时发出红光。氙灯射出的红光，在空气中的透射力很强，可以穿透浓雾，常被用作航空、航海的指示灯等。氙灯通电时能发出比荧光灯强上万倍的强光，可用于广场、体育场、飞机场的照明。氦气密度很\n\n图3-1-8 五光十色的霓虹灯",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_020_科学_7年级下册_沪教版_2012版_一_空气的组成_main_049_a8abce5d_big_001",
+    "parent_index": 1,
+    "small_index": 2
+  },
+  {
+    "chunk_id": "science_textbooks_020_科学_7年级下册_沪教版_2012版_一_空气的组成_main_049_a8abce5d_big_001_small_003",
+    "source": "science_textbooks/020_科学_7年级下册_沪教版_2012版_一_空气的组成_main_049.md",
+    "content": "-8 五光十色的霓虹灯",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_020_科学_7年级下册_沪教版_2012版_一_空气的组成_main_049_a8abce5d_big_001",
+    "parent_index": 1,
+    "small_index": 3
+  },
+  {
+    "chunk_id": "science_textbooks_021_科学_8年级上册_沪教版_2013版_三_地质灾害_main_093_f2ec8997_big_001_small_001",
+    "source": "science_textbooks/021_科学_8年级上册_沪教版_2013版_三_地质灾害_main_093.md",
+    "content": "# 初中科学教材：科学_8年级上册_沪教版_2013版 - 三、地质灾害\n\n## 教材元信息\n- 教材：科学_8年级上册_沪教版_2013版\n- 年级：8\n- 册次：上册\n- 出版社：沪教版\n- 学段：初中\n- 章节：三、地质灾害\n- 内容类型：reading\n- 原始 token 数：655\n- 原始文件：../ch-3/knowledge_base_builder/data/textbooks/初中科学/沪教版初中科学/科学_8年级上册_沪教版_2013版_三、地质灾害_main_093.md\n\n## 教材正文\n# 拓展视野\n\n# 唐山大地震\n\n唐山是中国北方著名的工业城市，人口稠密，该市的生产总值在地震前约占整个中国的  $1\\%$  。1976年7月28日凌晨3时42分，唐山市突然发生里氏7.8级强烈地震。唐山市几乎被夷为废墟，地震场面极为惨烈。在这次地震中死亡24.2万多人，重伤16.4万多人。\n\n# 台湾南投地震\n\n1999年9月21日凌晨1时47分，台湾省南投县发生7.6级大地震，震源深度在地下  $10\\mathrm{km}$  左右，重灾区在日月潭地区。丰原、大境、务",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_021_科学_8年级上册_沪教版_2013版_三_地质灾害_main_093_f2ec8997_big_001",
+    "parent_index": 1,
+    "small_index": 1
+  },
+  {
+    "chunk_id": "science_textbooks_021_科学_8年级上册_沪教版_2013版_三_地质灾害_main_093_f2ec8997_big_001_small_002",
+    "source": "science_textbooks/021_科学_8年级上册_沪教版_2013版_三_地质灾害_main_093.md",
+    "content": "1999年9月21日凌晨1时47分，台湾省南投县发生7.6级大地震，震源深度在地下  $10\\mathrm{km}$  左右，重灾区在日月潭地区。丰原、大境、务峰、中兴新村、南投和名间、竹川等市县村镇地区遭到灾难性破坏，大部分地段被夷为平地。整个灾区死亡2329人、伤8722人、失踪39人，倒塌各种建筑9909栋、严重破坏7575栋，受灾人口250万、灾民32万，财产损失达92亿美元。\n\n# 5·12汶川地震\n\n2008年5月12日14时28分04秒，我国四川省的汶川、北川等地发生8.0级强震。这是新中国成立以来破坏性最强、波及范围最大的一次地震。此次地震重创约50万 $\\mathrm{km}^2$ 的中国大地，造成69227人遇难、374643人受伤、17923人失踪；造成直接经济损失约8451亿元人民币。为表达全国\n\n图5-3-7 2008年汶川地震\n\n各族人民对遇难同胞的深切哀悼，国务院决定，2008年5月19日至21日为全国哀悼日，自2009年起，每年5月12日为全国防灾减灾日。",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_021_科学_8年级上册_沪教版_2013版_三_地质灾害_main_093_f2ec8997_big_001",
+    "parent_index": 1,
+    "small_index": 2
+  },
+  {
+    "chunk_id": "science_textbooks_021_科学_8年级上册_沪教版_2013版_三_地质灾害_main_093_f2ec8997_big_001_small_003",
+    "source": "science_textbooks/021_科学_8年级上册_沪教版_2013版_三_地质灾害_main_093.md",
+    "content": "全国哀悼日，自2009年起，每年5月12日为全国防灾减灾日。",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_021_科学_8年级上册_沪教版_2013版_三_地质灾害_main_093_f2ec8997_big_001",
+    "parent_index": 1,
+    "small_index": 3
+  },
+  {
+    "chunk_id": "science_textbooks_022_科学_8年级下册_沪教版_2013版_三_几种常见的力_main_010_ded52231_big_001_small_001",
+    "source": "science_textbooks/022_科学_8年级下册_沪教版_2013版_三_几种常见的力_main_010.md",
+    "content": "# 初中科学教材：科学_8年级下册_沪教版_2013版 - 三、几种常见的力\n\n## 教材元信息\n- 教材：科学_8年级下册_沪教版_2013版\n- 年级：8\n- 册次：下册\n- 出版社：沪教版\n- 学段：初中\n- 章节：三、几种常见的力\n- 内容类型：exercise\n- 原始 token 数：496\n- 原始文件：../ch-3/knowledge_base_builder/data/textbooks/初中科学/沪教版初中科学/科学_8年级下册_沪教版_2013版_三、几种常见的力_main_010.md\n\n## 教材正文\n# 三、几种常见的力\n\n在自然界中，从微观到宏观，在不同尺度的范围内都存在着物体之间的相互作用力。这些力的表现形式不同，产生的条件也不一样。本节我们将认识几种常见的力。\n\n# 弹力\n\n用过弹簧拉力器的同学会有深刻的体会，弹簧没有伸长时不会对你产生力的作用，弹簧拉得越长，你感到越费力，说明弹簧对你的作用力越大。当你使用橡胶握力器时，也会体会到它的形状改变越大，对你产生的力也越大。如图1-3-1所示，跳水运动员为了能够腾跃到足够的高度，就要使劲蹬踏跳板。跳板弯曲得",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_022_科学_8年级下册_沪教版_2013版_三_几种常见的力_main_010_ded52231_big_001",
+    "parent_index": 1,
+    "small_index": 1
+  },
+  {
+    "chunk_id": "science_textbooks_022_科学_8年级下册_沪教版_2013版_三_几种常见的力_main_010_ded52231_big_001_small_002",
+    "source": "science_textbooks/022_科学_8年级下册_沪教版_2013版_三_几种常见的力_main_010.md",
+    "content": "越大。当你使用橡胶握力器时，也会体会到它的形状改变越大，对你产生的力也越大。如图1-3-1所示，跳水运动员为了能够腾跃到足够的高度，就要使劲蹬踏跳板。跳板弯曲得越厉害，获得的向上的力就越大。\n\n物体在力的作用下发生的形状或体积的改变叫作形变。如果撤去外力后物体的形状能够复原，这种形变就叫作弹性形变。发生弹性形变的物体要恢\n\n图1-3-1 从跳板获得向上的力\n\n复原状，会对与它接触的物体产生力的作用，我们把这种力叫作弹力（elastic force）。\n\n弹力的表现形式有多种，下面我们来逐一认识。\n\n# 1. 弹簧的弹力\n\n前面我们用到了弹簧测力计，弹簧为什么能测力呢？",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_022_科学_8年级下册_沪教版_2013版_三_几种常见的力_main_010_ded52231_big_001",
+    "parent_index": 1,
+    "small_index": 2
+  },
+  {
+    "chunk_id": "science_textbooks_023_科学_9年级上册_沪教版_2013版_一_食物为我们提供了什么_main_104_969111f1_big_001_small_001",
+    "source": "science_textbooks/023_科学_9年级上册_沪教版_2013版_一_食物为我们提供了什么_main_104.md",
+    "content": "# 初中科学教材：科学_9年级上册_沪教版_2013版 - 一、食物为我们提供了什么\n\n## 教材元信息\n- 教材：科学_9年级上册_沪教版_2013版\n- 年级：9\n- 册次：上册\n- 出版社：沪教版\n- 学段：初中\n- 章节：一、食物为我们提供了什么\n- 内容类型：exercise\n- 原始 token 数：837\n- 原始文件：../ch-3/knowledge_base_builder/data/textbooks/初中科学/沪教版初中科学/科学_9年级上册_沪教版_2013版_一、食物为我们提供了什么_main_104.md\n\n## 教材正文\n膳食纤维主要存在于植物性食品中，不同的植物所含有的种类和数量也不同。我们通过吃蔬菜、水果、豆类、粗粮和没有经过精加工的谷物（麦麸中膳食纤维的含量高达  $70\\%$  ，而越是精加工的食品，膳食纤维的含量越低）等可以获得较多的膳食纤维。\n\n但应当指出，膳食纤维的摄入也不能过量（每日以  $20 \\mathrm{~g}$  左右为宜），否则会影响某些维生素和无机盐的吸收，并有可能会使胃癌和食道癌的患病危险性增大。\n\n# 思考·练习\n\n1.",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_023_科学_9年级上册_沪教版_2013版_一_食物为我们提供了什么_main_104_969111f1_big_001",
+    "parent_index": 1,
+    "small_index": 1
+  },
+  {
+    "chunk_id": "science_textbooks_023_科学_9年级上册_沪教版_2013版_一_食物为我们提供了什么_main_104_969111f1_big_001_small_002",
+    "source": "science_textbooks/023_科学_9年级上册_沪教版_2013版_一_食物为我们提供了什么_main_104.md",
+    "content": "日以  $20 \\mathrm{~g}$  左右为宜），否则会影响某些维生素和无机盐的吸收，并有可能会使胃癌和食道癌的患病危险性增大。\n\n# 思考·练习\n\n1. 人体所需的六大类营养素是哪些？能为人体提供能量的营养素有哪些？  \n2. 构成人体细胞的基本物质和供给生命活动能量的主要物质是下列哪一组（）\n\nA. 蛋白质、脂肪\n\nB. 蛋白质、糖类\n\nC. 糖类、蛋白质\n\nD. 维生素、脂肪\n\n3. 有些同学只爱吃肉，不爱吃水果和蔬菜，长此以往会造成身体缺乏（）\n\nA. 蛋白质和维生素\n\nB. 脂肪和无机盐\n\nC. 维生素和无机盐\n\nD. 蛋白质和脂肪\n\n4. 小林这几天刷牙时发现牙龈经常出血, 你应当建议他多吃一些 ( )\n\nA.米饭、馒头\n\nB. 鱼、肉、奶、蛋\n\nC. 新鲜蔬菜、水果\n\nD. 奶油、巧克力\n\n5. 如果食物中长期缺乏某些营养物质，就会使人患某种疾病，适当补充相应食物则可以促进身体的恢复。请将右栏针对相应疾病需补充的食物与左栏病症用线连接起来。\n\n夜盲症\n\n海带\n\n坏血病\n\n胡萝卜\n\n佝偻病\n\n橙子\n\n地方性甲状腺肿\n\n牛奶\n\n6. 作为健康饮食的一部分，每个人都应该补",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_023_科学_9年级上册_沪教版_2013版_一_食物为我们提供了什么_main_104_969111f1_big_001",
+    "parent_index": 1,
+    "small_index": 2
+  },
+  {
+    "chunk_id": "science_textbooks_023_科学_9年级上册_沪教版_2013版_一_食物为我们提供了什么_main_104_969111f1_big_001_small_003",
+    "source": "science_textbooks/023_科学_9年级上册_沪教版_2013版_一_食物为我们提供了什么_main_104.md",
+    "content": "充的食物与左栏病症用线连接起来。\n\n夜盲症\n\n海带\n\n坏血病\n\n胡萝卜\n\n佝偻病\n\n橙子\n\n地方性甲状腺肿\n\n牛奶\n\n6. 作为健康饮食的一部分，每个人都应该补充维生素，你认为这个观点对吗？  \n7. 为什么素食者应该吃各种各样的食物？",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_023_科学_9年级上册_沪教版_2013版_一_食物为我们提供了什么_main_104_969111f1_big_001",
+    "parent_index": 1,
+    "small_index": 3
+  },
+  {
+    "chunk_id": "science_textbooks_024_科学_9年级下册_沪教版_2013版_三_文化休闲_main_261_ffbfc9e1_big_001_small_001",
+    "source": "science_textbooks/024_科学_9年级下册_沪教版_2013版_三_文化休闲_main_261.md",
+    "content": "# 初中科学教材：科学_9年级下册_沪教版_2013版 - 三、文化休闲\n\n## 教材元信息\n- 教材：科学_9年级下册_沪教版_2013版\n- 年级：9\n- 册次：下册\n- 出版社：沪教版\n- 学段：初中\n- 章节：三、文化休闲\n- 内容类型：experiment\n- 原始 token 数：708\n- 原始文件：../ch-3/knowledge_base_builder/data/textbooks/初中科学/沪教版初中科学/科学_9年级下册_沪教版_2013版_三、文化休闲_main_261.md\n\n## 教材正文\n本册教材的主题是“演化”和“科学-技术-社会-环境”，包括了许多重大科学问题，教材中尽可能借助科学发展史揭示科学本质，使学生体会其中的科学思想和方法。作为教材的最后一册，本册起着总结和提升的作用。一方面，以更高的观点回顾和反思前面各册有关内容，使学生加深对科学整体性的认识，同时在科学观念上有所提升；另一方面，综合运用前面各册涉及的各种科学方法，每章均设计了1-2个较大的探究活动，使学生得以综合运用所学科学知识和科学方法，加深理解和体验，体会科学的本质。活动设计较为开放",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_024_科学_9年级下册_沪教版_2013版_三_文化休闲_main_261_ffbfc9e1_big_001",
+    "parent_index": 1,
+    "small_index": 1
+  },
+  {
+    "chunk_id": "science_textbooks_024_科学_9年级下册_沪教版_2013版_三_文化休闲_main_261_ffbfc9e1_big_001_small_002",
+    "source": "science_textbooks/024_科学_9年级下册_沪教版_2013版_三_文化休闲_main_261.md",
+    "content": "合运用前面各册涉及的各种科学方法，每章均设计了1-2个较大的探究活动，使学生得以综合运用所学科学知识和科学方法，加深理解和体验，体会科学的本质。活动设计较为开放，并为教师和学生留出了选择的余地。考虑到九年级面临升学考试，授课内容按十周设计。许多内容以“阅读材料”的方式呈现，一方面扩展学生视野，一方面培养学生自主学习的意识、习惯与能力。本册教材包含了较为丰富的科学史、科学文化、科学技术与社会等方面的素材，对学生树立科学观念、科学精神和科学态度，体会科学技术的发展历程及其对人类社会的影响，学习科学家的崇高精神，都具有深刻和长远的教育价值。\n\n上海教育出版社的同志为本书的出版付出了极为艰辛的劳动，\n由于时间仓促，教材中的错误和疏漏在所难免，恳请使用者和有关专家批评指正。\n\n《科学》编写组\n\n2013年5月\n\n义务教育教科书\n\n科学\n\n九年级下册\n\n上海世纪出版股份有限公司\n\n上海教育出版社\n\n版\n\n(上海永福路123号 邮政编码：200031)\n\n2016年4月第1版 2016年4月第1次印刷\n\n审图号GS(2012)2412号\n\n此书如有印、装质量问题，请向工厂调换",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_024_科学_9年级下册_沪教版_2013版_三_文化休闲_main_261_ffbfc9e1_big_001",
+    "parent_index": 1,
+    "small_index": 2
+  },
+  {
+    "chunk_id": "science_textbooks_024_科学_9年级下册_沪教版_2013版_三_文化休闲_main_261_ffbfc9e1_big_001_small_003",
+    "source": "science_textbooks/024_科学_9年级下册_沪教版_2013版_三_文化休闲_main_261.md",
+    "content": "0031)\n\n2016年4月第1版 2016年4月第1次印刷\n\n审图号GS(2012)2412号\n\n此书如有印、装质量问题，请向工厂调换",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_024_科学_9年级下册_沪教版_2013版_三_文化休闲_main_261_ffbfc9e1_big_001",
+    "parent_index": 1,
+    "small_index": 3
+  },
+  {
+    "chunk_id": "science_textbooks_025_科学_7年级上册_沪教版_2012版_三_四季星空_main_115_f8ae2def_big_001_small_001",
+    "source": "science_textbooks/025_科学_7年级上册_沪教版_2012版_三_四季星空_main_115.md",
+    "content": "# 初中科学教材：科学_7年级上册_沪教版_2012版 - 三、四季星空\n\n## 教材元信息\n- 教材：科学_7年级上册_沪教版_2012版\n- 年级：7\n- 册次：上册\n- 出版社：沪教版\n- 学段：初中\n- 章节：三、四季星空\n- 内容类型：exercise\n- 原始 token 数：502\n- 原始文件：../ch-3/knowledge_base_builder/data/textbooks/初中科学/沪教版初中科学/科学_7年级上册_沪教版_2012版_三、四季星空_main_115.md\n\n## 教材正文\n# 四季星空\n\n我们在前面已经知道，日月星辰每天东升西落的现象是由于地球自转造成的，四季星空的变化则是由地球绕太阳的公转造成的。在春夏秋冬四季，如果天黑后你观察南方夜空，看到的主要星座是不同的，它们依次是：狮子座、天蝎座、飞马座和猎户座。\n\n# 1. 春季星空\n\n春季星空（图7-3-1）的代表星座是狮子座。春季傍晚观察南方天空，可看见6颗亮星构成一个反写的问号，“反问号”的那一点是狮子座最亮的星——狮子座  $\\alpha$  ，是一颗白色1等星，我国古代称为“轩辕十四”",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_025_科学_7年级上册_沪教版_2012版_三_四季星空_main_115_f8ae2def_big_001",
+    "parent_index": 1,
+    "small_index": 1
+  },
+  {
+    "chunk_id": "science_textbooks_025_科学_7年级上册_沪教版_2012版_三_四季星空_main_115_f8ae2def_big_001_small_002",
+    "source": "science_textbooks/025_科学_7年级上册_沪教版_2012版_三_四季星空_main_115.md",
+    "content": "观察南方天空，可看见6颗亮星构成一个反写的问号，“反问号”的那一点是狮子座最亮的星——狮子座  $\\alpha$  ，是一颗白色1等星，我国古代称为“轩辕十四”。与狮子座有关的天象中最著名的是狮子座流星雨，每年11月17日左右出现，每隔33年会发生绚丽的流星雨。在北天，从北斗星斗柄几颗星（ $\\delta$ 、 $\\varepsilon$ 、 $\\zeta$ 、 $\\eta$ ）连成的曲线延长，可以找到牧夫座最亮的大角星（牧夫座  $\\alpha$ ），把这条曲线从大角星再延长一倍，可找到另一颗亮星角宿一（室女座  $\\alpha$  星），这条曲线就是著名的“春季大弧线”。\n\n图7-3-1 春季星空",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_025_科学_7年级上册_沪教版_2012版_三_四季星空_main_115_f8ae2def_big_001",
+    "parent_index": 1,
+    "small_index": 2
+  },
+  {
+    "chunk_id": "science_textbooks_026_科学_7年级下册_沪教版_2012版_三_土壤是一个自然综合体_main_187_2d9ddbd3_big_001_small_001",
+    "source": "science_textbooks/026_科学_7年级下册_沪教版_2012版_三_土壤是一个自然综合体_main_187.md",
+    "content": "# 初中科学教材：科学_7年级下册_沪教版_2012版 - 三、土壤是一个自然综合体\n\n## 教材元信息\n- 教材：科学_7年级下册_沪教版_2012版\n- 年级：7\n- 册次：下册\n- 出版社：沪教版\n- 学段：初中\n- 章节：三、土壤是一个自然综合体\n- 内容类型：experiment\n- 原始 token 数：566\n- 原始文件：../ch-3/knowledge_base_builder/data/textbooks/初中科学/沪教版初中科学/科学_7年级下册_沪教版_2012版_三、土壤是一个自然综合体_main_187.md\n\n## 教材正文\n# 后记\n\n《科学（七年级下册）》是根据教育部《义务教育初中科学课程标准（2011年版）》编写的课程标准实验教科书，适于课程改革实验区七年级第二学期使用。\n\n《科学》以全面提高学生的科学素养为根本目的，以学生终身学习和发展的需求为基本着眼点。教材体现了自然科学不同领域之间的内在联系，按照学生的认知发展过程编排和组织内容，设计主题或专题，涵盖了生物、物理、化学、自然地理和天文等学科领域，力图实现整体优化。编者期望在本套教材基础上开设的",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_026_科学_7年级下册_沪教版_2012版_三_土壤是一个自然综合体_main_187_2d9ddbd3_big_001",
+    "parent_index": 1,
+    "small_index": 1
+  },
+  {
+    "chunk_id": "science_textbooks_026_科学_7年级下册_沪教版_2012版_三_土壤是一个自然综合体_main_187_2d9ddbd3_big_001_small_002",
+    "source": "science_textbooks/026_科学_7年级下册_沪教版_2012版_三_土壤是一个自然综合体_main_187.md",
+    "content": "在联系，按照学生的认知发展过程编排和组织内容，设计主题或专题，涵盖了生物、物理、化学、自然地理和天文等学科领域，力图实现整体优化。编者期望在本套教材基础上开设的科学课程能够使学生在学习科学知识的同时，激发对自然、对科学的热情，激发对学习科学、探究未知事物的兴趣，提高实践能力和创新意识，培养科学态度、情感和价值观。本套教材于2001年起在国内部分实验区使用，本次根据《义务教育初中科学课程标准（2011年版）》作了全面修订。\n\n光照、温度、水、空气和土壤是地球上生物生存环境的五个基本要素，本册教材将其有机关联在一起，勾画出地球上生物生存环境的整体面貌。各章内容大体上遵循了由表及里、由静到动、由直观到抽象、由感性到理性、由定性到定量的设计思想。这样的设计不仅符合学生的认知规律，而且便于揭示事物之间的内在逻辑关系。",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_026_科学_7年级下册_沪教版_2012版_三_土壤是一个自然综合体_main_187_2d9ddbd3_big_001",
+    "parent_index": 1,
+    "small_index": 2
+  },
+  {
+    "chunk_id": "science_textbooks_027_科学_8年级上册_沪教版_2013版_三_大气压强_main_049_05649647_big_001_small_001",
+    "source": "science_textbooks/027_科学_8年级上册_沪教版_2013版_三_大气压强_main_049.md",
+    "content": "# 初中科学教材：科学_8年级上册_沪教版_2013版 - 三、大气压强\n\n## 教材元信息\n- 教材：科学_8年级上册_沪教版_2013版\n- 年级：8\n- 册次：上册\n- 出版社：沪教版\n- 学段：初中\n- 章节：三、大气压强\n- 内容类型：exercise\n- 原始 token 数：455\n- 原始文件：../ch-3/knowledge_base_builder/data/textbooks/初中科学/沪教版初中科学/科学_8年级上册_沪教版_2013版_三、大气压强_main_049.md\n\n## 教材正文\n# 交流·研讨\n\n1. 把手分别放在胸部和腹部，深呼吸，细细体会吸气和呼气时胸腔和腹腔的变化，讨论一下大气压是如何帮我们实现呼吸的。  \n2. 如图3-3-11所示，患者输液时，玻璃吊瓶的瓶口除了插着一根输液管外，还要插上一根排气管，它的作用是让空气通过排气管的过滤网进入瓶内，保持瓶内气压与大气压相同，药水才能流出来。如果把玻璃瓶换成塑料袋，还要插排气管吗？为什么？\n\n图3-3-11 输液吊瓶\n\n由于大气压随着海拔高度的升高而降低，水的沸点随着压强的降低而降低，因此在高山",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_027_科学_8年级上册_沪教版_2013版_三_大气压强_main_049_05649647_big_001",
+    "parent_index": 1,
+    "small_index": 1
+  },
+  {
+    "chunk_id": "science_textbooks_027_科学_8年级上册_沪教版_2013版_三_大气压强_main_049_05649647_big_001_small_002",
+    "source": "science_textbooks/027_科学_8年级上册_沪教版_2013版_三_大气压强_main_049.md",
+    "content": "来。如果把玻璃瓶换成塑料袋，还要插排气管吗？为什么？\n\n图3-3-11 输液吊瓶\n\n由于大气压随着海拔高度的升高而降低，水的沸点随着压强的降低而降低，因此在高山上如果用普通的锅就不容易把饭煮熟。使用高压锅时，锅内的气压可以大于外面的大气压，水的沸点升高，这样就能把饭煮熟。\n\n用气压计可以测量不同高度处的大气压，根据大气压随高度变化的原理，可以制成测高仪，供登山爱好者使用。",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_027_科学_8年级上册_沪教版_2013版_三_大气压强_main_049_05649647_big_001",
+    "parent_index": 1,
+    "small_index": 2
+  },
+  {
+    "chunk_id": "science_textbooks_028_科学_8年级下册_沪教版_2013版_三_植物的运动_main_082_fac99b72_big_001_small_001",
+    "source": "science_textbooks/028_科学_8年级下册_沪教版_2013版_三_植物的运动_main_082.md",
+    "content": "# 初中科学教材：科学_8年级下册_沪教版_2013版 - 三、植物的运动\n\n## 教材元信息\n- 教材：科学_8年级下册_沪教版_2013版\n- 年级：8\n- 册次：下册\n- 出版社：沪教版\n- 学段：初中\n- 章节：三、植物的运动\n- 内容类型：concept\n- 原始 token 数：229\n- 原始文件：../ch-3/knowledge_base_builder/data/textbooks/初中科学/沪教版初中科学/科学_8年级下册_沪教版_2013版_三、植物的运动_main_082.md\n\n## 教材正文\n# 三、植物的运动\n\n当你轻轻触碰含羞草的叶子，它会将小叶片轻轻合拢；再如轻挠紫薇（俗名痒痒树）的树皮，你会看到树梢的叶子都在抖动……\n\n植物真的也会动吗？\n\n图3-3-1 含羞草合拢的叶子\n\n# 根的向性生长\n\n农民播种时随机地把种子撒到土壤中，但长出的庄稼根总是朝下的。你想过这是为什么吗？长在河堤边的植物，根总是朝河床方向长，这又是为什么呢？",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_028_科学_8年级下册_沪教版_2013版_三_植物的运动_main_082_fac99b72_big_001",
+    "parent_index": 1,
+    "small_index": 1
+  },
+  {
+    "chunk_id": "science_textbooks_028_科学_8年级下册_沪教版_2013版_三_植物的运动_main_082_fac99b72_big_001_small_002",
+    "source": "science_textbooks/028_科学_8年级下册_沪教版_2013版_三_植物的运动_main_082.md",
+    "content": "根总是朝河床方向长，这又是为什么呢？",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_028_科学_8年级下册_沪教版_2013版_三_植物的运动_main_082_fac99b72_big_001",
+    "parent_index": 1,
+    "small_index": 2
+  },
+  {
+    "chunk_id": "science_textbooks_029_科学_9年级上册_沪教版_2013版_三_利用化学反应实现能量转化_main_092_6a35946f_big_001_small_001",
+    "source": "science_textbooks/029_科学_9年级上册_沪教版_2013版_三_利用化学反应实现能量转化_main_092.md",
+    "content": "# 初中科学教材：科学_9年级上册_沪教版_2013版 - 三、利用化学反应实现能量转化\n\n## 教材元信息\n- 教材：科学_9年级上册_沪教版_2013版\n- 年级：9\n- 册次：上册\n- 出版社：沪教版\n- 学段：初中\n- 章节：三、利用化学反应实现能量转化\n- 内容类型：experiment\n- 原始 token 数：1026\n- 原始文件：../ch-3/knowledge_base_builder/data/textbooks/初中科学/沪教版初中科学/科学_9年级上册_沪教版_2013版_三、利用化学反应实现能量转化_main_092.md\n\n## 教材正文\n13. 酸、碱、盐在工农业生产和日常生活中有许多重要用途。很多化学肥料都属于盐类，主要的化学肥料有氮肥、磷肥、钾肥三类。  \n14. 浓硫酸具有一些特殊性质，它有极强的腐蚀性。使用强酸、强碱时要注意安全。  \n15. 酸和碱能发生中和反应，生成盐和水。  \n16. 两种化合物相互交换成分，生成两种新的化合物的反应叫做复分解反应。复分解反应的发生要满足一定的条件，生成物中有沉淀、气体或者有水时，复分解反应才能发生。酸、碱",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_029_科学_9年级上册_沪教版_2013版_三_利用化学反应实现能量转化_main_092_6a35946f_big_001",
+    "parent_index": 1,
+    "small_index": 1
+  },
+  {
+    "chunk_id": "science_textbooks_029_科学_9年级上册_沪教版_2013版_三_利用化学反应实现能量转化_main_092_6a35946f_big_001_small_002",
+    "source": "science_textbooks/029_科学_9年级上册_沪教版_2013版_三_利用化学反应实现能量转化_main_092.md",
+    "content": ". 两种化合物相互交换成分，生成两种新的化合物的反应叫做复分解反应。复分解反应的发生要满足一定的条件，生成物中有沉淀、气体或者有水时，复分解反应才能发生。酸、碱、盐之间的反应大多属于复分解反应。  \n17. 自然界中存在着碳、氮、氧元素的循环及其构成物质的转化，碳、氮、氧的循环具有重要的意义。  \n18. 金属单质、金属氧化物、碱与盐，非金属单质、非金属氧化物、酸与盐之间存在着一定的转化关系，利用这些转化关系，可以研究物质的性质、制备物质以及鉴别和提纯物质。  \n19. 应用化学反应可以制备物质。利用双氧水的分解反应、高锰酸钾的分解反应可以制取氧气。用稀盐酸与大理石发生的反应可以制取二氧化碳。  \n20. 化学科学中最有创造性的工作就是设计和制备新物质。在人工合成的新物质中，最有代表性的就是塑料、合成纤维、合成橡胶。  \n21. 实验室制取气体，首先要确定反应原理和药品；然后依据反应物状态和反应条件确定气体发生装置，依据气体性质确定气体收集装置；最后考虑具体的实验操作。  \n22. 化学变化伴随着热量的吸收或释放。化学反应伴随着热量变化是化学反应的基本特征之一。化学反应所产生的热能是人",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_029_科学_9年级上册_沪教版_2013版_三_利用化学反应实现能量转化_main_092_6a35946f_big_001",
+    "parent_index": 1,
+    "small_index": 2
+  },
+  {
+    "chunk_id": "science_textbooks_029_科学_9年级上册_沪教版_2013版_三_利用化学反应实现能量转化_main_092_6a35946f_big_001_small_003",
+    "source": "science_textbooks/029_科学_9年级上册_沪教版_2013版_三_利用化学反应实现能量转化_main_092.md",
+    "content": "确定气体收集装置；最后考虑具体的实验操作。  \n22. 化学变化伴随着热量的吸收或释放。化学反应伴随着热量变化是化学反应的基本特征之一。化学反应所产生的热能是人类生产和生活中所需能量的重要来源之一。电池是将化学能转化为电能的装置。化学科学将在能源的开发和利用等方面发挥着重要的作用。  \n23. 由一种反应物生成两种或两种以上新物质，这样的反应叫做分解反应。由两种或两种以上物质生成一种新物质的反应叫做化合反应。  \n24. 在化学反应中能加快其他物质的化学反应速率，本身的质量和化学性质在化学反应前后都没有变化的物质叫做催化剂。催化剂在化学反应中的作用叫做催化作用。催化剂在许多化学反应中有十分重要的作用。\n\n# 生物体内外的物质、能量交换及转化\n\n第四章 生物体怎样获得营养\n\n第五章 生物体怎样获得能量\n\n第六章 物质在人体内的运输\n\n本篇小结",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_029_科学_9年级上册_沪教版_2013版_三_利用化学反应实现能量转化_main_092_6a35946f_big_001",
+    "parent_index": 1,
+    "small_index": 3
+  },
+  {
+    "chunk_id": "science_textbooks_030_科学_9年级下册_沪教版_2013版_三_生物的进化_main_056_7bb39d90_big_001_small_001",
+    "source": "science_textbooks/030_科学_9年级下册_沪教版_2013版_三_生物的进化_main_056.md",
+    "content": "# 初中科学教材：科学_9年级下册_沪教版_2013版 - 三、生物的进化\n\n## 教材元信息\n- 教材：科学_9年级下册_沪教版_2013版\n- 年级：9\n- 册次：下册\n- 出版社：沪教版\n- 学段：初中\n- 章节：三、生物的进化\n- 内容类型：concept\n- 原始 token 数：421\n- 原始文件：../ch-3/knowledge_base_builder/data/textbooks/初中科学/沪教版初中科学/科学_9年级下册_沪教版_2013版_三、生物的进化_main_056.md\n\n## 教材正文\n# 资料卡\n\n# 达尔文\n\n达尔文（Charles Robert Darwin，1809～1882）是英国生物学家，进化论的主要奠基人。1831年，达尔文毕业于剑桥大学，同年12月27日参加英国海军贝格尔舰环绕世界的考察航行，先在南美洲东海岸的巴西、阿根廷等地和西海岸及相邻的岛屿上考察，然后跨太平洋至大洋洲，继而越过印度洋到达南非，再绕好望角经大西洋回到巴西，最\n\n后于1836年10月2日返回英国。这5年的旅行考察促使他思索物种起源的问题。他研究了各方面的大量证据，逐",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_030_科学_9年级下册_沪教版_2013版_三_生物的进化_main_056_7bb39d90_big_001",
+    "parent_index": 1,
+    "small_index": 1
+  },
+  {
+    "chunk_id": "science_textbooks_030_科学_9年级下册_沪教版_2013版_三_生物的进化_main_056_7bb39d90_big_001_small_002",
+    "source": "science_textbooks/030_科学_9年级下册_沪教版_2013版_三_生物的进化_main_056.md",
+    "content": "而越过印度洋到达南非，再绕好望角经大西洋回到巴西，最\n\n后于1836年10月2日返回英国。这5年的旅行考察促使他思索物种起源的问题。他研究了各方面的大量证据，逐渐认识到，形形色色的物种实际都是由共同祖先进化而来的。他通过植物栽培和家畜驯养的事例，感到进化的原因可能是大自然对生物采取了类似的选择方式——去劣存优。他还注意到，生物界中普遍存在着个体差异；适应环境的物种可以孳生繁衍，不适应的则可能灭绝。他又从T.R.马尔萨斯的《人口论》中得到启示：\n\n图2-3-4 达尔文",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_030_科学_9年级下册_沪教版_2013版_三_生物的进化_main_056_7bb39d90_big_001",
+    "parent_index": 1,
+    "small_index": 2
+  },
+  {
+    "chunk_id": "science_textbooks_031_科学_7年级上册_沪教版_2012版_三_声音的特征_main_183_eaf03615_big_001_small_001",
+    "source": "science_textbooks/031_科学_7年级上册_沪教版_2012版_三_声音的特征_main_183.md",
+    "content": "# 初中科学教材：科学_7年级上册_沪教版_2012版 - 三、声音的特征\n\n## 教材元信息\n- 教材：科学_7年级上册_沪教版_2012版\n- 年级：7\n- 册次：上册\n- 出版社：沪教版\n- 学段：初中\n- 章节：三、声音的特征\n- 内容类型：experiment\n- 原始 token 数：604\n- 原始文件：../ch-3/knowledge_base_builder/data/textbooks/初中科学/沪教版初中科学/科学_7年级上册_沪教版_2012版_三、声音的特征_main_183.md\n\n## 教材正文\n本册的主题是“观察和感受周围的世界”。面对刚刚升入初中的学生，作为一门新的科学课程的开始，本册教材引导他们借助初步的科学方法认识新的学习环境，进而认识我们周围的世界。这一册涉及的科学方法主要是观察、测量、调查和模型，在运用这些方法认识校园之后，探究的对象从微生物到动植物，从常见的物质到四季星空再到我们自身，最后探究光和声，视觉和听觉，并对最初提出的我们怎样认识世界的问题给出初步回答。本册教材立足于学生已有的知识和经验，由近及远，由表及里，由简单到复杂，对科学知识",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_031_科学_7年级上册_沪教版_2012版_三_声音的特征_main_183_eaf03615_big_001",
+    "parent_index": 1,
+    "small_index": 1
+  },
+  {
+    "chunk_id": "science_textbooks_031_科学_7年级上册_沪教版_2012版_三_声音的特征_main_183_eaf03615_big_001_small_002",
+    "source": "science_textbooks/031_科学_7年级上册_沪教版_2012版_三_声音的特征_main_183.md",
+    "content": "，最后探究光和声，视觉和听觉，并对最初提出的我们怎样认识世界的问题给出初步回答。本册教材立足于学生已有的知识和经验，由近及远，由表及里，由简单到复杂，对科学知识的关联和层次、科学方法的运用和扩展都作了较为细致的设计，力图较为充分地体现科学课程的特点，发挥其优势。教材在表述方式上尽可能亲切、平易，情境设计尽可能贴近学生生活，通过对平凡现象的探究揭示事物的本质和规律，使学生感受到科学探究的乐趣和妙处。\n\n上海教育出版社的同志为本书的出版付出了极为艰辛的劳动，\n\n《科学》编写组\n\n2012年5月\n\n义务教育教科书\n\n# 科学\n\n七年级上册\n\n上海世纪出版股份有限公司\n\n易文网：www ewen.cc\n\n(上海永福路123号 邮政编码：200031)\n\n2012年10月第1版 2019年7月第2次印刷\n\n此书如有印、装质量问题，请向工厂调换\n\n责任编辑 隋淑光\n\n美术编辑 郑艺 顾云明\n\n封面设计 陆弦",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_031_科学_7年级上册_沪教版_2012版_三_声音的特征_main_183_eaf03615_big_001",
+    "parent_index": 1,
+    "small_index": 2
+  },
+  {
+    "chunk_id": "science_textbooks_032_科学_7年级下册_沪教版_2012版_三_海水制盐_main_131_cc23cf5c_big_001_small_001",
+    "source": "science_textbooks/032_科学_7年级下册_沪教版_2012版_三_海水制盐_main_131.md",
+    "content": "# 初中科学教材：科学_7年级下册_沪教版_2012版 - 三、海水制盐\n\n## 教材元信息\n- 教材：科学_7年级下册_沪教版_2012版\n- 年级：7\n- 册次：下册\n- 出版社：沪教版\n- 学段：初中\n- 章节：三、海水制盐\n- 内容类型：experiment\n- 原始 token 数：496\n- 原始文件：../ch-3/knowledge_base_builder/data/textbooks/初中科学/沪教版初中科学/科学_7年级下册_沪教版_2012版_三、海水制盐_main_131.md\n\n## 教材正文\n操作指南：使用酒精灯时应该用酒精灯的外焰加热，还应注意：①不要向燃着的酒精灯里添加酒精；②不要用酒精灯引燃另一盏酒精灯；③用完酒精灯后，必须用灯帽盖灭，不能用嘴吹；④万一碰倒酒精灯，洒出的酒精在桌上燃烧时，不要惊慌，应立刻用湿抹布扑盖。\n\n图7-3-6 蒸发装置\n\n4. 用玻璃棒把固体转移到纸上，回收到教师指定的容器里。比较提纯前后食盐的状态，评价提纯的效果。\n\n讨论：在进行过滤和蒸发时应注意哪几点？为什么？\n\n# 思考·练习\n\n1. 食盐是生产、生活中常见的物质，有",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_032_科学_7年级下册_沪教版_2012版_三_海水制盐_main_131_cc23cf5c_big_001",
+    "parent_index": 1,
+    "small_index": 1
+  },
+  {
+    "chunk_id": "science_textbooks_032_科学_7年级下册_沪教版_2012版_三_海水制盐_main_131_cc23cf5c_big_001_small_002",
+    "source": "science_textbooks/032_科学_7年级下册_沪教版_2012版_三_海水制盐_main_131.md",
+    "content": "的容器里。比较提纯前后食盐的状态，评价提纯的效果。\n\n讨论：在进行过滤和蒸发时应注意哪几点？为什么？\n\n# 思考·练习\n\n1. 食盐是生产、生活中常见的物质，有广泛的用途。\n\n(1) 海水中含有较多的氯化钠, 用海水晒盐可以获得食盐, 请说出海水晒盐依据的原理。  \n(2) 海水晒盐制得的食盐中含有泥沙等不溶性的杂质, 如何将泥沙等除去以制得较纯净的食盐?\n\n2. 在粗盐提纯的实验中，要多次用到玻璃棒。请说出使用玻璃棒的步骤以及玻璃棒的作用。",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_032_科学_7年级下册_沪教版_2012版_三_海水制盐_main_131_cc23cf5c_big_001",
+    "parent_index": 1,
+    "small_index": 2
+  },
+  {
+    "chunk_id": "science_textbooks_033_科学_8年级上册_沪教版_2013版_三_物质组成的表示方法_main_260_b1f049ea_big_001_small_001",
+    "source": "science_textbooks/033_科学_8年级上册_沪教版_2013版_三_物质组成的表示方法_main_260.md",
+    "content": "# 初中科学教材：科学_8年级上册_沪教版_2013版 - 三、物质组成的表示方法\n\n## 教材元信息\n- 教材：科学_8年级上册_沪教版_2013版\n- 年级：8\n- 册次：上册\n- 出版社：沪教版\n- 学段：初中\n- 章节：三、物质组成的表示方法\n- 内容类型：concept\n- 原始 token 数：682\n- 原始文件：../ch-3/knowledge_base_builder/data/textbooks/初中科学/沪教版初中科学/科学_8年级上册_沪教版_2013版_三、物质组成的表示方法_main_260.md\n\n## 教材正文\n本册教材的主题是“世界的基本构成层次”，依次介绍地球的构成层次、宇宙的构成层次、生物体的构成层次和物质的构成层次，全面揭示物质世界构成的层次性，从而不仅在科学知识和方法上概括了人类对物质世界认识的主要结果，而且勾画出现代科学观点下的整个自然图景，将上述认识上升到哲学层次。这一册各篇章的基本设计和表述方式坚持了本教材一贯的风格：由近及远、由表及里、由简及繁、由直观到抽象，充分尊重和借助学生的已有经验和认识能力，逐步提高他们的认识水平，较为系统地学",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_033_科学_8年级上册_沪教版_2013版_三_物质组成的表示方法_main_260_b1f049ea_big_001",
+    "parent_index": 1,
+    "small_index": 1
+  },
+  {
+    "chunk_id": "science_textbooks_033_科学_8年级上册_沪教版_2013版_三_物质组成的表示方法_main_260_b1f049ea_big_001_small_002",
+    "source": "science_textbooks/033_科学_8年级上册_沪教版_2013版_三_物质组成的表示方法_main_260.md",
+    "content": "本设计和表述方式坚持了本教材一贯的风格：由近及远、由表及里、由简及繁、由直观到抽象，充分尊重和借助学生的已有经验和认识能力，逐步提高他们的认识水平，较为系统地学习科学方法，形成科学的世界观。例如，关于宇宙的构成层次，不是采取严谨的学科体系，从宇宙的整体结构出发，由整体到局部给出静态的、结论式的描述，而是完全相反，由脚下的地球，到学生较为熟悉的地月系、容易理解的太阳系，再到相对遥远和抽象的银河系、本星系群，直到目前人类观察到的整个宇宙，循序渐进，层层展开，不仅概括了现代天文学关于宇宙构造层次的主要结果，而且展现了人类获得这一结果的认识过程。\n\n上海教育出版社的同志为本书的出版付出了极为艰辛的劳动，\n\n《科学》编写组\n\n2013年5月\n\n义务教育教科书\n\n# 科学\n\n八年级上册\n\n上海世纪出版股份有限公司\n\n上海教育出版社出版\n\n(上海永福路123号\n\n邮政编码：200031)\n\n各地发行\n\n2013年8月第1版\n\n2019年7月第2次印刷\n\n审图号GS(2012)2410号\n\n上海市物价局价格审查批准文号：沪价费专(2013)05号",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_033_科学_8年级上册_沪教版_2013版_三_物质组成的表示方法_main_260_b1f049ea_big_001",
+    "parent_index": 1,
+    "small_index": 2
+  },
+  {
+    "chunk_id": "science_textbooks_033_科学_8年级上册_沪教版_2013版_三_物质组成的表示方法_main_260_b1f049ea_big_001_small_003",
+    "source": "science_textbooks/033_科学_8年级上册_沪教版_2013版_三_物质组成的表示方法_main_260.md",
+    "content": "2次印刷\n\n审图号GS(2012)2410号\n\n上海市物价局价格审查批准文号：沪价费专(2013)05号",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_033_科学_8年级上册_沪教版_2013版_三_物质组成的表示方法_main_260_b1f049ea_big_001",
+    "parent_index": 1,
+    "small_index": 3
+  },
+  {
+    "chunk_id": "science_textbooks_034_科学_8年级下册_沪教版_2013版_三_气温的变化与分布_main_155_9fe1b006_big_001_small_001",
+    "source": "science_textbooks/034_科学_8年级下册_沪教版_2013版_三_气温的变化与分布_main_155.md",
+    "content": "# 初中科学教材：科学_8年级下册_沪教版_2013版 - 三、气温的变化与分布\n\n## 教材元信息\n- 教材：科学_8年级下册_沪教版_2013版\n- 年级：8\n- 册次：下册\n- 出版社：沪教版\n- 学段：初中\n- 章节：三、气温的变化与分布\n- 内容类型：exercise\n- 原始 token 数：514\n- 原始文件：../ch-3/knowledge_base_builder/data/textbooks/初中科学/沪教版初中科学/科学_8年级下册_沪教版_2013版_三、气温的变化与分布_main_155.md\n\n## 教材正文\n1. 在图中找出年平均气温在  $20^{\\circ} \\mathrm{C}$  以上的地区和  $0^{\\circ} \\mathrm{C}$  以下的地区，看一看它们主要分布在哪个纬度地带。  \n2. 世界气温分布由低纬度向高纬度有什么变化规律？变化的原因是什么？  \n3. 同纬度地带的陆地和海洋气温相同吗？\n\n气温的分布主要受纬度位置、海陆位置等因素的影响。一般来说，低纬度地区气温高，高纬度地区气温低；而海洋与陆地受热情况的差异，使同纬度地区海",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_034_科学_8年级下册_沪教版_2013版_三_气温的变化与分布_main_155_9fe1b006_big_001",
+    "parent_index": 1,
+    "small_index": 1
+  },
+  {
+    "chunk_id": "science_textbooks_034_科学_8年级下册_沪教版_2013版_三_气温的变化与分布_main_155_9fe1b006_big_001_small_002",
+    "source": "science_textbooks/034_科学_8年级下册_沪教版_2013版_三_气温的变化与分布_main_155.md",
+    "content": "地和海洋气温相同吗？\n\n气温的分布主要受纬度位置、海陆位置等因素的影响。一般来说，低纬度地区气温高，高纬度地区气温低；而海洋与陆地受热情况的差异，使同纬度地区海洋与陆地的气温不同，一般夏季陆地气温高，海洋气温低，冬季则相反。此外，在高原山地，气温随海拔高度的升高逐渐降低，大约每升高  $100\\mathrm{m}$ ，气温下降  $0.6\\%$ 。\n\n我国各地气温的分布也有很大差异。以冬季为例，从我国1月份气温分布图（图7-3-7）上可以看出，冬季我国气温由南向北降低，南北温差很大。黑龙江北部冬季寒冷漫长，一片冰天雪地的北国风光；海南岛和南海诸岛则是长夏无冬、高温多雨的热带景象。\n\n图7-3-7 中国1月份气温分布图",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_034_科学_8年级下册_沪教版_2013版_三_气温的变化与分布_main_155_9fe1b006_big_001",
+    "parent_index": 1,
+    "small_index": 2
+  },
+  {
+    "chunk_id": "science_textbooks_035_科学_9年级上册_沪教版_2013版_三_秩序井然的体内运输_main_159_e305e026_big_001_small_001",
+    "source": "science_textbooks/035_科学_9年级上册_沪教版_2013版_三_秩序井然的体内运输_main_159.md",
+    "content": "# 初中科学教材：科学_9年级上册_沪教版_2013版 - 三、秩序井然的体内运输\n\n## 教材元信息\n- 教材：科学_9年级上册_沪教版_2013版\n- 年级：9\n- 册次：上册\n- 出版社：沪教版\n- 学段：初中\n- 章节：三、秩序井然的体内运输\n- 内容类型：reading\n- 原始 token 数：774\n- 原始文件：../ch-3/knowledge_base_builder/data/textbooks/初中科学/沪教版初中科学/科学_9年级上册_沪教版_2013版_三、秩序井然的体内运输_main_159.md\n\n## 教材正文\n# 拓展视野\n\n# 冠脉循环和冠心病\n\n心脏的工作效率很高，消耗的能量也很多。那么心脏本身的营养和能量从哪里来呢？\n\n原来，在主动脉基部有左、右两条冠状动脉分支出来，然后再分成小支，盘绕在心脏外面，逐渐分成无数小支进入心肌内。营养物质和氧气就通过这密集的血管网送到心脏。心肌细胞吸取氧和营养物质后，鲜红的动脉血变成暗红的静脉血，由小静脉逐渐汇合成大的冠状静脉，直接流进右心房。由于冠状动脉的分布特殊，其中的血液没有流经体循环，且循环途径也短，所以称",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_035_科学_9年级上册_沪教版_2013版_三_秩序井然的体内运输_main_159_e305e026_big_001",
+    "parent_index": 1,
+    "small_index": 1
+  },
+  {
+    "chunk_id": "science_textbooks_035_科学_9年级上册_沪教版_2013版_三_秩序井然的体内运输_main_159_e305e026_big_001_small_002",
+    "source": "science_textbooks/035_科学_9年级上册_沪教版_2013版_三_秩序井然的体内运输_main_159.md",
+    "content": "养物质后，鲜红的动脉血变成暗红的静脉血，由小静脉逐渐汇合成大的冠状静脉，直接流进右心房。由于冠状动脉的分布特殊，其中的血液没有流经体循环，且循环途径也短，所以称“冠脉循环”。\n\n冠脉循环虽然很短，但血流量却很大。人体在安静时，通过冠脉循环的血液量，大约占心脏输出血量的  $1 / 20$  。心脏的重量一般只有  $260 \\mathrm{~g}$  左右，1分钟流入冠状动脉的血量几乎等于心脏本身的重量。只有这么大的血流量才能保证心肌营养和代谢的需要。心脏工作量越大，需要能量越多，冠状动脉血流量也越大。如果冠脉循环正常，即使进行剧烈运动，心脏本身也不会缺乏营养物质和氧气。但是，如果冠状\n\n动脉受到损害，如发生冠状动脉硬化、管腔狭窄、堵塞等（图6-3-2），即可造成心肌缺血、缺氧，从而发生一系列的症状(如胸闷、心绞痛等)，甚至发生心肌梗死而危及生命。这种病变就是冠状动脉粥样硬化性心脏病，俗称冠心病，其实质是心肌缺血，所以也称为缺血性心脏病。\n\n图6-3-2 冠状动脉堵塞示意图",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_035_科学_9年级上册_沪教版_2013版_三_秩序井然的体内运输_main_159_e305e026_big_001",
+    "parent_index": 1,
+    "small_index": 2
+  },
+  {
+    "chunk_id": "science_textbooks_035_科学_9年级上册_沪教版_2013版_三_秩序井然的体内运输_main_159_e305e026_big_001_small_003",
+    "source": "science_textbooks/035_科学_9年级上册_沪教版_2013版_三_秩序井然的体内运输_main_159.md",
+    "content": "性心脏病。\n\n图6-3-2 冠状动脉堵塞示意图",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_035_科学_9年级上册_沪教版_2013版_三_秩序井然的体内运输_main_159_e305e026_big_001",
+    "parent_index": 1,
+    "small_index": 3
+  },
+  {
+    "chunk_id": "science_textbooks_036_科学_9年级下册_沪教版_2013版_三_能源_main_148_8a7d2bf5_big_001_small_001",
+    "source": "science_textbooks/036_科学_9年级下册_沪教版_2013版_三_能源_main_148.md",
+    "content": "# 初中科学教材：科学_9年级下册_沪教版_2013版 - 三、能源\n\n## 教材元信息\n- 教材：科学_9年级下册_沪教版_2013版\n- 年级：9\n- 册次：下册\n- 出版社：沪教版\n- 学段：初中\n- 章节：三、能源\n- 内容类型：concept\n- 原始 token 数：255\n- 原始文件：../ch-3/knowledge_base_builder/data/textbooks/初中科学/沪教版初中科学/科学_9年级下册_沪教版_2013版_三、能源_main_148.md\n\n## 教材正文\n地表，随着水流经地表流入湖泊、海洋。千百年来，人们一直利用水力推动的水车碾磨谷物。今天，人们建造水力发电站，用水力发电（图7-3-11）。开发水能对江河的综合治理和综合利用具有积极作用，对促进国民经济发展，改善能源消费结构，缓解由于消耗煤炭、石油资源所带来的环境污染有重要意义，因此世界各国都把开发水能放在能源发展战略的优先地位。不过大坝拦截河流对周围的环境可能产生不良的影响，因此必须认真分析其利弊。\n\n图7-3-11 水力发电站",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_036_科学_9年级下册_沪教版_2013版_三_能源_main_148_8a7d2bf5_big_001",
+    "parent_index": 1,
+    "small_index": 1
+  },
+  {
+    "chunk_id": "science_textbooks_036_科学_9年级下册_沪教版_2013版_三_能源_main_148_8a7d2bf5_big_001_small_002",
+    "source": "science_textbooks/036_科学_9年级下册_沪教版_2013版_三_能源_main_148.md",
+    "content": "不过大坝拦截河流对周围的环境可能产生不良的影响，因此必须认真分析其利弊。\n\n图7-3-11 水力发电站",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_036_科学_9年级下册_沪教版_2013版_三_能源_main_148_8a7d2bf5_big_001",
+    "parent_index": 1,
+    "small_index": 2
+  },
+  {
+    "chunk_id": "science_textbooks_037_科学_7年级上册_沪教版_2012版_三_透镜的秘密_main_149_314ff6cc_big_001_small_001",
+    "source": "science_textbooks/037_科学_7年级上册_沪教版_2012版_三_透镜的秘密_main_149.md",
+    "content": "# 初中科学教材：科学_7年级上册_沪教版_2012版 - 三、透镜的秘密\n\n## 教材元信息\n- 教材：科学_7年级上册_沪教版_2012版\n- 年级：7\n- 册次：上册\n- 出版社：沪教版\n- 学段：初中\n- 章节：三、透镜的秘密\n- 内容类型：exercise\n- 原始 token 数：501\n- 原始文件：../ch-3/knowledge_base_builder/data/textbooks/初中科学/沪教版初中科学/科学_7年级上册_沪教版_2012版_三、透镜的秘密_main_149.md\n\n## 教材正文\n(c)  \n图9-3-11 照相机、幻灯机和显微镜成像示意图\n\n# 操作·实践\n\n# 制作“简易照相机”\n\n材料与用具：两个能套在一起的硬纸筒、凸透镜、塑料薄膜(半透明，有类似于毛玻璃的效果)、透明胶带等。\n\n# 制作方法：\n\n1. 用透明胶带将凸透镜固定在做好的硬纸筒外筒的前端，内筒蒙上塑料薄膜，将内外筒套在一起。  \n2. 在室内, 把凸透镜对着明亮的室外。拉动纸筒, 改变透镜和塑料薄膜之间的距离, 直到在塑料薄膜上看到室外景物清晰的像。  \n3. 如果把塑料薄",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_037_科学_7年级上册_沪教版_2012版_三_透镜的秘密_main_149_314ff6cc_big_001",
+    "parent_index": 1,
+    "small_index": 1
+  },
+  {
+    "chunk_id": "science_textbooks_037_科学_7年级上册_沪教版_2012版_三_透镜的秘密_main_149_314ff6cc_big_001_small_002",
+    "source": "science_textbooks/037_科学_7年级上册_沪教版_2012版_三_透镜的秘密_main_149.md",
+    "content": "在一起。  \n2. 在室内, 把凸透镜对着明亮的室外。拉动纸筒, 改变透镜和塑料薄膜之间的距离, 直到在塑料薄膜上看到室外景物清晰的像。  \n3. 如果把塑料薄膜换成感光胶片，就可以得到照相底片。\n\n# 思考-练习\n\n1. 画出图9-3-12中折射光线的大致方向。  \n2. 粗略测出一个未知凸透镜的焦距。  \n3. 游泳池有水时看上去比实际深度要浅，为什么？  \n4. 拿一个空烧瓶，透过烧瓶观察书上的字；把烧瓶装满水，再透过烧瓶观察书上的字，两次观察的结果有什么不同？为什么？\n\n图9-3-12",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_037_科学_7年级上册_沪教版_2012版_三_透镜的秘密_main_149_314ff6cc_big_001",
+    "parent_index": 1,
+    "small_index": 2
+  },
+  {
+    "chunk_id": "science_textbooks_038_科学_7年级下册_沪教版_2012版_三_阳光带来了温暖_main_013_e584ac64_big_001_small_001",
+    "source": "science_textbooks/038_科学_7年级下册_沪教版_2012版_三_阳光带来了温暖_main_013.md",
+    "content": "# 初中科学教材：科学_7年级下册_沪教版_2012版 - 三、阳光带来了温暖\n\n## 教材元信息\n- 教材：科学_7年级下册_沪教版_2012版\n- 年级：7\n- 册次：下册\n- 出版社：沪教版\n- 学段：初中\n- 章节：三、阳光带来了温暖\n- 内容类型：concept\n- 原始 token 数：231\n- 原始文件：../ch-3/knowledge_base_builder/data/textbooks/初中科学/沪教版初中科学/科学_7年级下册_沪教版_2012版_三、阳光带来了温暖_main_013.md\n\n## 教材正文\n# 三、阳光带来了温暖\n\n在寒冷的冬日，人们总是渴望温暖的阳光，许多动物也要利用阳光取暖（图1-3-1）。冷血动物由于不能保持恒定的体温，当气温变低时更需要晒太阳取暖。晒太阳的动物伸展躯体，并保持平展的身体与光线垂直，以获取尽量多的热量。你知道这种做法有什么道理吗？\n\n蝴蝶展开翅膀获取热量  \n图1-3-1 动物吸取阳光的热量\n\n会变色的蜥蜴\n\n# 物体表面对光的吸收",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_038_科学_7年级下册_沪教版_2012版_三_阳光带来了温暖_main_013_e584ac64_big_001",
+    "parent_index": 1,
+    "small_index": 1
+  },
+  {
+    "chunk_id": "science_textbooks_038_科学_7年级下册_沪教版_2012版_三_阳光带来了温暖_main_013_e584ac64_big_001_small_002",
+    "source": "science_textbooks/038_科学_7年级下册_沪教版_2012版_三_阳光带来了温暖_main_013.md",
+    "content": "-3-1 动物吸取阳光的热量\n\n会变色的蜥蜴\n\n# 物体表面对光的吸收",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_038_科学_7年级下册_沪教版_2012版_三_阳光带来了温暖_main_013_e584ac64_big_001",
+    "parent_index": 1,
+    "small_index": 2
+  },
+  {
+    "chunk_id": "science_textbooks_039_科学_8年级上册_沪教版_2013版_三_行星_main_186_e0bc8d33_big_001_small_001",
+    "source": "science_textbooks/039_科学_8年级上册_沪教版_2013版_三_行星_main_186.md",
+    "content": "# 初中科学教材：科学_8年级上册_沪教版_2013版 - 三、行星\n\n## 教材元信息\n- 教材：科学_8年级上册_沪教版_2013版\n- 年级：8\n- 册次：上册\n- 出版社：沪教版\n- 学段：初中\n- 章节：三、行星\n- 内容类型：experiment\n- 原始 token 数：765\n- 原始文件：../ch-3/knowledge_base_builder/data/textbooks/初中科学/沪教版初中科学/科学_8年级上册_沪教版_2013版_三、行星_main_186.md\n\n## 教材正文\n# 活动-探究\n\n1. 用天文望远镜观测行星，画出行星的表面特征图。  \n2. 用天文望远镜观测是否有行星像月球一样有圆缺变化的现象，总结你的观测结果。\n\n# 天王星与海王星\n\n天王星和海王星距离我们十分遥远，在地球上用肉眼看不见它们。为了研究方便，科学家把地球到太阳的平均距离称作一个天文单位。天王星到太阳的距离是19个天文单位，而海王星离太阳差不多是30个天文单位。光从太阳跑到海王星大约需要4个小时。但那里还不是太阳系的边界。在海王星的轨道之外，还有冥王星等较小的行星，以及大量",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_039_科学_8年级上册_沪教版_2013版_三_行星_main_186_e0bc8d33_big_001",
+    "parent_index": 1,
+    "small_index": 1
+  },
+  {
+    "chunk_id": "science_textbooks_039_科学_8年级上册_沪教版_2013版_三_行星_main_186_e0bc8d33_big_001_small_002",
+    "source": "science_textbooks/039_科学_8年级上册_沪教版_2013版_三_行星_main_186.md",
+    "content": "文单位，而海王星离太阳差不多是30个天文单位。光从太阳跑到海王星大约需要4个小时。但那里还不是太阳系的边界。在海王星的轨道之外，还有冥王星等较小的行星，以及大量气体、尘埃和其他冰冻物质。科学研究表明，太阳系的直径大约一光年（光走一年的距离），也就是说光从太阳系的一端跑到另一端大约需要一年的时间。\n\n天王星的直径大约是地球的4倍，质量大约是地球的14倍，公转周期约84.3年，自转周期17个多小时，与金星一样也是自东向西旋转。天王星主要是由岩石与各种成分不同的水冰物质所组成，其组成主要元素为氢（ $83\\%$ ），其次为氦（ $15\\%$ ）。多数天文学家认为，天王星的结构包括三个层面：中心是相对较小的岩石的核，其半径不到天王星的 $20\\%$ ；核的外面是由冰构成的地幔；最外面是氢、氦组成的大气层。\n\n海王星的直径大约是地球的3.9倍，质量大约是地球的17倍，公转周期约164.8年，自转周期约16个小时。它的结构和天王星相似：行星核是一个质量大概不超过一个地球质量的由岩石和冰构成的混合体；核外面是由不同状态的冰（包括水）构成的冰幔，总质量相当于10到15个地球质量，富含水、氨、甲烷和其他",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_039_科学_8年级上册_沪教版_2013版_三_行星_main_186_e0bc8d33_big_001",
+    "parent_index": 1,
+    "small_index": 2
+  },
+  {
+    "chunk_id": "science_textbooks_039_科学_8年级上册_沪教版_2013版_三_行星_main_186_e0bc8d33_big_001_small_003",
+    "source": "science_textbooks/039_科学_8年级上册_沪教版_2013版_三_行星_main_186.md",
+    "content": "核是一个质量大概不超过一个地球质量的由岩石和冰构成的混合体；核外面是由不同状态的冰（包括水）构成的冰幔，总质量相当于10到15个地球质量，富含水、氨、甲烷和其他成分；外面是以氢、氦为主和微量甲烷组成的大气层。",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_039_科学_8年级上册_沪教版_2013版_三_行星_main_186_e0bc8d33_big_001",
+    "parent_index": 1,
+    "small_index": 3
+  },
+  {
+    "chunk_id": "science_textbooks_040_科学_8年级下册_沪教版_2013版_三_独辟蹊径的植物繁殖_main_130_236de626_big_001_small_001",
+    "source": "science_textbooks/040_科学_8年级下册_沪教版_2013版_三_独辟蹊径的植物繁殖_main_130.md",
+    "content": "# 初中科学教材：科学_8年级下册_沪教版_2013版 - 三、独辟蹊径的植物繁殖\n\n## 教材元信息\n- 教材：科学_8年级下册_沪教版_2013版\n- 年级：8\n- 册次：下册\n- 出版社：沪教版\n- 学段：初中\n- 章节：三、独辟蹊径的植物繁殖\n- 内容类型：reading\n- 原始 token 数：882\n- 原始文件：../ch-3/knowledge_base_builder/data/textbooks/初中科学/沪教版初中科学/科学_8年级下册_沪教版_2013版_三、独辟蹊径的植物繁殖_main_130.md\n\n## 教材正文\n# 拓展视野\n\n# 人工种子\n\n图5-3-4所示的晶莹剔透的小颗粒是黄连的人工种子。科学工作者利用组织培养的方法，培养出大量胚状体（1L培养液中能产生10万个胚状体），胚状体经过人工薄膜（人工胚乳）包装得到的种子称为人工种子。人工薄膜含有多种营养物质以及抗生\n\n图5-3-4 人工种子\n\n素、激素和杀虫剂等。由于人工种子的“胚状体”含有的是同一植物体提供的遗传物质，因此遗传信息与供体完全相同。通过这种方法，可以\n\n使珍稀植物扩大繁殖，达到挽救珍稀",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_040_科学_8年级下册_沪教版_2013版_三_独辟蹊径的植物繁殖_main_130_236de626_big_001",
+    "parent_index": 1,
+    "small_index": 1
+  },
+  {
+    "chunk_id": "science_textbooks_040_科学_8年级下册_沪教版_2013版_三_独辟蹊径的植物繁殖_main_130_236de626_big_001_small_002",
+    "source": "science_textbooks/040_科学_8年级下册_沪教版_2013版_三_独辟蹊径的植物繁殖_main_130.md",
+    "content": "素、激素和杀虫剂等。由于人工种子的“胚状体”含有的是同一植物体提供的遗传物质，因此遗传信息与供体完全相同。通过这种方法，可以\n\n使珍稀植物扩大繁殖，达到挽救珍稀植物的目的。目前，人工种子多用于名贵药材、珍奇花卉、造林苗木的人工培植，用以保持良种优势。由于这一技术可以在瓶瓶罐罐中完成植物的工厂化“生产”，因此能节约劳动力，降低成本，提高单位空间的利用率（多层面向空中发展），同时还能节约土地。此外，人工种子还可以用于改良和培育新品种的基因工程。\n\n# 植物培育技术的新应用\n\n现代植物育种的方式逐渐发展，新兴的技术层出不穷。人类可以根据自己的需求选择合适的作物亲本，并在人工授粉的基础上杂交进行新品种的培育，培育出的新品种就可以利用营养繁殖，如植物组织培养等方法，在保证遗传性状不发生改变的基础上进行大量的育种，同时也缩短了新品种投入生产所需要的时间和金钱。\n\n植物组织培养是一种已日益广泛地应用于优良品种推广方面的新技术。简单地说，进行组织培养时，人们在无菌的条件下，将选定了的植物体的茎尖、根尖、叶片分割成小块的组织（或直接用花粉），放在人工配制的培养基上，渐渐地每一小块植物组织都会形成一棵试管",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_040_科学_8年级下册_沪教版_2013版_三_独辟蹊径的植物繁殖_main_130_236de626_big_001",
+    "parent_index": 1,
+    "small_index": 2
+  },
+  {
+    "chunk_id": "science_textbooks_040_科学_8年级下册_沪教版_2013版_三_独辟蹊径的植物繁殖_main_130_236de626_big_001_small_003",
+    "source": "science_textbooks/040_科学_8年级下册_沪教版_2013版_三_独辟蹊径的植物繁殖_main_130.md",
+    "content": "织培养时，人们在无菌的条件下，将选定了的植物体的茎尖、根尖、叶片分割成小块的组织（或直接用花粉），放在人工配制的培养基上，渐渐地每一小块植物组织都会形成一棵试管苗，并发育成完整植物体，如图5-3-5。\n\n图5-3-5 植物组织培养流程示意图\n\n# 思考·练习\n\n利用身边的资源，如因特网等查阅身边哪些常见的植物在生产上会用到营养繁殖等技术。",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_040_科学_8年级下册_沪教版_2013版_三_独辟蹊径的植物繁殖_main_130_236de626_big_001",
+    "parent_index": 1,
+    "small_index": 3
+  },
+  {
+    "chunk_id": "science_textbooks_041_科学_9年级上册_沪教版_2013版_二_为生命之火供氧的呼吸系统_main_134_915ad270_big_001_small_001",
+    "source": "science_textbooks/041_科学_9年级上册_沪教版_2013版_二_为生命之火供氧的呼吸系统_main_134.md",
+    "content": "# 初中科学教材：科学_9年级上册_沪教版_2013版 - 二、为生命之火供氧的呼吸系统\n\n## 教材元信息\n- 教材：科学_9年级上册_沪教版_2013版\n- 年级：9\n- 册次：上册\n- 出版社：沪教版\n- 学段：初中\n- 章节：二、为生命之火供氧的呼吸系统\n- 内容类型：concept\n- 原始 token 数：529\n- 原始文件：../ch-3/knowledge_base_builder/data/textbooks/初中科学/沪教版初中科学/科学_9年级上册_沪教版_2013版_二、为生命之火供氧的呼吸系统_main_134.md\n\n## 教材正文\n在气管和支气管的内壁中也同样长着许多细细的纤毛（图5-2-3），并不断地分泌出黏液。这不仅使气管里面保持湿润，而且黏液中含有能抑制和杀灭细菌、病毒的成分。进入气管的细菌、灰尘等被这些黏液粘住，而纤毛就像无数的小掸子一样，以每分钟1千多次的速度向咽喉方向摆动，把尘埃、细菌等和黏液一起“扫”到咽部咳出来，这就是痰。\n\n图5-2-2 鼻腔剖面图\n\n图5-2-3 气管内密密的纤毛\n\n正如上面所描述的那样，在人体的呼吸道里有着一整套高效",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_041_科学_9年级上册_沪教版_2013版_二_为生命之火供氧的呼吸系统_main_134_915ad270_big_001",
+    "parent_index": 1,
+    "small_index": 1
+  },
+  {
+    "chunk_id": "science_textbooks_041_科学_9年级上册_沪教版_2013版_二_为生命之火供氧的呼吸系统_main_134_915ad270_big_001_small_002",
+    "source": "science_textbooks/041_科学_9年级上册_沪教版_2013版_二_为生命之火供氧的呼吸系统_main_134.md",
+    "content": "等和黏液一起“扫”到咽部咳出来，这就是痰。\n\n图5-2-2 鼻腔剖面图\n\n图5-2-3 气管内密密的纤毛\n\n正如上面所描述的那样，在人体的呼吸道里有着一整套高效的空气预处理系统。据报道， $-7\\%$  的冷空气通过鼻腔后温度可上升到  $28\\% \\sim 29\\%$  ，进入气管时就已经接近于体温了。而这一预处理的全过程是在几分之一秒内完成的！\n\n# 呼吸运动——空气进出肺的动力\n\n人在呼吸时，肋骨间肌肉的收缩或舒张以及膈肌的升降使胸腔内的空间发生一大一小的规律性变化，导致胸腔内的气压低于或高于外界，从而吸入或呼出气体（图5-2-4）。下面让我们来体验一下呼吸的过程。\n\n图5-2-4 呼吸运动示意图",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_041_科学_9年级上册_沪教版_2013版_二_为生命之火供氧的呼吸系统_main_134_915ad270_big_001",
+    "parent_index": 1,
+    "small_index": 2
+  },
+  {
+    "chunk_id": "science_textbooks_042_科学_9年级下册_沪教版_2013版_二_卫生保健_main_254_f0fb7187_big_001_small_001",
+    "source": "science_textbooks/042_科学_9年级下册_沪教版_2013版_二_卫生保健_main_254.md",
+    "content": "# 初中科学教材：科学_9年级下册_沪教版_2013版 - 二、卫生保健\n\n## 教材元信息\n- 教材：科学_9年级下册_沪教版_2013版\n- 年级：9\n- 册次：下册\n- 出版社：沪教版\n- 学段：初中\n- 章节：二、卫生保健\n- 内容类型：concept\n- 原始 token 数：698\n- 原始文件：../ch-3/knowledge_base_builder/data/textbooks/初中科学/沪教版初中科学/科学_9年级下册_沪教版_2013版_二、卫生保健_main_254.md\n\n## 教材正文\n（图12-2-1），如人工心脏瓣膜、人工心脏起搏器、人工肾、人工关节等。人造器官对医学治疗起着重要作用，如今可以说除了没有人工大脑研究以外，其他的很多人体器官都在进行人工制造研究，而且很多都已经取得成效。1957年美国医生威廉·考尔夫（Willem Kolff）和Akutsn首次将人工心脏植于一条狗体内使之生存一个半小时，以此为开端展开了世界性人工心脏研究。\n\n免疫预防是20世纪医学的又一项重要成就，我们已经在“人体的自我保护”中了解了有关内容。\n\n由于国际互联网的普及和多",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_042_科学_9年级下册_沪教版_2013版_二_卫生保健_main_254_f0fb7187_big_001",
+    "parent_index": 1,
+    "small_index": 1
+  },
+  {
+    "chunk_id": "science_textbooks_042_科学_9年级下册_沪教版_2013版_二_卫生保健_main_254_f0fb7187_big_001_small_002",
+    "source": "science_textbooks/042_科学_9年级下册_沪教版_2013版_二_卫生保健_main_254.md",
+    "content": "小时，以此为开端展开了世界性人工心脏研究。\n\n免疫预防是20世纪医学的又一项重要成就，我们已经在“人体的自我保护”中了解了有关内容。\n\n由于国际互联网的普及和多媒体技术的发展，在技术上已经可以实现诸如远距离诊断、“在线医生”等新的医疗保健服务，这就是远程医疗。它不仅会对传统的医疗模式提出挑战，而且还会导致产生一个比目前费用低得多的，为大多数公众提供更好服务的、更有效的医疗保健系统。\n\n# 器官移植\n\n器官移植是20世纪医学的一个重要发展方向，取得了显著进展。例如：\n\n1954年，美国医生默里（Joseph E. Murray）等首次成功完成同卵双生子间的肾移植手术，并因此获得1990年诺贝尔生物学或医学奖，开创了器官移植的新纪元。在中国，1960年吴阶平院士率先实行第一\n\n例人体肾移植, 20世纪70年代肾移植在全国正式展开。截至2009年, 中国内地肾移植累计已超过86000例, 大批患者通过移植恢复了正常的生活和工作能力。中国内地现在每年肾移植量仅次于美国, 居全球第二, 移植技术水平和效果也已接近或达到国际水平。",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_042_科学_9年级下册_沪教版_2013版_二_卫生保健_main_254_f0fb7187_big_001",
+    "parent_index": 1,
+    "small_index": 2
+  },
+  {
+    "chunk_id": "science_textbooks_042_科学_9年级下册_沪教版_2013版_二_卫生保健_main_254_f0fb7187_big_001_small_003",
+    "source": "science_textbooks/042_科学_9年级下册_沪教版_2013版_二_卫生保健_main_254.md",
+    "content": "国内地现在每年肾移植量仅次于美国, 居全球第二, 移植技术水平和效果也已接近或达到国际水平。",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_042_科学_9年级下册_沪教版_2013版_二_卫生保健_main_254_f0fb7187_big_001",
+    "parent_index": 1,
+    "small_index": 3
+  },
+  {
+    "chunk_id": "science_textbooks_043_科学_7年级上册_沪教版_2012版_二_平面图及其绘制_main_021_af558c9b_big_001_small_001",
+    "source": "science_textbooks/043_科学_7年级上册_沪教版_2012版_二_平面图及其绘制_main_021.md",
+    "content": "# 初中科学教材：科学_7年级上册_沪教版_2012版 - 二、平面图及其绘制\n\n## 教材元信息\n- 教材：科学_7年级上册_沪教版_2012版\n- 年级：7\n- 册次：上册\n- 出版社：沪教版\n- 学段：初中\n- 章节：二、平面图及其绘制\n- 内容类型：exercise\n- 原始 token 数：725\n- 原始文件：../ch-3/knowledge_base_builder/data/textbooks/初中科学/沪教版初中科学/科学_7年级上册_沪教版_2012版_二、平面图及其绘制_main_021.md\n\n## 教材正文\n# 二、平面图及其绘制\n\n校园能用实物模型表示，也能用图形表示。平面图就是常用的图形。校园模型能使我们对校园全貌一目了然。如果你从它正上方往下看，把它绘制成图形，就会得到校园平面图。平面图有哪些特点呢？你能读懂并绘制出来吗？\n\n# 方向的辨别\n\n我们已经对校园有了一些初步的认识，怎样才能进一步熟悉我们的校园呢？借助校园平面图是个好办法。\n\n# 交流·研讨\n\n图2-2-1、图2-2-2是某校校园模型及其校园平面图。\n\n请你对照两图，找到学校的图书馆、食堂、",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_043_科学_7年级上册_沪教版_2012版_二_平面图及其绘制_main_021_af558c9b_big_001",
+    "parent_index": 1,
+    "small_index": 1
+  },
+  {
+    "chunk_id": "science_textbooks_043_科学_7年级上册_沪教版_2012版_二_平面图及其绘制_main_021_af558c9b_big_001_small_002",
+    "source": "science_textbooks/043_科学_7年级上册_沪教版_2012版_二_平面图及其绘制_main_021.md",
+    "content": "我们的校园呢？借助校园平面图是个好办法。\n\n# 交流·研讨\n\n图2-2-1、图2-2-2是某校校园模型及其校园平面图。\n\n请你对照两图，找到学校的图书馆、食堂、教学楼和操场。\n\n# 讨论：\n\n1. 图书馆、食堂、教学楼和操场的轮廓有什么特点？它们是怎样延伸的？它们之间的位置关系怎样？\n\n图2-2-1 校园模型\n\n图2-2-2 校园平面图\n\n2. 平面图与实物模型有什么不同？平面图与照片一样吗？平面图有哪些特点呢？\n\n与实物模型对照，校园平面图包含着许多信息。借助平面图，我们可以进行校园绿地面积的计算，校园道路的规划设计，探讨校园建筑的合理性……\n\n# 平面图的观察角度\n\n# 交流·研讨\n\n图2-2-3是几种物体的俯视图，观察后做出自己的判断并与同学交流。\n\n# 讨论：\n\n1. 你能辨认它们吗？它们是从什么角度观察得到的？  \n2. 你能用同样的方法再画一些其他物品（例如：火柴盒、茶杯、书本等）吗？  \n3. 平面图和实物图在画法上有什么相同和不同？\n\n图2-2-3 几种物体的俯视图\n\n照片是从我们平时观察的角度拍摄的，而与一般的照片不同，平面图是从垂直俯视的观察角度绘制的。",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_043_科学_7年级上册_沪教版_2012版_二_平面图及其绘制_main_021_af558c9b_big_001",
+    "parent_index": 1,
+    "small_index": 2
+  },
+  {
+    "chunk_id": "science_textbooks_043_科学_7年级上册_沪教版_2012版_二_平面图及其绘制_main_021_af558c9b_big_001_small_003",
+    "source": "science_textbooks/043_科学_7年级上册_沪教版_2012版_二_平面图及其绘制_main_021.md",
+    "content": "上有什么相同和不同？\n\n图2-2-3 几种物体的俯视图\n\n照片是从我们平时观察的角度拍摄的，而与一般的照片不同，平面图是从垂直俯视的观察角度绘制的。",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_043_科学_7年级上册_沪教版_2012版_二_平面图及其绘制_main_021_af558c9b_big_001",
+    "parent_index": 1,
+    "small_index": 3
+  },
+  {
+    "chunk_id": "science_textbooks_044_科学_7年级下册_沪教版_2012版_二_土壤与植物_main_177_807851db_big_001_small_001",
+    "source": "science_textbooks/044_科学_7年级下册_沪教版_2012版_二_土壤与植物_main_177.md",
+    "content": "# 初中科学教材：科学_7年级下册_沪教版_2012版 - 二、土壤与植物\n\n## 教材元信息\n- 教材：科学_7年级下册_沪教版_2012版\n- 年级：7\n- 册次：下册\n- 出版社：沪教版\n- 学段：初中\n- 章节：二、土壤与植物\n- 内容类型：concept\n- 原始 token 数：282\n- 原始文件：../ch-3/knowledge_base_builder/data/textbooks/初中科学/沪教版初中科学/科学_7年级下册_沪教版_2012版_二、土壤与植物_main_177.md\n\n## 教材正文\n# 二、土壤与植物\n\n陆地上的植物生长在土壤中，似乎是天经地义的事。离开土壤，植物还能不能生长呢？\n\n图10- 2- 1所示为无土栽培的植物。无土栽培可以不需要土壤，那么，土壤对于植物来说，究竟有何意义呢？\n\n图10-2-1 无土栽培的植物\n\n# 植物从土壤中获得了什么？\n\n陆地上的植物，根总是扎到土壤中。若将植物从土壤中拔出后，它将会枯萎而死。我们已经知道，植物通过根从土壤中吸收水分。我们也知道，土壤的肥沃程度影响着农作物的生长。那么，根从土壤中还获得了什么？",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_044_科学_7年级下册_沪教版_2012版_二_土壤与植物_main_177_807851db_big_001",
+    "parent_index": 1,
+    "small_index": 1
+  },
+  {
+    "chunk_id": "science_textbooks_044_科学_7年级下册_沪教版_2012版_二_土壤与植物_main_177_807851db_big_001_small_002",
+    "source": "science_textbooks/044_科学_7年级下册_沪教版_2012版_二_土壤与植物_main_177.md",
+    "content": "植物从土壤中拔出后，它将会枯萎而死。我们已经知道，植物通过根从土壤中吸收水分。我们也知道，土壤的肥沃程度影响着农作物的生长。那么，根从土壤中还获得了什么？",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_044_科学_7年级下册_沪教版_2012版_二_土壤与植物_main_177_807851db_big_001",
+    "parent_index": 1,
+    "small_index": 2
+  },
+  {
+    "chunk_id": "science_textbooks_045_科学_8年级上册_沪教版_2013版_二_大陆漂移假说和板块构造学说_main_085_e4fd5ce8_big_001_small_001",
+    "source": "science_textbooks/045_科学_8年级上册_沪教版_2013版_二_大陆漂移假说和板块构造学说_main_085.md",
+    "content": "# 初中科学教材：科学_8年级上册_沪教版_2013版 - 二、大陆漂移假说和板块构造学说\n\n## 教材元信息\n- 教材：科学_8年级上册_沪教版_2013版\n- 年级：8\n- 册次：上册\n- 出版社：沪教版\n- 学段：初中\n- 章节：二、大陆漂移假说和板块构造学说\n- 内容类型：reading\n- 原始 token 数：748\n- 原始文件：../ch-3/knowledge_base_builder/data/textbooks/初中科学/沪教版初中科学/科学_8年级上册_沪教版_2013版_二、大陆漂移假说和板块构造学说_main_085.md\n\n## 教材正文\n# 拓展视野\n\n# 海底扩张说\n\n海底扩张学说认为：大洋中脊处的海岭是产生新地壳的地带，地幔物质不断从大洋中脊的开裂处溢出，遇冷凝结，形成了新的大洋地壳，并把以前形成的地壳推向两边。这种过程不断进行，新的地壳不断产生并且向外扩张。当扩张的大洋地壳遇到了大陆地壳时，便俯冲到大陆地壳之下，被地幔的高温逐渐熔化而消亡。这种地壳的水平运动可以达到数千千米。正是海底扩张，推动了与洋底相连的大陆的漂移。“海底扩张理论”为“大陆漂移假",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_045_科学_8年级上册_沪教版_2013版_二_大陆漂移假说和板块构造学说_main_085_e4fd5ce8_big_001",
+    "parent_index": 1,
+    "small_index": 1
+  },
+  {
+    "chunk_id": "science_textbooks_045_科学_8年级上册_沪教版_2013版_二_大陆漂移假说和板块构造学说_main_085_e4fd5ce8_big_001_small_002",
+    "source": "science_textbooks/045_科学_8年级上册_沪教版_2013版_二_大陆漂移假说和板块构造学说_main_085.md",
+    "content": "便俯冲到大陆地壳之下，被地幔的高温逐渐熔化而消亡。这种地壳的水平运动可以达到数千千米。正是海底扩张，推动了与洋底相连的大陆的漂移。“海底扩张理论”为“大陆漂移假说”作出了新的解释。\n\n目前，一般认为全球的岩石圈是由六大板块（图5-2-4）和一些较小的板\n\n块构成的。这六大板块是：亚欧板块、非洲板块、太平洋板块、印度洋板块、南极洲板块、美洲板块（有人将它进一步划分为北美板块和南美板块，还有人在此基础上增加一个纳斯卡板块，从而也有八大板块的说法）。六大板块处于不断的运动之中，一般来说，板块内部地壳比较稳定，板块与板块的交界地带地壳的活动比较活跃，这些地方往往火山、地震活动频繁。这很好地解释了世界上的两大火山地震带（图5-2-5）：地\n\n图5-2-4 世界六大板块示意图\n\n图5-2-5 世界火山地震带分布示意图\n\n中海-喜马拉雅火山地震带和环太平洋火山地震带的成因和分布。\n\n与人类的历史相比，板块的移动速度非常缓慢，但从地质角度来看却是非常快的。例如，亚欧板块的欧洲部分和北美洲板块目前正以每年大约  $20\\mathrm{mm}$  的速度分离，这使得大西洋海面越来越宽广。",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_045_科学_8年级上册_沪教版_2013版_二_大陆漂移假说和板块构造学说_main_085_e4fd5ce8_big_001",
+    "parent_index": 1,
+    "small_index": 2
+  },
+  {
+    "chunk_id": "science_textbooks_045_科学_8年级上册_沪教版_2013版_二_大陆漂移假说和板块构造学说_main_085_e4fd5ce8_big_001_small_003",
+    "source": "science_textbooks/045_科学_8年级上册_沪教版_2013版_二_大陆漂移假说和板块构造学说_main_085.md",
+    "content": "是非常快的。例如，亚欧板块的欧洲部分和北美洲板块目前正以每年大约  $20\\mathrm{mm}$  的速度分离，这使得大西洋海面越来越宽广。",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_045_科学_8年级上册_沪教版_2013版_二_大陆漂移假说和板块构造学说_main_085_e4fd5ce8_big_001",
+    "parent_index": 1,
+    "small_index": 3
+  },
+  {
+    "chunk_id": "science_textbooks_046_科学_8年级下册_沪教版_2013版_二_反射是神经调节的基本方式_main_094_7272ff78_big_001_small_001",
+    "source": "science_textbooks/046_科学_8年级下册_沪教版_2013版_二_反射是神经调节的基本方式_main_094.md",
+    "content": "# 初中科学教材：科学_8年级下册_沪教版_2013版 - 二、反射是神经调节的基本方式\n\n## 教材元信息\n- 教材：科学_8年级下册_沪教版_2013版\n- 年级：8\n- 册次：下册\n- 出版社：沪教版\n- 学段：初中\n- 章节：二、反射是神经调节的基本方式\n- 内容类型：experiment\n- 原始 token 数：773\n- 原始文件：../ch-3/knowledge_base_builder/data/textbooks/初中科学/沪教版初中科学/科学_8年级下册_沪教版_2013版_二、反射是神经调节的基本方式_main_094.md\n\n## 教材正文\n# 活动·探究\n\n# 什么是反射\n\n目的：通过体验膝跳反射，初步了解什么叫反射，以及它有什么特征。\n\n# 步骤：\n\n1. 同学分成若干个小组，每组三人，分别为受试者、测试者和协助测试者。  \n2. 受试者坐在桌子上，小腿自然下垂。  \n3. 测试者用橡皮锤以轻、中、重三种不同的力度敲打受试者膝盖下股四头肌肌腱韧带处（图4-2-1）。将受试者的反应记录在表格中。\n\n图4-2-1 膝跳反射示意图\n\n4. 在受试者小腿上绑负重",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_046_科学_8年级下册_沪教版_2013版_二_反射是神经调节的基本方式_main_094_7272ff78_big_001",
+    "parent_index": 1,
+    "small_index": 1
+  },
+  {
+    "chunk_id": "science_textbooks_046_科学_8年级下册_沪教版_2013版_二_反射是神经调节的基本方式_main_094_7272ff78_big_001_small_002",
+    "source": "science_textbooks/046_科学_8年级下册_沪教版_2013版_二_反射是神经调节的基本方式_main_094.md",
+    "content": "、重三种不同的力度敲打受试者膝盖下股四头肌肌腱韧带处（图4-2-1）。将受试者的反应记录在表格中。\n\n图4-2-1 膝跳反射示意图\n\n4. 在受试者小腿上绑负重物（ $0.5 \\mathrm{~kg} \\sim 1 \\mathrm{~kg}$ ），测试者重复步骤3，看看受试者还会不会产生膝跳反射。  \n5. 协助测试者双手用力握住受试者的小腿，测试者重复步骤3，看看受试者还会不会产生膝跳反射。  \n6. 三人轮换角色，重复上述活动并记录结果，填入下面的表格。\n\n<table><tr><td>测试方法</td><td>小腿自然下垂</td><td>小腿上绑负重物</td><td>小腿被协助测试者握住</td></tr><tr><td>轻轻敲打</td><td></td><td></td><td></td></tr><tr><td>中等力度敲打</td><td></td><td></td><td></td></tr><tr><td>稍重力度敲打</td><td></td><td></td><td></td></tr></table>\n\n# 讨论：\n\n1. 当敲打膝盖下韧带时，踢腿动作的发生",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_046_科学_8年级下册_沪教版_2013版_二_反射是神经调节的基本方式_main_094_7272ff78_big_001",
+    "parent_index": 1,
+    "small_index": 2
+  },
+  {
+    "chunk_id": "science_textbooks_046_科学_8年级下册_沪教版_2013版_二_反射是神经调节的基本方式_main_094_7272ff78_big_001_small_003",
+    "source": "science_textbooks/046_科学_8年级下册_沪教版_2013版_二_反射是神经调节的基本方式_main_094.md",
+    "content": "稍重力度敲打</td><td></td><td></td><td></td></tr></table>\n\n# 讨论：\n\n1. 当敲打膝盖下韧带时，踢腿动作的发生____（受/不受）意志的控制；____（受/不受）负重的影响。  \n2. 轻微敲打韧带时，踢腿动作（会/不会）发生。  \n3. 敲打动作和踢腿反应发生之间____（有/没有）一个短暂的时间滞后，想一想，这说明了什么？\n\n在日常生活中注意观察，你就会发现类似膝跳反射的情况还有许多。比如：当一个物体突然出现在眼前，我们会不自觉地迅速眨眼；当我们的手碰到",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_046_科学_8年级下册_沪教版_2013版_二_反射是神经调节的基本方式_main_094_7272ff78_big_001",
+    "parent_index": 1,
+    "small_index": 3
+  },
+  {
+    "chunk_id": "science_textbooks_047_科学_9年级上册_沪教版_2013版_二_实用的碱_main_045_80bfa4c1_big_001_small_001",
+    "source": "science_textbooks/047_科学_9年级上册_沪教版_2013版_二_实用的碱_main_045.md",
+    "content": "# 初中科学教材：科学_9年级上册_沪教版_2013版 - 二、实用的碱\n\n## 教材元信息\n- 教材：科学_9年级上册_沪教版_2013版\n- 年级：9\n- 册次：上册\n- 出版社：沪教版\n- 学段：初中\n- 章节：二、实用的碱\n- 内容类型：experiment\n- 原始 token 数：859\n- 原始文件：../ch-3/knowledge_base_builder/data/textbooks/初中科学/沪教版初中科学/科学_9年级上册_沪教版_2013版_二、实用的碱_main_045.md\n\n## 教材正文\n<table><tr><td>实验内容</td><td>氢氧化钠</td><td>氢氧化钙</td><td>浓氨水</td></tr><tr><td>（溶质的）化学式</td><td></td><td></td><td></td></tr><tr><td>颜色</td><td></td><td></td><td></td></tr><tr><td>状态</td><td></td><td></td><td></td></tr><tr><td>放置在空气中的变化</td>",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_047_科学_9年级上册_沪教版_2013版_二_实用的碱_main_045_80bfa4c1_big_001",
+    "parent_index": 1,
+    "small_index": 1
+  },
+  {
+    "chunk_id": "science_textbooks_047_科学_9年级上册_沪教版_2013版_二_实用的碱_main_045_80bfa4c1_big_001_small_002",
+    "source": "science_textbooks/047_科学_9年级上册_沪教版_2013版_二_实用的碱_main_045.md",
+    "content": "></td></tr><tr><td>状态</td><td></td><td></td><td></td></tr><tr><td>放置在空气中的变化</td><td></td><td></td><td></td></tr><tr><td>在水中的溶解情况</td><td></td><td></td><td></td></tr><tr><td>用手指捻一捻</td><td></td><td></td><td></td></tr><tr><td>滴加酚酞溶液</td><td></td><td></td><td></td></tr><tr><td>滴加石蕊溶液</td><td></td><td></td><td></td></tr><tr><td>羊毛线在热的氢氧化钠溶液中的变化</td><td></td><td></td><td></td></tr></table>\n\n# 讨论：\n\n1. 碱具有哪些共同的性质？  \n2. 使用碱时要注意哪些问题？\n\n氢氧化钠是白色固体，易溶于水，溶解时放出热量。暴露在空气中的氢氧化钠固体容易吸收水分，表面潮湿并逐步溶解，这种现象叫做潮解。\n\n氢氧化钠对皮",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_047_科学_9年级上册_沪教版_2013版_二_实用的碱_main_045_80bfa4c1_big_001",
+    "parent_index": 1,
+    "small_index": 2
+  },
+  {
+    "chunk_id": "science_textbooks_047_科学_9年级上册_沪教版_2013版_二_实用的碱_main_045_80bfa4c1_big_001_small_003",
+    "source": "science_textbooks/047_科学_9年级上册_沪教版_2013版_二_实用的碱_main_045.md",
+    "content": "要注意哪些问题？\n\n氢氧化钠是白色固体，易溶于水，溶解时放出热量。暴露在空气中的氢氧化钠固体容易吸收水分，表面潮湿并逐步溶解，这种现象叫做潮解。\n\n氢氧化钠对皮肤、纸张、织物等有强烈的腐蚀性（图2-2-6），使用时要特别小心。若不慎将碱溶液溅在皮肤上，应用大量水冲洗，再涂上硼酸溶液。要特别注意不要把碱\n\n洗净的鸡爪\n\n放置在  $20\\%$  氢氧化钠溶液中\n\n20min后的鸡爪  \n图2-2-6 氢氧化钠的腐蚀性\n\n溶液溅到眼睛里。如果眼睛里不慎溅入碱液，要立即用大量水冲洗，必要时请医生治疗。\n\n氢氧化钙俗称熟石灰或消石灰，是白色粉末，微溶于水，其水溶液俗称石灰水。氢氧化钙对皮肤和衣服等有腐蚀作用。\n\n浓氨水具有刺激性气味，易挥发，放置在空气中有白雾生成。\n\n碱溶液遇到紫色石蕊溶液变蓝，遇到无色酚酞溶液变红。\n\n# 碱的化学性质",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_047_科学_9年级上册_沪教版_2013版_二_实用的碱_main_045_80bfa4c1_big_001",
+    "parent_index": 1,
+    "small_index": 3
+  },
+  {
+    "chunk_id": "science_textbooks_048_科学_9年级下册_沪教版_2013版_二_自然资源危机_main_134_4cd291bf_big_001_small_001",
+    "source": "science_textbooks/048_科学_9年级下册_沪教版_2013版_二_自然资源危机_main_134.md",
+    "content": "# 初中科学教材：科学_9年级下册_沪教版_2013版 - 二、自然资源危机\n\n## 教材元信息\n- 教材：科学_9年级下册_沪教版_2013版\n- 年级：9\n- 册次：下册\n- 出版社：沪教版\n- 学段：初中\n- 章节：二、自然资源危机\n- 内容类型：concept\n- 原始 token 数：213\n- 原始文件：../ch-3/knowledge_base_builder/data/textbooks/初中科学/沪教版初中科学/科学_9年级下册_沪教版_2013版_二、自然资源危机_main_134.md\n\n## 教材正文\n# 二、自然资源危机\n\n人类自诞生以来从未停止过对自然资源的获取和利用，自然资源是人类生存和发展的基本条件。但是，无论是可再生资源还是不可再生资源，其总量都是有限的。近代以来，由于人口的增加、技术水平的提高和生活方式的变化，人们对自然资源的需求迅速提高，获取速度超过了自然资源的补给、再生和增殖速度，从而导致了世界自然资源供不应求的紧缺现象，这就是自然资源危机，主要包括水资源危机、土地资源危机、矿产资源危机和生物资源危机等。",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_048_科学_9年级下册_沪教版_2013版_二_自然资源危机_main_134_4cd291bf_big_001",
+    "parent_index": 1,
+    "small_index": 1
+  },
+  {
+    "chunk_id": "science_textbooks_048_科学_9年级下册_沪教版_2013版_二_自然资源危机_main_134_4cd291bf_big_001_small_002",
+    "source": "science_textbooks/048_科学_9年级下册_沪教版_2013版_二_自然资源危机_main_134.md",
+    "content": "致了世界自然资源供不应求的紧缺现象，这就是自然资源危机，主要包括水资源危机、土地资源危机、矿产资源危机和生物资源危机等。",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_048_科学_9年级下册_沪教版_2013版_二_自然资源危机_main_134_4cd291bf_big_001",
+    "parent_index": 1,
+    "small_index": 2
+  },
+  {
+    "chunk_id": "science_textbooks_049_科学_7年级上册_沪教版_2012版_二_根_营养的获取_main_044_04b25e8a_big_001_small_001",
+    "source": "science_textbooks/049_科学_7年级上册_沪教版_2012版_二_根_营养的获取_main_044.md",
+    "content": "# 初中科学教材：科学_7年级上册_沪教版_2012版 - 二、根——营养的获取\n\n## 教材元信息\n- 教材：科学_7年级上册_沪教版_2012版\n- 年级：7\n- 册次：上册\n- 出版社：沪教版\n- 学段：初中\n- 章节：二、根——营养的获取\n- 内容类型：exercise\n- 原始 token 数：721\n- 原始文件：../ch-3/knowledge_base_builder/data/textbooks/初中科学/沪教版初中科学/科学_7年级上册_沪教版_2012版_二、根——营养的获取_main_044.md\n\n## 教材正文\n# 二、根——营养的获取\n\n俗话说“树有多高，根有多深”。从蕨类植物开始，植物有了真正的根（root）。根不仅仅将植物牢牢固定在土壤中，更是植物吸收水分和营养的主要器官。自然界的不同环境中，根的形态和功能变化多端……\n\n# 奇妙的根尖\n\n观察小麦和蚕豆种子的幼根，你会发现根的前端生有密密的绒毛，这叫做根毛（图4-2-1）。从根的顶端到长有根毛的一段叫做根尖（图4-2-2）。\n\n图4-2-1 幼根的根毛\n\n图4-2-2 根尖外形图\n\n# 观察-思考",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_049_科学_7年级上册_沪教版_2012版_二_根_营养的获取_main_044_04b25e8a_big_001",
+    "parent_index": 1,
+    "small_index": 1
+  },
+  {
+    "chunk_id": "science_textbooks_049_科学_7年级上册_沪教版_2012版_二_根_营养的获取_main_044_04b25e8a_big_001_small_002",
+    "source": "science_textbooks/049_科学_7年级上册_沪教版_2012版_二_根_营养的获取_main_044.md",
+    "content": "毛，这叫做根毛（图4-2-1）。从根的顶端到长有根毛的一段叫做根尖（图4-2-2）。\n\n图4-2-1 幼根的根毛\n\n图4-2-2 根尖外形图\n\n# 观察-思考\n\n# 观察小麦的根尖\n\n材料与用具：根系完好的小麦幼苗、放大镜。\n\n步骤：\n\n1. 用放大镜仔细观察小麦幼根的前端部分，它的表面有什么特点？\n\n2.这一段占整条根的比例大致为  \n3. 计算根尖的表面积有多大。\n\n已知：每条根毛的形状可看作圆柱体；根毛长 \\(0.5 \\mathrm{~mm} \\sim 1 \\mathrm{~mm}\\)；平均直径为 \\(0.01 \\mathrm{~mm}\\)；每条根毛表面积为 \\(\\_ \\_ \\_ \\_ \\_ \\_ \\_ \\_ \\_ \\_ \\_ \\_ \\_ \\_ \\_ \\_ \\_ \\_ \\_ \\_ \\_ \\_ \\_ \\_ \\_ \\_ \\_ \\_ \\_ \\_ \\_ \\_ \\_ \\_ \\_ \\_ \\_ \\_ \\_ \\_ \\_ \\_ \\_ \\_ \\_ \\_ \\_ \\_ \\_ \\_ \\_ mm²。1 mm²根毛区大约有 \\(200 \\sim 300\\) 条根毛，则 \\(1 \\mathrm{~mm}^2\\)",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_049_科学_7年级上册_沪教版_2012版_二_根_营养的获取_main_044_04b25e8a_big_001",
+    "parent_index": 1,
+    "small_index": 2
+  },
+  {
+    "chunk_id": "science_textbooks_049_科学_7年级上册_沪教版_2012版_二_根_营养的获取_main_044_04b25e8a_big_001_small_003",
+    "source": "science_textbooks/049_科学_7年级上册_沪教版_2012版_二_根_营养的获取_main_044.md",
+    "content": "\\_ \\_ \\_ \\_ \\_ \\_ \\_ mm²。1 mm²根毛区大约有 \\(200 \\sim 300\\) 条根毛，则 \\(1 \\mathrm{~mm}^2\\) 根毛区实际表面积为 \\(\\_ \\_ \\_ \\_ \\_ \\_ \\_ \\_ \\_ \\_ \\_ \\_ \\_ \\_ \\_ \\_ \\_ \\_ \\_ \\_ \\_ mm^2\\)。也就是说，由于有了根毛，\\(1 \\mathrm{~mm}^2\\) 根毛区的面积被扩大了倍。",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_049_科学_7年级上册_沪教版_2012版_二_根_营养的获取_main_044_04b25e8a_big_001",
+    "parent_index": 1,
+    "small_index": 3
+  },
+  {
+    "chunk_id": "science_textbooks_050_科学_7年级下册_沪教版_2012版_二_水的性质和组成_main_101_4eed4911_big_001_small_001",
+    "source": "science_textbooks/050_科学_7年级下册_沪教版_2012版_二_水的性质和组成_main_101.md",
+    "content": "# 初中科学教材：科学_7年级下册_沪教版_2012版 - 二、水的性质和组成\n\n## 教材元信息\n- 教材：科学_7年级下册_沪教版_2012版\n- 年级：7\n- 册次：下册\n- 出版社：沪教版\n- 学段：初中\n- 章节：二、水的性质和组成\n- 内容类型：experiment\n- 原始 token 数：431\n- 原始文件：../ch-3/knowledge_base_builder/data/textbooks/初中科学/沪教版初中科学/科学_7年级下册_沪教版_2012版_二、水的性质和组成_main_101.md\n\n## 教材正文\n# 活动-探究\n\n# 水的分解实验\n\n1. 向水电解器的漏斗中注入水（为了增强水的导电性，需在水中加入少量的稀硫酸或氢氧化钠溶液），打开两侧玻璃管的活塞，调节漏斗的高度使两侧玻璃管中充满水。把电极分别与直流电源的正负极接通，观察两电极表面和两侧玻璃管内液面有什么变化。  \n2. 将一根点燃的火柴靠近液面下降较多的玻璃管的尖嘴处，慢慢打开活塞，观察发生的现象。  \n3. 将一根带火星的木条靠近液面下降较少的玻璃管的尖嘴处，慢慢打开活塞，观察发生的现象。",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_050_科学_7年级下册_沪教版_2012版_二_水的性质和组成_main_101_4eed4911_big_001",
+    "parent_index": 1,
+    "small_index": 1
+  },
+  {
+    "chunk_id": "science_textbooks_050_科学_7年级下册_沪教版_2012版_二_水的性质和组成_main_101_4eed4911_big_001_small_002",
+    "source": "science_textbooks/050_科学_7年级下册_沪教版_2012版_二_水的性质和组成_main_101.md",
+    "content": "柴靠近液面下降较多的玻璃管的尖嘴处，慢慢打开活塞，观察发生的现象。  \n3. 将一根带火星的木条靠近液面下降较少的玻璃管的尖嘴处，慢慢打开活塞，观察发生的现象。\n\n图6-2-2 电解水实验\n\n我们发现，通电之后，两个电极上产生气泡，气泡在两个玻璃管的上部汇集。生成较多的那种气体可以燃烧，产生淡蓝色火焰；生成较少的那种气体可以使带火星的木条复燃，通过前面的学习我们知道它是氧气。",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_050_科学_7年级下册_沪教版_2012版_二_水的性质和组成_main_101_4eed4911_big_001",
+    "parent_index": 1,
+    "small_index": 2
+  },
+  {
+    "chunk_id": "science_textbooks_051_科学_8年级上册_沪教版_2013版_二_海陆地形类型及其表示_main_109_f7411a7f_big_001_small_001",
+    "source": "science_textbooks/051_科学_8年级上册_沪教版_2013版_二_海陆地形类型及其表示_main_109.md",
+    "content": "# 初中科学教材：科学_8年级上册_沪教版_2013版 - 二、海陆地形类型及其表示\n\n## 教材元信息\n- 教材：科学_8年级上册_沪教版_2013版\n- 年级：8\n- 册次：上册\n- 出版社：沪教版\n- 学段：初中\n- 章节：二、海陆地形类型及其表示\n- 内容类型：experiment\n- 原始 token 数：781\n- 原始文件：../ch-3/knowledge_base_builder/data/textbooks/初中科学/沪教版初中科学/科学_8年级上册_沪教版_2013版_二、海陆地形类型及其表示_main_109.md\n\n## 教材正文\n# 活动·探究\n\n目的：认识“拳头”这个地形区。\n\n步骤：\n\n1. 以下工作都需分组完成，每四个人组成一组，请在进行具体工作前，首先通读课文，然后讨论如何分工，形成一致意见后，填写下表。\n\n<table><tr><td>序号</td><td>姓名</td><td>任务</td></tr><tr><td>1</td><td></td><td></td></tr><tr><td>2</td><td></td><td></td></tr>",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_051_科学_8年级上册_沪教版_2013版_二_海陆地形类型及其表示_main_109_f7411a7f_big_001",
+    "parent_index": 1,
+    "small_index": 1
+  },
+  {
+    "chunk_id": "science_textbooks_051_科学_8年级上册_沪教版_2013版_二_海陆地形类型及其表示_main_109_f7411a7f_big_001_small_002",
+    "source": "science_textbooks/051_科学_8年级上册_沪教版_2013版_二_海陆地形类型及其表示_main_109.md",
+    "content": "></tr><tr><td>1</td><td></td><td></td></tr><tr><td>2</td><td></td><td></td></tr><tr><td>3</td><td></td><td></td></tr><tr><td>4</td><td></td><td></td></tr></table>\n\n为使分工更加合理，我们应当：\n\n(1) 人人有事做, 每个人都能发挥特长;  \n（2）分工方案要最有利于提高效率；  \n(3) “分工是必需的, 但合作更重要。”希望同学们在活动中认真体验这句话。\n\n2. 请你左手握拳，假设你的左拳是个地形区，请在图6-2-11中找出下列地形（把结果填在图中横线上）：\n\n“山峰”、“山脊”、“山谷”、“缓坡”、“陡坡”、“断崖”。  \n3. 一号同学把左拳平放入脸盆中，二号同学在脸盆中垂直放一把直尺并扶好它，三号同学在脸盆中垂直放一把直尺并扶好它。\n\n同学缓慢往盆中注水至  $1 \\mathrm{~cm}$ , 四号同学用笔在一号同学的左拳上画  $1 \\mathrm{~cm}$  等高线, 如图6-2-12。依次画出  $2 \\",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_051_科学_8年级上册_沪教版_2013版_二_海陆地形类型及其表示_main_109_f7411a7f_big_001",
+    "parent_index": 1,
+    "small_index": 2
+  },
+  {
+    "chunk_id": "science_textbooks_051_科学_8年级上册_沪教版_2013版_二_海陆地形类型及其表示_main_109_f7411a7f_big_001_small_003",
+    "source": "science_textbooks/051_科学_8年级上册_沪教版_2013版_二_海陆地形类型及其表示_main_109.md",
+    "content": "$1 \\mathrm{~cm}$ , 四号同学用笔在一号同学的左拳上画  $1 \\mathrm{~cm}$  等高线, 如图6-2-12。依次画出  $2 \\mathrm{~cm} 、 3 \\mathrm{~cm}$  等高线。  \n4. 一号同学从水中拿出左拳，置于桌面，全组同学仔细观察，寻找规律。\n\n# 讨论：\n\n1. “山脊”与“山谷”的等高线有何不同？  \n2. “缓坡”、“陡坡”与“断崖”的等高线有何不同？（握拳的松紧程度不同，“山坡”的陡缓便不同）  \n3. “山峰”与“盆地”的等高线有何不同？（把左手掌心向上，五个手指向上翘，这样便会形成一个“盆地”）\n\n把地理事物按照一定的数学方法缩小, 并用不同的符号、颜色和文字绘制",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_051_科学_8年级上册_沪教版_2013版_二_海陆地形类型及其表示_main_109_f7411a7f_big_001",
+    "parent_index": 1,
+    "small_index": 3
+  },
+  {
+    "chunk_id": "science_textbooks_052_科学_8年级下册_沪教版_2013版_二_气象观测_main_150_af11c858_big_001_small_001",
+    "source": "science_textbooks/052_科学_8年级下册_沪教版_2013版_二_气象观测_main_150.md",
+    "content": "# 初中科学教材：科学_8年级下册_沪教版_2013版 - 二、气象观测\n\n## 教材元信息\n- 教材：科学_8年级下册_沪教版_2013版\n- 年级：8\n- 册次：下册\n- 出版社：沪教版\n- 学段：初中\n- 章节：二、气象观测\n- 内容类型：exercise\n- 原始 token 数：801\n- 原始文件：../ch-3/knowledge_base_builder/data/textbooks/初中科学/沪教版初中科学/科学_8年级下册_沪教版_2013版_二、气象观测_main_150.md\n\n## 教材正文\n# 气压、风力风向的观测\n\n日常生活中，一般感觉不到大气压对人体的影响，而登山运动员为应对高山上的低气压，却要背负氧气瓶以备用。\n\n气压的变化是影响天气变化的重要因素之一。在地球上不同地点、不同时间，气压是不一样的。等压线分布图（图7-2-4）可以反映同一海拔高度上不同地点的气压分布情况。\n\n图7-2-4 高、低气压的分布\n\n空盒气压计是气象观测中测量气压的常用仪器之一。气象观测中常用百帕（hPa）作为计量气压的单位。\n\n# 操作：实践\n\n# 用空盒气压计测量气压\n\n材料",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_052_科学_8年级下册_沪教版_2013版_二_气象观测_main_150_af11c858_big_001",
+    "parent_index": 1,
+    "small_index": 1
+  },
+  {
+    "chunk_id": "science_textbooks_052_科学_8年级下册_沪教版_2013版_二_气象观测_main_150_af11c858_big_001_small_002",
+    "source": "science_textbooks/052_科学_8年级下册_沪教版_2013版_二_气象观测_main_150.md",
+    "content": "压的分布\n\n空盒气压计是气象观测中测量气压的常用仪器之一。气象观测中常用百帕（hPa）作为计量气压的单位。\n\n# 操作：实践\n\n# 用空盒气压计测量气压\n\n材料与用具：空盒气压计。\n\n步骤：分别在晴朗和阴雨的天气中，使用空盒气压计测量气压，同时测量当时的气温，将测量数值记入下表。\n\n# 讨论：\n\n1. 同一天中，早晨、中午、傍晚时的气压有何变化？气压的变化与气温的变化是否存在联系？  \n2. 晴朗或阴雨天气的气压有何不同？\n\n<table><tr><td>天气状况</td><td colspan=\"3\">晴朗天气</td><td colspan=\"3\">阴雨天气</td></tr><tr><td>观测时间</td><td>早__点</td><td>午__点</td><td>晚__点</td><td>早__点</td><td>午__点</td><td>晚__点</td></tr><tr><td>气压值（hPa）</td><td></td><td></td><td></td><td></td><td></td><td></td></tr><tr><td>气温（℃）</td><td></td",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_052_科学_8年级下册_沪教版_2013版_二_气象观测_main_150_af11c858_big_001",
+    "parent_index": 1,
+    "small_index": 2
+  },
+  {
+    "chunk_id": "science_textbooks_052_科学_8年级下册_沪教版_2013版_二_气象观测_main_150_af11c858_big_001_small_003",
+    "source": "science_textbooks/052_科学_8年级下册_沪教版_2013版_二_气象观测_main_150.md",
+    "content": "/td><td></td><td></td><td></td><td></td><td></td></tr><tr><td>气温（℃）</td><td></td><td></td><td></td><td></td><td></td><td></td></tr></table>\n\n由于高、低气压的存在，导致了空气的流动。空气的水平流动就形成了风。一般气象台（站）使用风向标和风速计（图7-2-5）测量风向和风力。\n\n日常生活中，可以根据风对烟柱、旗子、树枝等的影响程度判断风向和风力。风向通常用八个方位来表示（图7-2-6）。\n\n图7-2-5 风向标和风速计",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_052_科学_8年级下册_沪教版_2013版_二_气象观测_main_150_af11c858_big_001",
+    "parent_index": 1,
+    "small_index": 3
+  },
+  {
+    "chunk_id": "science_textbooks_053_科学_9年级上册_沪教版_2013版_二_电生磁_main_232_ab8d0b73_big_001_small_001",
+    "source": "science_textbooks/053_科学_9年级上册_沪教版_2013版_二_电生磁_main_232.md",
+    "content": "# 初中科学教材：科学_9年级上册_沪教版_2013版 - 二、电生磁\n\n## 教材元信息\n- 教材：科学_9年级上册_沪教版_2013版\n- 年级：9\n- 册次：上册\n- 出版社：沪教版\n- 学段：初中\n- 章节：二、电生磁\n- 内容类型：experiment\n- 原始 token 数：734\n- 原始文件：../ch-3/knowledge_base_builder/data/textbooks/初中科学/沪教版初中科学/科学_9年级上册_沪教版_2013版_二、电生磁_main_232.md\n\n## 教材正文\n图8-2-9 电子钟表中的小电磁铁\n\n# 思考·练习\n\n1. 电流的磁效应指________，这是由________最先发现的。\n\n2. 探究决定电磁铁磁性大小的因素。\n\n(1) 用实验室的螺线管、铁心、导线、干电池、电键、滑动变阻器、电流计, 仿照图8-2-7设计出实验线路图, 并连接好线路。  \n(2) 移动滑动变阻器的触头以改变电流的大小, 观察不同电流下小磁针的偏转程度和吸引大头针数目的多少。  \n(3) 更换不同材料的铁心, 再重复步骤 (2) 的操作和观察。",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_053_科学_9年级上册_沪教版_2013版_二_电生磁_main_232_ab8d0b73_big_001",
+    "parent_index": 1,
+    "small_index": 1
+  },
+  {
+    "chunk_id": "science_textbooks_053_科学_9年级上册_沪教版_2013版_二_电生磁_main_232_ab8d0b73_big_001_small_002",
+    "source": "science_textbooks/053_科学_9年级上册_沪教版_2013版_二_电生磁_main_232.md",
+    "content": "变阻器的触头以改变电流的大小, 观察不同电流下小磁针的偏转程度和吸引大头针数目的多少。  \n(3) 更换不同材料的铁心, 再重复步骤 (2) 的操作和观察。  \n(4) 更换线圈疏密不同的螺线管, 再重复步骤 (2) 的操作和观察。\n\n请得出结论:影响电磁铁磁性大小的因素有哪些?\n\n3. 观察继电器是如何工作的。\n\n（1）仔细阅读继电器结构示意图（图8-2-10b），并观察继电器（图8-2-10a），加以对照，研究它的结构。  \n(2) 找出继电器中电磁铁线圈的两个接线端, 将它串联一电键后接上电源 (电源电压根据继电器工作电压而定)。反复接通和断开电键, 观察继电器有什么反应 (各触点闭合和断开的情况)。\n\n请描述你观察到的情况，并与单刀双掷开关（图8-2-11）作比较。\n\n（a）继电器\n\n（b）继电器结构示意图\n\n图8-2-11 单刀双掷开关\n\n图8-2-10  \n图8-2-12 自动报警器工作原理图\n\n(3) 在线圈的电路上再串联一个电源和小灯泡, 组成一个工作电路, 用继电器电路中的电键控制小灯泡的点亮和熄灭。\n\n请总结出上述控制电路的特点，并设想继电器有什么用途。\n\n4. 图",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_053_科学_9年级上册_沪教版_2013版_二_电生磁_main_232_ab8d0b73_big_001",
+    "parent_index": 1,
+    "small_index": 2
+  },
+  {
+    "chunk_id": "science_textbooks_053_科学_9年级上册_沪教版_2013版_二_电生磁_main_232_ab8d0b73_big_001_small_003",
+    "source": "science_textbooks/053_科学_9年级上册_沪教版_2013版_二_电生磁_main_232.md",
+    "content": "上再串联一个电源和小灯泡, 组成一个工作电路, 用继电器电路中的电键控制小灯泡的点亮和熄灭。\n\n请总结出上述控制电路的特点，并设想继电器有什么用途。\n\n4. 图8-2-12所示为简易水塔水位自动报警器的工作原理图。请分析它的工作原理。",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_053_科学_9年级上册_沪教版_2013版_二_电生磁_main_232_ab8d0b73_big_001",
+    "parent_index": 1,
+    "small_index": 3
+  },
+  {
+    "chunk_id": "science_textbooks_054_科学_9年级下册_沪教版_2013版_四_生物多样性及其保护_main_062_433e07ed_big_001_small_001",
+    "source": "science_textbooks/054_科学_9年级下册_沪教版_2013版_四_生物多样性及其保护_main_062.md",
+    "content": "# 初中科学教材：科学_9年级下册_沪教版_2013版 - 四、生物多样性及其保护\n\n## 教材元信息\n- 教材：科学_9年级下册_沪教版_2013版\n- 年级：9\n- 册次：下册\n- 出版社：沪教版\n- 学段：初中\n- 章节：四、生物多样性及其保护\n- 内容类型：concept\n- 原始 token 数：422\n- 原始文件：../ch-3/knowledge_base_builder/data/textbooks/初中科学/沪教版初中科学/科学_9年级下册_沪教版_2013版_四、生物多样性及其保护_main_062.md\n\n## 教材正文\n物种多样性是指地球上动物、植物、微生物等生物种类的丰富程度，是用一定空间范围内的物种数量和分布特征来衡量的。热带雨林、珊瑚礁、大型热带湖泊和深海是物种最丰富的环境；一般来说，越接近热带地区，物种多样性程度越高。例如，热带雨林占全球面积的  $7\\%$  ，物种数却占  $50\\%$  ；珊瑚礁面积为海洋的  $0.1\\%$  ，却有  $8\\%$  的鱼种类。\n\n生态系统多样性主要是指地球上生态系统组成、功能的多样性以及各种生态过程的多样性，前",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_054_科学_9年级下册_沪教版_2013版_四_生物多样性及其保护_main_062_433e07ed_big_001",
+    "parent_index": 1,
+    "small_index": 1
+  },
+  {
+    "chunk_id": "science_textbooks_054_科学_9年级下册_沪教版_2013版_四_生物多样性及其保护_main_062_433e07ed_big_001_small_002",
+    "source": "science_textbooks/054_科学_9年级下册_沪教版_2013版_四_生物多样性及其保护_main_062.md",
+    "content": "珊瑚礁面积为海洋的  $0.1\\%$  ，却有  $8\\%$  的鱼种类。\n\n生态系统多样性主要是指地球上生态系统组成、功能的多样性以及各种生态过程的多样性，前面我们已经学习过生态系统的类型，中国幅员辽阔，南北东西跨度都很大，因此生态系统多样性较高。\n\n遗传多样性又叫基因多样性，指控制生物性状的基因丰富多样。基因是决定生物性状的根本原因，因此物种多样性的实质就是基因的多样性。\n\n生物多样性是地球上的生命经过几十亿年发展进化的结果，是人类赖以生存的物质基础。",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_054_科学_9年级下册_沪教版_2013版_四_生物多样性及其保护_main_062_433e07ed_big_001",
+    "parent_index": 1,
+    "small_index": 2
+  },
+  {
+    "chunk_id": "science_textbooks_055_科学_7年级上册_沪教版_2012版_二_根_营养的获取_main_057_28dfc619_big_001_small_001",
+    "source": "science_textbooks/055_科学_7年级上册_沪教版_2012版_二_根_营养的获取_main_057.md",
+    "content": "# 初中科学教材：科学_7年级上册_沪教版_2012版 - 二、根——营养的获取\n\n## 教材元信息\n- 教材：科学_7年级上册_沪教版_2012版\n- 年级：7\n- 册次：上册\n- 出版社：沪教版\n- 学段：初中\n- 章节：二、根——营养的获取\n- 内容类型：exercise\n- 原始 token 数：604\n- 原始文件：../ch-3/knowledge_base_builder/data/textbooks/初中科学/沪教版初中科学/科学_7年级上册_沪教版_2012版_二、根——营养的获取_main_057.md\n\n## 教材正文\n3. 将几片树叶放入溶液里，继续煮沸10分钟，煮沸时用玻璃棒轻轻搅动，使每片叶子都与溶液接触。（注意操作安全！）  \n4. 由于化学药品的腐蚀, 叶子的柔软部分很容易消失。如有未完全\n\n消失的部分，可用镊子将叶子从溶液中取出，平铺在玻璃片上，用小刷轻轻敲击，再用水冲洗，最后会只剩下完整的叶脉。将叶脉贴在玻璃片上晾干。\n\n5. 待叶片完全干燥后，涂上你喜欢的颜色（广告色就可以），再压平，叶脉书签就制好了（图4-3-9）。  \n6. 为了增加色彩，你可",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_055_科学_7年级上册_沪教版_2012版_二_根_营养的获取_main_057_28dfc619_big_001",
+    "parent_index": 1,
+    "small_index": 1
+  },
+  {
+    "chunk_id": "science_textbooks_055_科学_7年级上册_沪教版_2012版_二_根_营养的获取_main_057_28dfc619_big_001_small_002",
+    "source": "science_textbooks/055_科学_7年级上册_沪教版_2012版_二_根_营养的获取_main_057.md",
+    "content": "。将叶脉贴在玻璃片上晾干。\n\n5. 待叶片完全干燥后，涂上你喜欢的颜色（广告色就可以），再压平，叶脉书签就制好了（图4-3-9）。  \n6. 为了增加色彩，你可以在叶柄上扎上细的丝带，用起来也更方便。相信你一定会制作出一张精美的叶脉书签。\n\n图4-3-9 叶脉书签\n\n思考：通过制作叶脉书签，你认为什么样的叶片较容易制作成功，这与叶子的生活环境是否有关？为什么？\n\n# 思考-练习\n\n1. 叶的基本功能是什么？它的结构是如何与功能适应的？  \n2. 某同学根据显微镜下观察的结果绘制了叶片结构图（图4-3-10），但在注明结构时出现了错误，请帮助改正。\n\n图4-3-10 叶片结构图\n\n3. 请连线：\n\n气孔下陷\n\n阳生\n\n叶片大而薄\n\n阴生\n\n表皮有角质层\n\n叶肉细胞具有较多叶绿体, 色深\n\n早生\n\n叶片具有较大的气腔\n\n水生\n\n表皮薄",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_055_科学_7年级上册_沪教版_2012版_二_根_营养的获取_main_057_28dfc619_big_001",
+    "parent_index": 1,
+    "small_index": 2
+  },
+  {
+    "chunk_id": "science_textbooks_056_科学_7年级下册_沪教版_2012版_二_空气的性质_main_051_14238208_big_001_small_001",
+    "source": "science_textbooks/056_科学_7年级下册_沪教版_2012版_二_空气的性质_main_051.md",
+    "content": "# 初中科学教材：科学_7年级下册_沪教版_2012版 - 二、空气的性质\n\n## 教材元信息\n- 教材：科学_7年级下册_沪教版_2012版\n- 年级：7\n- 册次：下册\n- 出版社：沪教版\n- 学段：初中\n- 章节：二、空气的性质\n- 内容类型：experiment\n- 原始 token 数：713\n- 原始文件：../ch-3/knowledge_base_builder/data/textbooks/初中科学/沪教版初中科学/科学_7年级下册_沪教版_2012版_二、空气的性质_main_051.md\n\n## 教材正文\n# 二、空气的性质\n\n空气是我们接触最多的物质之一，也是一种重要的自然资源。了解空气的性质，有助于我们更好地研究和利用空气。\n\n# 空气有质量\n\n# 观察·思考\n\n用细绳将两只相同的大塑料瓶（其中一只的瓶口装有自行车进气阀）固定在一根约  $0.5 \\mathrm{~m}$  长木条的两端。如图3-2-1所示，用细绳吊起木条，调整细绳的位置，使木条保持平衡，然后将细绳固定。放下木条，用气筒通过进气阀往一只塑料瓶中打气。关紧进气阀，再提起木条，观察木条会向哪边倾斜",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_056_科学_7年级下册_沪教版_2012版_二_空气的性质_main_051_14238208_big_001",
+    "parent_index": 1,
+    "small_index": 1
+  },
+  {
+    "chunk_id": "science_textbooks_056_科学_7年级下册_沪教版_2012版_二_空气的性质_main_051_14238208_big_001_small_002",
+    "source": "science_textbooks/056_科学_7年级下册_沪教版_2012版_二_空气的性质_main_051.md",
+    "content": "所示，用细绳吊起木条，调整细绳的位置，使木条保持平衡，然后将细绳固定。放下木条，用气筒通过进气阀往一只塑料瓶中打气。关紧进气阀，再提起木条，观察木条会向哪边倾斜。\n\n图3-2-1 实验装置示意图\n\n我们观察到\n\n这说明\n\n讨论：在这个实验中，为什么首先要使木条保持平衡？\n\n你还有哪些方法能证明空气有质量？\n\n空气的密度较小。在  $0^{\\circ}\\mathrm{C}$ ， $1.01 \\times 10^{5} \\mathrm{~Pa}$  时，空气的密度约是  $1.29 \\mathrm{~g} \\cdot \\mathrm{L}^{-1}$ 。当空气的体积很大时，质量也会很大，一间约  $20 \\mathrm{~m}^{2}$  的房间里空气的质量大约有  $70 \\mathrm{~kg}$ ，相当于一个成年人的质量。\n\n# 空气的热胀冷缩\n\n# 观察-思考\n\n1. 如图3-2-2所示，在细玻璃管中滴入几滴水，使弯曲部分有一小段水柱，用橡皮塞塞紧空烧瓶，用手捂住烧瓶一会儿，观察水柱的运动。  \n2. 往矿泉水瓶中装入约  $2 / 3$  体积的热水, 盖好瓶盖, 用冷水浇淋矿泉",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_056_科学_7年级下册_沪教版_2012版_二_空气的性质_main_051_14238208_big_001",
+    "parent_index": 1,
+    "small_index": 2
+  },
+  {
+    "chunk_id": "science_textbooks_056_科学_7年级下册_沪教版_2012版_二_空气的性质_main_051_14238208_big_001_small_003",
+    "source": "science_textbooks/056_科学_7年级下册_沪教版_2012版_二_空气的性质_main_051.md",
+    "content": "一小段水柱，用橡皮塞塞紧空烧瓶，用手捂住烧瓶一会儿，观察水柱的运动。  \n2. 往矿泉水瓶中装入约  $2 / 3$  体积的热水, 盖好瓶盖, 用冷水浇淋矿泉水瓶使其降温, 观察矿泉水瓶会出现什么变化。\n\n图3-2-2 实验装置示意图",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_056_科学_7年级下册_沪教版_2012版_二_空气的性质_main_051_14238208_big_001",
+    "parent_index": 1,
+    "small_index": 3
+  },
+  {
+    "chunk_id": "science_textbooks_057_科学_8年级上册_沪教版_2013版_二_生态系统的结构_main_144_3160b92f_big_001_small_001",
+    "source": "science_textbooks/057_科学_8年级上册_沪教版_2013版_二_生态系统的结构_main_144.md",
+    "content": "# 初中科学教材：科学_8年级上册_沪教版_2013版 - 二、生态系统的结构\n\n## 教材元信息\n- 教材：科学_8年级上册_沪教版_2013版\n- 年级：8\n- 册次：上册\n- 出版社：沪教版\n- 学段：初中\n- 章节：二、生态系统的结构\n- 内容类型：concept\n- 原始 token 数：781\n- 原始文件：../ch-3/knowledge_base_builder/data/textbooks/初中科学/沪教版初中科学/科学_8年级上册_沪教版_2013版_二、生态系统的结构_main_144.md\n\n## 教材正文\n# 二、生态系统的结构\n\n据说有这样一个案例：初秋，麦田里已现丰收的迹象，吸引来一群鸟儿啄食麦粒。农民为了保护劳动果实，用一张大网盖住麦田。鸟儿真的飞不进来了。但是没过多久，麦田遭遇了严重的虫害，收成甚至比以前还要糟糕。\n\n你能帮农民分析一下，这到底是怎么回事吗？\n\n# 生态系统的组成\n\n我们已经知道，在一定地域内，生物与环境所形成的统一的整体叫做生态系统。一个生态系统是由生物和非生物环境组成的。生态系统中的生物有植物、动物、细菌、真菌等类群；生态系统中的",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_057_科学_8年级上册_沪教版_2013版_二_生态系统的结构_main_144_3160b92f_big_001",
+    "parent_index": 1,
+    "small_index": 1
+  },
+  {
+    "chunk_id": "science_textbooks_057_科学_8年级上册_沪教版_2013版_二_生态系统的结构_main_144_3160b92f_big_001_small_002",
+    "source": "science_textbooks/057_科学_8年级上册_沪教版_2013版_二_生态系统的结构_main_144.md",
+    "content": "道，在一定地域内，生物与环境所形成的统一的整体叫做生态系统。一个生态系统是由生物和非生物环境组成的。生态系统中的生物有植物、动物、细菌、真菌等类群；生态系统中的非生物环境包括阳光、温度、水分、空气、土壤等因素。\n\n生态系统中的植物，可以利用太阳能，通过光合作用制造有机物。植物制造的有机物不仅养活了自身，还为动物的生存提供食物，因此，绿色植物是生态系统中的生产者（producer）。\n\n除了生产者，生态系统中的其他成员都不能自己生产食物。比如各种动物直接或间接以植物为食，它们是生态系统中的消费者（consumers）。其中，直接以植物为食的生物种类，如兔、食草籽的鸟、食草昆虫，它们叫做初级消费者；以草食性动物为食的生物种类，如食虫鸟等，它们叫做次级消费者；像狼和猫头鹰那样以次级消费者为食的生物种类叫做三级消费者，依次类推。\n\n生态系统中的所有生物都会产生废物，并最终都会死亡。如果这些废物\n\n和生物遗体没有从生态系统中移走，就会堆积起来。把废物和生物遗体进行分解并将原料重新归入周围环境中的生物就是分解者（decomposer）。细菌和真菌是最主要的两类分解者。\n\n在生态系统中，非生物的物质",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_057_科学_8年级上册_沪教版_2013版_二_生态系统的结构_main_144_3160b92f_big_001",
+    "parent_index": 1,
+    "small_index": 2
+  },
+  {
+    "chunk_id": "science_textbooks_057_科学_8年级上册_沪教版_2013版_二_生态系统的结构_main_144_3160b92f_big_001_small_003",
+    "source": "science_textbooks/057_科学_8年级上册_沪教版_2013版_二_生态系统的结构_main_144.md",
+    "content": "起来。把废物和生物遗体进行分解并将原料重新归入周围环境中的生物就是分解者（decomposer）。细菌和真菌是最主要的两类分解者。\n\n在生态系统中，非生物的物质和能量、生产者、消费者以及分解者紧密联系，彼此作用，构成一个整体（图8-2-1）。\n\n图8-2-1 生产者、消费者和分解者",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_057_科学_8年级上册_沪教版_2013版_二_生态系统的结构_main_144_3160b92f_big_001",
+    "parent_index": 1,
+    "small_index": 3
+  },
+  {
+    "chunk_id": "science_textbooks_058_科学_8年级下册_沪教版_2013版_二_种子_新生命的开始_main_123_35c1a6a6_big_001_small_001",
+    "source": "science_textbooks/058_科学_8年级下册_沪教版_2013版_二_种子_新生命的开始_main_123.md",
+    "content": "# 初中科学教材：科学_8年级下册_沪教版_2013版 - 二、种子——新生命的开始\n\n## 教材元信息\n- 教材：科学_8年级下册_沪教版_2013版\n- 年级：8\n- 册次：下册\n- 出版社：沪教版\n- 学段：初中\n- 章节：二、种子——新生命的开始\n- 内容类型：experiment\n- 原始 token 数：725\n- 原始文件：../ch-3/knowledge_base_builder/data/textbooks/初中科学/沪教版初中科学/科学_8年级下册_沪教版_2013版_二、种子——新生命的开始_main_123.md\n\n## 教材正文\n# 活动-探究\n\n# 影响种子萌发的主要外部条件\n\n确定目的：通过探究了解哪些外部条件是种子萌发必需的。\n\n提出假设：一定量的水（因素1）、空气（因素2）和适宜的温度（因素3）是种子萌发所必需的。\n\n设计方案：\n\n一组同学经过讨论，设计了如下的实验方案：\n\n<table><tr><td>环境条件</td><td>装置1</td><td>装置2</td><td>装置3</td><td>装置4</td><td>装置5</td></tr>",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_058_科学_8年级下册_沪教版_2013版_二_种子_新生命的开始_main_123_35c1a6a6_big_001",
+    "parent_index": 1,
+    "small_index": 1
+  },
+  {
+    "chunk_id": "science_textbooks_058_科学_8年级下册_沪教版_2013版_二_种子_新生命的开始_main_123_35c1a6a6_big_001_small_002",
+    "source": "science_textbooks/058_科学_8年级下册_沪教版_2013版_二_种子_新生命的开始_main_123.md",
+    "content": "r><td>环境条件</td><td>装置1</td><td>装置2</td><td>装置3</td><td>装置4</td><td>装置5</td></tr><tr><td>水</td><td>水面高于种子 10cm,加几滴植 物油,形成油膜</td><td>水面没过 种子的 1/2</td><td>水面没过 种子的 1/2</td><td>无水</td><td>水面没 过种子 的1/2</td></tr><tr><td>温度</td><td>约25℃</td><td>高于50℃</td><td>低于4℃</td><td>约25℃</td><td>约25℃</td></tr></table>\n\n他们提出实验的预期1：因为装置5比装置1中种子的通气状况要好，若装置5中菜豆的萌发情况显著好于装置1中的菜豆种子，则可以证明因素2对种子萌发是必不可少的。\n\n你能否根据实验假设和实验设计进一步提出：\n\n实验预期2：\n\n实验预期3：\n\n进行实验：按上表设计，分组安装好实验装置。5天后，观察几种不同装置中种子的萌发情况，并记录和分析原因。（表略）\n\n# 结果分析：\n\n实验结果与实验预期1____（",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_058_科学_8年级下册_沪教版_2013版_二_种子_新生命的开始_main_123_35c1a6a6_big_001",
+    "parent_index": 1,
+    "small_index": 2
+  },
+  {
+    "chunk_id": "science_textbooks_058_科学_8年级下册_沪教版_2013版_二_种子_新生命的开始_main_123_35c1a6a6_big_001_small_003",
+    "source": "science_textbooks/058_科学_8年级下册_沪教版_2013版_二_种子_新生命的开始_main_123.md",
+    "content": "行实验：按上表设计，分组安装好实验装置。5天后，观察几种不同装置中种子的萌发情况，并记录和分析原因。（表略）\n\n# 结果分析：\n\n实验结果与实验预期1____（一致/不一致），____（支持/推翻）因素2；\n\n实验结果与实验预期2____（一致/不一致），____（支持/推翻）因素____；\n\n实验结果与实验预期3____（一致/不一致），____（支持/推翻）因素____。\n\n# 讨论：\n\n1. 装置5在整个实验中的作用是什么？\n\n2. 实验前用水浸泡种子至充分膨胀，再进行实验，结果将会怎样？  \n3. 你能不能想出更巧妙的实验设计，达到同样的效果？",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_058_科学_8年级下册_沪教版_2013版_二_种子_新生命的开始_main_123_35c1a6a6_big_001",
+    "parent_index": 1,
+    "small_index": 3
+  },
+  {
+    "chunk_id": "science_textbooks_059_科学_9年级上册_沪教版_2013版_五_欧姆定律_main_199_70aa89b6_big_001_small_001",
+    "source": "science_textbooks/059_科学_9年级上册_沪教版_2013版_五_欧姆定律_main_199.md",
+    "content": "# 初中科学教材：科学_9年级上册_沪教版_2013版 - 五、欧姆定律\n\n## 教材元信息\n- 教材：科学_9年级上册_沪教版_2013版\n- 年级：9\n- 册次：上册\n- 出版社：沪教版\n- 学段：初中\n- 章节：五、欧姆定律\n- 内容类型：experiment\n- 原始 token 数：304\n- 原始文件：../ch-3/knowledge_base_builder/data/textbooks/初中科学/沪教版初中科学/科学_9年级上册_沪教版_2013版_五、欧姆定律_main_199.md\n\n## 教材正文\n# 思考·练习\n\n1. 电子手表的电源是一个纽扣形的氧化银电池，你能够设法探究在电子手表工作时，电池供电的整个电路相当于多大阻值的电阻吗？（提示：查阅有关数据）  \n2. 通过人体的安全电流不能大于  $10 \\mathrm{~mA}$ , 通常工厂车间使用的安全电压不超过  $36 \\mathrm{~V}$ , 你能据此估算人体的电阻大约有多少欧吗?  \n3. 在用电流表和电压表测量导体电阻的实验中，电压表的示数为  $4.8 \\mathrm{~V}$ ，电流表的示",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_059_科学_9年级上册_沪教版_2013版_五_欧姆定律_main_199_70aa89b6_big_001",
+    "parent_index": 1,
+    "small_index": 1
+  },
+  {
+    "chunk_id": "science_textbooks_059_科学_9年级上册_沪教版_2013版_五_欧姆定律_main_199_70aa89b6_big_001_small_002",
+    "source": "science_textbooks/059_科学_9年级上册_沪教版_2013版_五_欧姆定律_main_199.md",
+    "content": ", 你能据此估算人体的电阻大约有多少欧吗?  \n3. 在用电流表和电压表测量导体电阻的实验中，电压表的示数为  $4.8 \\mathrm{~V}$ ，电流表的示数为  $0.5 \\mathrm{~A}$ 。如果改变电源电压后，电压表的示数为  $12 \\mathrm{~V}$ ，前后两次实验都用量程为  $0.6 \\mathrm{~A}$  的电流表行不行？如果不行，应该怎么办？",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_059_科学_9年级上册_沪教版_2013版_五_欧姆定律_main_199_70aa89b6_big_001",
+    "parent_index": 1,
+    "small_index": 2
+  },
+  {
+    "chunk_id": "science_textbooks_060_科学_9年级下册_沪教版_2013版_四_走可持续发展的道路_main_171_d16c5a39_big_001_small_001",
+    "source": "science_textbooks/060_科学_9年级下册_沪教版_2013版_四_走可持续发展的道路_main_171.md",
+    "content": "# 初中科学教材：科学_9年级下册_沪教版_2013版 - 四、走可持续发展的道路\n\n## 教材元信息\n- 教材：科学_9年级下册_沪教版_2013版\n- 年级：9\n- 册次：下册\n- 出版社：沪教版\n- 学段：初中\n- 章节：四、走可持续发展的道路\n- 内容类型：experiment\n- 原始 token 数：717\n- 原始文件：../ch-3/knowledge_base_builder/data/textbooks/初中科学/沪教版初中科学/科学_9年级下册_沪教版_2013版_四、走可持续发展的道路_main_171.md\n\n## 教材正文\n# 拓展视野\n\n# 与可持续发展相适应的中国法律体系\n\n1973年，我国的第一个环境标准——《工业“三废”排放试行标准》诞生，1979年，我国通过了第一部环境保护法律——《中华人民共和国环境保护法（试行）》。1995年和1996年，全国人民代表大会常务委员会分别通过了关于修订《大气污染防治法》和《水污染防治法》的决定。此后又通过了一系列相关法律。与可持续发展相适应的中国法律体系逐步建立，主要可分为三部分：一是污染防治法，例如《大气污染防治",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_060_科学_9年级下册_沪教版_2013版_四_走可持续发展的道路_main_171_d16c5a39_big_001",
+    "parent_index": 1,
+    "small_index": 1
+  },
+  {
+    "chunk_id": "science_textbooks_060_科学_9年级下册_沪教版_2013版_四_走可持续发展的道路_main_171_d16c5a39_big_001_small_002",
+    "source": "science_textbooks/060_科学_9年级下册_沪教版_2013版_四_走可持续发展的道路_main_171.md",
+    "content": "污染防治法》和《水污染防治法》的决定。此后又通过了一系列相关法律。与可持续发展相适应的中国法律体系逐步建立，主要可分为三部分：一是污染防治法，例如《大气污染防治法》、《放射性污染防治法》、《固体废物污染环境防治法》等；二是自然保护法，例如《森林法》、《草原法》、《海洋环境保护法》、《野生动物保护法》、《防沙治沙法》、《环境影响评价法》等；三是与可持续发展相适应的行政、行为和发展规范，如《土地管理法》、《水法》、《渔业法》、《城市规划法》、《节约能源法》、《可再生能源法》。这些法律有力地保障了中国可持续发展战略的实施。\n\n# 可持续发展的实施\n\n从狭义上来讲，经过了约100年的不断探索，可持续发展的社会发展模式才不断完善准确。从广义上来讲，可持续发展的思想经历了2000多年的发展。但是，可持续发展问题归根结底是一个实践问题。重要的是实施可持续发展的各项原则，实现可持续发展的各项目标。\n\n可持续发展的个人生活——绿色生活。作为现代社会的公民，要树立可持续发展的意识，建立善待自然，与自然和谐相处的伦理观念；关注自己周围和社会的环境问题，了解环境知识，参与改善社会环境的公益活动；自觉地养成",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_060_科学_9年级下册_沪教版_2013版_四_走可持续发展的道路_main_171_d16c5a39_big_001",
+    "parent_index": 1,
+    "small_index": 2
+  },
+  {
+    "chunk_id": "science_textbooks_060_科学_9年级下册_沪教版_2013版_四_走可持续发展的道路_main_171_d16c5a39_big_001_small_003",
+    "source": "science_textbooks/060_科学_9年级下册_沪教版_2013版_四_走可持续发展的道路_main_171.md",
+    "content": "会的公民，要树立可持续发展的意识，建立善待自然，与自然和谐相处的伦理观念；关注自己周围和社会的环境问题，了解环境知识，参与改善社会环境的公益活动；自觉地养成",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_060_科学_9年级下册_沪教版_2013版_四_走可持续发展的道路_main_171_d16c5a39_big_001",
+    "parent_index": 1,
+    "small_index": 3
+  },
+  {
+    "chunk_id": "science_textbooks_061_科学_7年级上册_沪教版_2012版_二_耳朵与听觉_main_174_48511082_big_001_small_001",
+    "source": "science_textbooks/061_科学_7年级上册_沪教版_2012版_二_耳朵与听觉_main_174.md",
+    "content": "# 初中科学教材：科学_7年级上册_沪教版_2012版 - 二、耳朵与听觉\n\n## 教材元信息\n- 教材：科学_7年级上册_沪教版_2012版\n- 年级：7\n- 册次：上册\n- 出版社：沪教版\n- 学段：初中\n- 章节：二、耳朵与听觉\n- 内容类型：exercise\n- 原始 token 数：344\n- 原始文件：../ch-3/knowledge_base_builder/data/textbooks/初中科学/沪教版初中科学/科学_7年级上册_沪教版_2012版_二、耳朵与听觉_main_174.md\n\n## 教材正文\n# 拓展视野\n\n<table><tr><td>声音</td><td>声音强弱（分贝）</td></tr><tr><td>树叶沙沙作响的声音</td><td>10</td></tr><tr><td>低声耳语</td><td>20</td></tr><tr><td>理想的睡眠环境</td><td>30</td></tr><tr><td>课堂</td><td>35</td></tr><tr><td>家里日常聊天</td><td>40～50</td></tr><tr><td",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_061_科学_7年级上册_沪教版_2012版_二_耳朵与听觉_main_174_48511082_big_001",
+    "parent_index": 1,
+    "small_index": 1
+  },
+  {
+    "chunk_id": "science_textbooks_061_科学_7年级上册_沪教版_2012版_二_耳朵与听觉_main_174_48511082_big_001_small_002",
+    "source": "science_textbooks/061_科学_7年级上册_沪教版_2012版_二_耳朵与听觉_main_174.md",
+    "content": "/tr><tr><td>课堂</td><td>35</td></tr><tr><td>家里日常聊天</td><td>40～50</td></tr><tr><td>大声说话</td><td>60～70</td></tr><tr><td>交通繁忙的街道</td><td>70</td></tr><tr><td>高强度音乐</td><td>90～100</td></tr></table>\n\n# 思考·练习\n\n1. 外界的振动是如何在人耳中传递的？耳朵是如何将振动转化成听觉的？  \n2. 耳朵除了能产生听觉外，还有什么功能？  \n3. 通过上网查询或其他途径，查找有关造成耳聋的主要原因及科学用耳的方法。",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_061_科学_7年级上册_沪教版_2012版_二_耳朵与听觉_main_174_48511082_big_001",
+    "parent_index": 1,
+    "small_index": 2
+  },
+  {
+    "chunk_id": "science_textbooks_062_科学_7年级下册_沪教版_2012版_二_蒸腾作用_水分的散失_main_140_f275e46a_big_001_small_001",
+    "source": "science_textbooks/062_科学_7年级下册_沪教版_2012版_二_蒸腾作用_水分的散失_main_140.md",
+    "content": "# 初中科学教材：科学_7年级下册_沪教版_2012版 - 二、蒸腾作用——水分的散失\n\n## 教材元信息\n- 教材：科学_7年级下册_沪教版_2012版\n- 年级：7\n- 册次：下册\n- 出版社：沪教版\n- 学段：初中\n- 章节：二、蒸腾作用——水分的散失\n- 内容类型：experiment\n- 原始 token 数：547\n- 原始文件：../ch-3/knowledge_base_builder/data/textbooks/初中科学/沪教版初中科学/科学_7年级下册_沪教版_2012版_二、蒸腾作用——水分的散失_main_140.md\n\n## 教材正文\n# 进行实验：\n\n准备下列实验材料和用具：两盆品种相同、大小和叶片个数相似的植物（最好叶子面积较大而片数较少），多个小塑料袋，两个大塑料袋以及线绳、剪刀。\n\n# 按下列实验步骤进行：\n\n1. 分别在两只花盆上标明1号和2号的字样。  \n2. 把1号盆中植物的每片叶子套上小塑料袋，并在叶柄下端把小塑料袋用细线扎紧。  \n3. 用两个大塑料袋分别把1号和2号盆中的植物整个套起来，在茎的下部用绳子捆紧（图8-2-2）。\n\n图8-2-",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_062_科学_7年级下册_沪教版_2012版_二_蒸腾作用_水分的散失_main_140_f275e46a_big_001",
+    "parent_index": 1,
+    "small_index": 1
+  },
+  {
+    "chunk_id": "science_textbooks_062_科学_7年级下册_沪教版_2012版_二_蒸腾作用_水分的散失_main_140_f275e46a_big_001_small_002",
+    "source": "science_textbooks/062_科学_7年级下册_沪教版_2012版_二_蒸腾作用_水分的散失_main_140.md",
+    "content": "小塑料袋，并在叶柄下端把小塑料袋用细线扎紧。  \n3. 用两个大塑料袋分别把1号和2号盆中的植物整个套起来，在茎的下部用绳子捆紧（图8-2-2）。\n\n图8-2-2 蒸腾作用实验示意图\n\n4. 给两盆植物浇足水后（注意：水量要一样），一起放到阳光下照射，并不断进行观察。\n\n# 观察记录：\n\n随着时间的延长，发现包在2号盆植物外面的大塑料袋里（没变化/变得雾蒙蒙的），并且____（有/无）明显的水滴生成；包在1号盆植物外面的大塑料袋里____（没变化/变得雾蒙蒙的），并且____（有/无）明显的水滴生成；而直接包在叶片外面的小塑料袋里____（记录下观察到的现象）。\n\n# 结果和分析：\n\n实验结果与假设________（一致/不大一致/不一致），说明假设________（正确/需要修正/应推翻）。由此可以得出结论：植物的蒸腾作用主要发生在________。",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_062_科学_7年级下册_沪教版_2012版_二_蒸腾作用_水分的散失_main_140_f275e46a_big_001",
+    "parent_index": 1,
+    "small_index": 2
+  },
+  {
+    "chunk_id": "science_textbooks_063_科学_8年级上册_沪教版_2013版_五_浮力_main_058_f8cb4814_big_001_small_001",
+    "source": "science_textbooks/063_科学_8年级上册_沪教版_2013版_五_浮力_main_058.md",
+    "content": "# 初中科学教材：科学_8年级上册_沪教版_2013版 - 五、浮力\n\n## 教材元信息\n- 教材：科学_8年级上册_沪教版_2013版\n- 年级：8\n- 册次：上册\n- 出版社：沪教版\n- 学段：初中\n- 章节：五、浮力\n- 内容类型：experiment\n- 原始 token 数：580\n- 原始文件：../ch-3/knowledge_base_builder/data/textbooks/初中科学/沪教版初中科学/科学_8年级上册_沪教版_2013版_五、浮力_main_058.md\n\n## 教材正文\n# 活动-探究\n\n# 验证空气浮力的大小与物体排开空气的体积有关\n\n设计实验：空气的质量很小，采用和水同样的实验方法显然不行，我们可以采用对照的方法。首先使空气中的两个物体处于相同的状态，然后改变其中一个物体的体积，保持其他因素不变，观察物体所受到的空气浮力的变化。\n\n材料与用具：两只相同的大塑料瓶（其中一只带有自行车进气阀）、气球、打气筒、细木棍等。\n\n# 步骤：\n\n1. 向带有自行车进气阀的大塑料瓶中打气（约十几次）后，将进气阀关紧。  \n2. 将气球套在进气阀口上，用细线系",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_063_科学_8年级上册_沪教版_2013版_五_浮力_main_058_f8cb4814_big_001",
+    "parent_index": 1,
+    "small_index": 1
+  },
+  {
+    "chunk_id": "science_textbooks_063_科学_8年级上册_沪教版_2013版_五_浮力_main_058_f8cb4814_big_001_small_002",
+    "source": "science_textbooks/063_科学_8年级上册_沪教版_2013版_五_浮力_main_058.md",
+    "content": "阀）、气球、打气筒、细木棍等。\n\n# 步骤：\n\n1. 向带有自行车进气阀的大塑料瓶中打气（约十几次）后，将进气阀关紧。  \n2. 将气球套在进气阀口上，用细线系紧。  \n3. 将此瓶与另一塑料瓶分别悬挂在细木棍的两端，用细线吊起后，调节平衡，如图3-5-9所示。\n\n图3-5-9 验证空气浮力实验示意图\n\n根据阿基米得定律，空气对塑料瓶有浮力，浮力的大小与物体排开空气的体积有关。请你预测，如果旋开进气阀的螺母，使瓶中的空气进入气球，随着气球体积的增大，会出现什么现象？\n\n记录：带有气球的一端\n\n结论：物体在空气中____（受到/不受）浮力，浮力的大小与____有关，物体的体积越____（大/小），受到的浮力越____（大/小）。\n\n热气球、飞艇、孔明灯能够飞上天空，也都是借助了空气的浮力。",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_063_科学_8年级上册_沪教版_2013版_五_浮力_main_058_f8cb4814_big_001",
+    "parent_index": 1,
+    "small_index": 2
+  },
+  {
+    "chunk_id": "science_textbooks_064_科学_8年级下册_沪教版_2013版_六_能量_能量的转化及其守恒_main_061_58f4ee83_big_001_small_001",
+    "source": "science_textbooks/064_科学_8年级下册_沪教版_2013版_六_能量_能量的转化及其守恒_main_061.md",
+    "content": "# 初中科学教材：科学_8年级下册_沪教版_2013版 - 六、能量、能量的转化及其守恒\n\n## 教材元信息\n- 教材：科学_8年级下册_沪教版_2013版\n- 年级：8\n- 册次：下册\n- 出版社：沪教版\n- 学段：初中\n- 章节：六、能量、能量的转化及其守恒\n- 内容类型：experiment\n- 原始 token 数：739\n- 原始文件：../ch-3/knowledge_base_builder/data/textbooks/初中科学/沪教版初中科学/科学_8年级下册_沪教版_2013版_六、能量、能量的转化及其守恒_main_061.md\n\n## 教材正文\n# 活动·探究\n\n# 制作双向能量转化装置\n\n材料与用具：玩具电动机、电流表、电池和电池盒、双刀双掷开关、重物和细绳、滑轮及用于固定滑轮的支架。\n\n# 步骤：\n\n1. 按图2-6-4所示安装器材。将双刀双掷开关扳到  $a$  位置，此时电动机由电池供电，电动机的运转通过机械结构把重物吊起。\n\n能量的转化：\n\n图2-6-4 能量转化装置\n\n2. 当重物上升到最高点时，将双刀双掷开关扳到  $b$  位置，此时，重物下降推",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_064_科学_8年级下册_沪教版_2013版_六_能量_能量的转化及其守恒_main_061_58f4ee83_big_001",
+    "parent_index": 1,
+    "small_index": 1
+  },
+  {
+    "chunk_id": "science_textbooks_064_科学_8年级下册_沪教版_2013版_六_能量_能量的转化及其守恒_main_061_58f4ee83_big_001_small_002",
+    "source": "science_textbooks/064_科学_8年级下册_沪教版_2013版_六_能量_能量的转化及其守恒_main_061.md",
+    "content": "运转通过机械结构把重物吊起。\n\n能量的转化：\n\n图2-6-4 能量转化装置\n\n2. 当重物上升到最高点时，将双刀双掷开关扳到  $b$  位置，此时，重物下降推动发电机（刚才的电动机现在成了发电机）发电，产生 _______，使电流计的指针 _______。\n\n能量的转化：  $\\longrightarrow$\n\n# 热量传递的方向性\n\n热传递可以把内能从一个物体传递给另一个物体。热传递有一个重要的特\n\n点: 在没有外界影响的情况下, 热量只能从高温物体传递给低温物体。例如, 一杯热开水放在室温环境中, 其热量会传给周围比它温度低的空气, 最后变得与周围空气的温度一样。而相反的情况谁也没有遇到过: 一杯与周围空气温度一样的水自动从周围空气中吸收热量, 最后变成开水。实际上, 这种现象是不可能发生的。自然界有一条重要规律, 叫做热力学第二定律: 在没有外界作用的情况下, 热量只能从高温物体传递给低温物体, 不可能从低温物体传递给高温物体。\n\n那么，也许你会问，冰箱里的温度是怎么降下来的呢？这是因为冰箱有制冷机。制冷机的作用就是一种外界作用，这种外界作用把冰箱内部（温度较低处）的热量传递到",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_064_科学_8年级下册_沪教版_2013版_六_能量_能量的转化及其守恒_main_061_58f4ee83_big_001",
+    "parent_index": 1,
+    "small_index": 2
+  },
+  {
+    "chunk_id": "science_textbooks_064_科学_8年级下册_沪教版_2013版_六_能量_能量的转化及其守恒_main_061_58f4ee83_big_001_small_003",
+    "source": "science_textbooks/064_科学_8年级下册_沪教版_2013版_六_能量_能量的转化及其守恒_main_061.md",
+    "content": "温物体。\n\n那么，也许你会问，冰箱里的温度是怎么降下来的呢？这是因为冰箱有制冷机。制冷机的作用就是一种外界作用，这种外界作用把冰箱内部（温度较低处）的热量传递到了冰箱外部（温度较高的地方）。制冷机的这种功能是以消耗电能为代价的。空调设备也是同样的道理。",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_064_科学_8年级下册_沪教版_2013版_六_能量_能量的转化及其守恒_main_061_58f4ee83_big_001",
+    "parent_index": 1,
+    "small_index": 3
+  },
+  {
+    "chunk_id": "science_textbooks_065_科学_9年级上册_沪教版_2013版_五_让你的循环系统更健康_main_174_c8b33712_big_001_small_001",
+    "source": "science_textbooks/065_科学_9年级上册_沪教版_2013版_五_让你的循环系统更健康_main_174.md",
+    "content": "# 初中科学教材：科学_9年级上册_沪教版_2013版 - 五、让你的循环系统更健康\n\n## 教材元信息\n- 教材：科学_9年级上册_沪教版_2013版\n- 年级：9\n- 册次：上册\n- 出版社：沪教版\n- 学段：初中\n- 章节：五、让你的循环系统更健康\n- 内容类型：exercise\n- 原始 token 数：1098\n- 原始文件：../ch-3/knowledge_base_builder/data/textbooks/初中科学/沪教版初中科学/科学_9年级上册_沪教版_2013版_五、让你的循环系统更健康_main_174.md\n\n## 教材正文\n# 本篇小结\n\n1. 食物中的营养素主要有蛋白质、糖类、脂肪、水、维生素和无机盐六大类。每一类营养素对人体都是不可缺少的。不同食物含有营养素的情况不同。  \n2. 蛋白质、糖类、脂肪是产能营养素。由于它们在人体内还具有许多方面的重要功能，而且释放能量的特点各不相同，所以要按照一定的比例摄入。  \n3. 人体对维生素和无机盐所需的量虽然很有限，但是它们的作用非常重要，而且在人体中不能合成（或合成的量不足），所以必须从食物中摄入。  \n4",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_065_科学_9年级上册_沪教版_2013版_五_让你的循环系统更健康_main_174_c8b33712_big_001",
+    "parent_index": 1,
+    "small_index": 1
+  },
+  {
+    "chunk_id": "science_textbooks_065_科学_9年级上册_沪教版_2013版_五_让你的循环系统更健康_main_174_c8b33712_big_001_small_002",
+    "source": "science_textbooks/065_科学_9年级上册_沪教版_2013版_五_让你的循环系统更健康_main_174.md",
+    "content": "定的比例摄入。  \n3. 人体对维生素和无机盐所需的量虽然很有限，但是它们的作用非常重要，而且在人体中不能合成（或合成的量不足），所以必须从食物中摄入。  \n4. 膳食纤维虽然不能被人体消化，但它在许多方面有重要的作用。所以，饮食中应保证一定的膳食纤维含量。  \n5. 人体的消化系统包括消化道和消化腺；对食物的消化作用可分为物理（机械）消化和化学消化两种不同类型。  \n6. 消化道的不同部位分布着不同的消化腺，分泌不同的消化液，里面含有不同的消化酶，对不同的食物成分进行消化。所以不同食物成分在消化道内不是同时被消化的。  \n7. 食物的消化从口腔开始，在胃和小肠上半段基本完成。除了口腔、胃和小肠以外，肝、胆、胰和它们所分泌的消化液在食物消化中也发挥重要的作用。  \n8. 营养的吸收主要发生在小肠中，食物残渣的处理主要由大肠完成。小肠和大肠的构造都与它们的功能相适应。  \n9. 我国有关主管部门制定并颁布了《中国居民膳食指南》和“中国居民平衡膳食宝塔”。我们应注意坚持“合理营养，平衡膳食”的原则。  \n10. 关注食品安全，具备一定的安全常识才能选择安全的食品。  \n11. 食物在人体细",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_065_科学_9年级上册_沪教版_2013版_五_让你的循环系统更健康_main_174_c8b33712_big_001",
+    "parent_index": 1,
+    "small_index": 2
+  },
+  {
+    "chunk_id": "science_textbooks_065_科学_9年级上册_沪教版_2013版_五_让你的循环系统更健康_main_174_c8b33712_big_001_small_003",
+    "source": "science_textbooks/065_科学_9年级上册_沪教版_2013版_五_让你的循环系统更健康_main_174.md",
+    "content": "中国居民平衡膳食宝塔”。我们应注意坚持“合理营养，平衡膳食”的原则。  \n10. 关注食品安全，具备一定的安全常识才能选择安全的食品。  \n11. 食物在人体细胞内释放能量的本质与木柴在空气中的燃烧一样，都是有机物被氧化生成二氧化碳（和水），同时释放出能量。但是二者的过程非常不同。  \n12. 酶不仅在消化过程中发挥作用，绝大多数的生命活动都要在酶的催化下进行。一种酶只催化一种（或一类）物质经特定的反应得到一定的产物。  \n13. 酶是由活细胞产生的生物催化剂，它的催化效率极高。酶在科学研究和工农业生产中也是重要的工具。由于几乎所有的酶都是蛋白质，酶的催化能力往往会受到酸碱度、温度等因素的影响。  \n14. 呼吸系统就像是人体“生命之火”的“给排风系统”，通过呼吸运动\n\n不断地为机体提供生命活动所需要的氧，并排出代谢所产生的二氧化碳。人体呼吸系统的构造有利于气体的进出和交换，与它的功能相一致。",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_065_科学_9年级上册_沪教版_2013版_五_让你的循环系统更健康_main_174_c8b33712_big_001",
+    "parent_index": 1,
+    "small_index": 3
+  },
+  {
+    "chunk_id": "science_textbooks_066_科学_9年级下册_沪教版_2013版_第五章_main_117_30d8d8dd_big_001_small_001",
+    "source": "science_textbooks/066_科学_9年级下册_沪教版_2013版_第五章_main_117.md",
+    "content": "# 初中科学教材：科学_9年级下册_沪教版_2013版 - 第五章\n\n## 教材元信息\n- 教材：科学_9年级下册_沪教版_2013版\n- 年级：9\n- 册次：下册\n- 出版社：沪教版\n- 学段：初中\n- 章节：第五章\n- 内容类型：exercise\n- 原始 token 数：397\n- 原始文件：../ch-3/knowledge_base_builder/data/textbooks/初中科学/沪教版初中科学/科学_9年级下册_沪教版_2013版_第五章_main_117.md\n\n## 教材正文\n# 思考·练习\n\n1. 根据所学过的知识，参考上面关于骨折处理的原则，在小组内讨论一下如果怀疑某同学脊柱受到了损伤，大家应采取哪些紧急处理措施，要特别注意些什么问题。然后查阅有关书籍，看看本小组的讨论结果是否正确和全面。  \n2. 在生活中还会发生另外一些意外事故，如烫伤、中暑、触电、溺水、狗咬伤、毒蛇咬伤、煤气中毒、出血性外伤、食物中毒等等，请同学根据自己生活的实际情况列出自己周围可能出现的意外事故，并以小组为单位，选择其中的两三项，通过请教有关人士、查阅资料、小组讨论等方式了解有关知识",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_066_科学_9年级下册_沪教版_2013版_第五章_main_117_30d8d8dd_big_001",
+    "parent_index": 1,
+    "small_index": 1
+  },
+  {
+    "chunk_id": "science_textbooks_066_科学_9年级下册_沪教版_2013版_第五章_main_117_30d8d8dd_big_001_small_002",
+    "source": "science_textbooks/066_科学_9年级下册_沪教版_2013版_第五章_main_117.md",
+    "content": "物中毒等等，请同学根据自己生活的实际情况列出自己周围可能出现的意外事故，并以小组为单位，选择其中的两三项，通过请教有关人士、查阅资料、小组讨论等方式了解有关知识，参照上面骨折急救卡片的形式制作资料卡，然后把全班各小组的资料卡统一起来，做成一整套急救卡片，放入班级的急救箱里（如果你们班还没有急救箱，应利用这次活动把它建起来）。",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_066_科学_9年级下册_沪教版_2013版_第五章_main_117_30d8d8dd_big_001",
+    "parent_index": 1,
+    "small_index": 2
+  },
+  {
+    "chunk_id": "science_textbooks_067_科学_7年级上册_沪教版_2012版_二_青春期_变化的关键时期_main_127_be7480e0_big_001_small_001",
+    "source": "science_textbooks/067_科学_7年级上册_沪教版_2012版_二_青春期_变化的关键时期_main_127.md",
+    "content": "# 初中科学教材：科学_7年级上册_沪教版_2012版 - 二、青春期——变化的关键时期\n\n## 教材元信息\n- 教材：科学_7年级上册_沪教版_2012版\n- 年级：7\n- 册次：上册\n- 出版社：沪教版\n- 学段：初中\n- 章节：二、青春期——变化的关键时期\n- 内容类型：concept\n- 原始 token 数：297\n- 原始文件：../ch-3/knowledge_base_builder/data/textbooks/初中科学/沪教版初中科学/科学_7年级上册_沪教版_2012版_二、青春期——变化的关键时期_main_127.md\n\n## 教材正文\n步入青春期的少年，考虑问题的方式、自我感觉以及与他人相处的方式开始有所改变。许多青少年对自己经历到的一些变化有许多复杂的感受，有时自我感觉快乐兴奋，有时又充满了困惑，有时开始思考诸如“我是谁？”“我怎样度过自己的人生”等等问题。\n\n青春期正是我们迈向成熟的关键一步。我们应当积极乐观地面对成长带来的烦恼，开阔胸襟，培养美好的情操，积极参加有益于身心的文体、科技活动，在共同学习、活动中，与同学建立真诚的友谊。同时，还应抓住青春期这",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_067_科学_7年级上册_沪教版_2012版_二_青春期_变化的关键时期_main_127_be7480e0_big_001",
+    "parent_index": 1,
+    "small_index": 1
+  },
+  {
+    "chunk_id": "science_textbooks_067_科学_7年级上册_沪教版_2012版_二_青春期_变化的关键时期_main_127_be7480e0_big_001_small_002",
+    "source": "science_textbooks/067_科学_7年级上册_沪教版_2012版_二_青春期_变化的关键时期_main_127.md",
+    "content": "应当积极乐观地面对成长带来的烦恼，开阔胸襟，培养美好的情操，积极参加有益于身心的文体、科技活动，在共同学习、活动中，与同学建立真诚的友谊。同时，还应抓住青春期这一长知识、长能力、发展智力的关键时期，为使自己变成理想中的成年人而努力！",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_067_科学_7年级上册_沪教版_2012版_二_青春期_变化的关键时期_main_127_be7480e0_big_001",
+    "parent_index": 1,
+    "small_index": 2
+  },
+  {
+    "chunk_id": "science_textbooks_068_科学_7年级下册_沪教版_2012版_四_土壤的酸碱性和含盐量_main_163_14307a86_big_001_small_001",
+    "source": "science_textbooks/068_科学_7年级下册_沪教版_2012版_四_土壤的酸碱性和含盐量_main_163.md",
+    "content": "# 初中科学教材：科学_7年级下册_沪教版_2012版 - 四、土壤的酸碱性和含盐量\n\n## 教材元信息\n- 教材：科学_7年级下册_沪教版_2012版\n- 年级：7\n- 册次：下册\n- 出版社：沪教版\n- 学段：初中\n- 章节：四、土壤的酸碱性和含盐量\n- 内容类型：reading\n- 原始 token 数：691\n- 原始文件：../ch-3/knowledge_base_builder/data/textbooks/初中科学/沪教版初中科学/科学_7年级下册_沪教版_2012版_四、土壤的酸碱性和含盐量_main_163.md\n\n## 教材正文\n# 拓展视野\n\n# 人工调控绣球花的颜色\n\n我们可以通过调节土壤的  $\\mathrm{pH}$  来人工调控绣球花的颜色。一般在土中拌入  $0.1\\%$  硫磺粉，或施用少许明矾水使土壤为酸性，也可以利用施肥的方式来维持土壤的酸性，使绣球花开出蓝色花。为保持粉红色，可在土壤中施用石灰。\n\n# 土壤含盐量\n\n土壤中有长石、石英、云母、辉石、角闪石等，以及由它们风化而成的高岭石、蒙脱石、水云母和硅、铁、铅氧化物等矿物。它们不仅是植物矿物质",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_068_科学_7年级下册_沪教版_2012版_四_土壤的酸碱性和含盐量_main_163_14307a86_big_001",
+    "parent_index": 1,
+    "small_index": 1
+  },
+  {
+    "chunk_id": "science_textbooks_068_科学_7年级下册_沪教版_2012版_四_土壤的酸碱性和含盐量_main_163_14307a86_big_001_small_002",
+    "source": "science_textbooks/068_科学_7年级下册_沪教版_2012版_四_土壤的酸碱性和含盐量_main_163.md",
+    "content": "用石灰。\n\n# 土壤含盐量\n\n土壤中有长石、石英、云母、辉石、角闪石等，以及由它们风化而成的高岭石、蒙脱石、水云母和硅、铁、铅氧化物等矿物。它们不仅是植物矿物质营养的主要来源，而且对土壤的物理化学性质和水分、养分的保蓄都有着十分重要的作用。\n\n在化学科学中，盐既包括我们非常熟悉的食盐（ $\\mathrm{NaCl}$ ），也包括我们接触过的硝酸钾（ $\\mathrm{KNO}_3$ ）、氯化钾（ $\\mathrm{KCl}$ ）等化合物，厨房中常用的纯碱（ $\\mathrm{Na}_2\\mathrm{CO}_3$ ）也属于盐类。常见的盐还有：硫酸钠（ $\\mathrm{Na}_2\\mathrm{SO}_4$ ）、硫酸钙（石膏， $\\mathrm{CaSO}_4$ ）、碳酸钙（石灰石， $\\mathrm{CaCO}_3$ ）、碳酸氢钠（小苏打， $\\mathrm{NaHCO}_3$ ）等。\n\n只有极少量土壤中的矿物质能溶解在土壤水分中，它们被称为可溶性盐，主要有氯化物、硫酸盐和碳酸盐等。我们将土壤中可溶性盐的总量叫做土壤含盐量，土壤中含盐量超过土壤质量的  $0.2\\%$  时，就会影响",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_068_科学_7年级下册_沪教版_2012版_四_土壤的酸碱性和含盐量_main_163_14307a86_big_001",
+    "parent_index": 1,
+    "small_index": 2
+  },
+  {
+    "chunk_id": "science_textbooks_068_科学_7年级下册_沪教版_2012版_四_土壤的酸碱性和含盐量_main_163_14307a86_big_001_small_003",
+    "source": "science_textbooks/068_科学_7年级下册_沪教版_2012版_四_土壤的酸碱性和含盐量_main_163.md",
+    "content": "分中，它们被称为可溶性盐，主要有氯化物、硫酸盐和碳酸盐等。我们将土壤中可溶性盐的总量叫做土壤含盐量，土壤中含盐量超过土壤质量的  $0.2\\%$  时，就会影响植物的生长。",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_068_科学_7年级下册_沪教版_2012版_四_土壤的酸碱性和含盐量_main_163_14307a86_big_001",
+    "parent_index": 1,
+    "small_index": 3
+  },
+  {
+    "chunk_id": "science_textbooks_069_科学_8年级上册_沪教版_2013版_四_飞机是怎样飞上天的__main_051_3a149883_big_001_small_001",
+    "source": "science_textbooks/069_科学_8年级上册_沪教版_2013版_四_飞机是怎样飞上天的__main_051.md",
+    "content": "# 初中科学教材：科学_8年级上册_沪教版_2013版 - 四、飞机是怎样飞上天的？\n\n## 教材元信息\n- 教材：科学_8年级上册_沪教版_2013版\n- 年级：8\n- 册次：上册\n- 出版社：沪教版\n- 学段：初中\n- 章节：四、飞机是怎样飞上天的？\n- 内容类型：experiment\n- 原始 token 数：679\n- 原始文件：../ch-3/knowledge_base_builder/data/textbooks/初中科学/沪教版初中科学/科学_8年级上册_沪教版_2013版_四、飞机是怎样飞上天的？_main_051.md\n\n## 教材正文\n# 四、飞机是怎样飞上天的？\n\n剪断引线，静止的氦气球就能够飞向高空，而静止在跑道上的飞机却不能自动升空。因为飞机跟气球升空的原理不一样，它是靠空气流动产生的升力飞向天空的。\n\n# 流体流速与压强的关系\n\n# 观察·思考\n\n# 流速与压强的关系\n\n# 1. 吹不开的纸\n\n材料与用具：薄纸两张。\n\n用两只手各拿一张薄纸的上端，使两张薄纸平行，距离约  $5 \\mathrm{~cm} \\sim 7 \\mathrm{~cm}$  。先向两",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_069_科学_8年级上册_沪教版_2013版_四_飞机是怎样飞上天的__main_051_3a149883_big_001",
+    "parent_index": 1,
+    "small_index": 1
+  },
+  {
+    "chunk_id": "science_textbooks_069_科学_8年级上册_沪教版_2013版_四_飞机是怎样飞上天的__main_051_3a149883_big_001_small_002",
+    "source": "science_textbooks/069_科学_8年级上册_沪教版_2013版_四_飞机是怎样飞上天的__main_051.md",
+    "content": "与用具：薄纸两张。\n\n用两只手各拿一张薄纸的上端，使两张薄纸平行，距离约  $5 \\mathrm{~cm} \\sim 7 \\mathrm{~cm}$  。先向两张薄纸中间缓缓地吹气，两张纸________。\n\n说明：这个实验也可用两只悬挂的气球代替薄纸。向两只气球中间吹气，两只气球不但没被吹开，反而互相靠近。\n\n# 2. 烛焰向哪边倒？\n\n材料与用具：蜡烛、漏斗、火柴。\n\n取一支点燃的蜡烛, 放在漏斗前, 如图 3-4-1, 向漏斗里吹气, 烛焰倒向\n\n# 3. 吹气吸物\n\n如图3- 4- 2所示，将漏斗口朝下，用手将乒乓球按在漏斗口，放手，乒乓球就会________；若从漏斗管口向里吹气，之后再放手，乒乓球就会________。\n\n图3-4-1 烛焰倒向\n\n图3-4-2 吹不掉的乒乓球\n\n以上现象中，都发生了空气的流动，物体都向空气流速高的区域运动或者是偏移，这说明空气中的压强与空气流速有关，空气流速越大，压强越小，这个规律叫伯努利定律。对于水和其他流体，伯努利定律都适用。飞机能够飞向蓝天，正是利用了伯努利定律。",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_069_科学_8年级上册_沪教版_2013版_四_飞机是怎样飞上天的__main_051_3a149883_big_001",
+    "parent_index": 1,
+    "small_index": 2
+  },
+  {
+    "chunk_id": "science_textbooks_069_科学_8年级上册_沪教版_2013版_四_飞机是怎样飞上天的__main_051_3a149883_big_001_small_003",
+    "source": "science_textbooks/069_科学_8年级上册_沪教版_2013版_四_飞机是怎样飞上天的__main_051.md",
+    "content": "伯努利定律。对于水和其他流体，伯努利定律都适用。飞机能够飞向蓝天，正是利用了伯努利定律。",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_069_科学_8年级上册_沪教版_2013版_四_飞机是怎样飞上天的__main_051_3a149883_big_001",
+    "parent_index": 1,
+    "small_index": 3
+  },
+  {
+    "chunk_id": "science_textbooks_070_科学_8年级下册_沪教版_2013版_四_牛顿第一定律_main_024_7c6a3c7a_big_001_small_001",
+    "source": "science_textbooks/070_科学_8年级下册_沪教版_2013版_四_牛顿第一定律_main_024.md",
+    "content": "# 初中科学教材：科学_8年级下册_沪教版_2013版 - 四、牛顿第一定律\n\n## 教材元信息\n- 教材：科学_8年级下册_沪教版_2013版\n- 年级：8\n- 册次：下册\n- 出版社：沪教版\n- 学段：初中\n- 章节：四、牛顿第一定律\n- 内容类型：experiment\n- 原始 token 数：670\n- 原始文件：../ch-3/knowledge_base_builder/data/textbooks/初中科学/沪教版初中科学/科学_8年级下册_沪教版_2013版_四、牛顿第一定律_main_024.md\n\n## 教材正文\n# 理想实验\n\n所谓理想实验，是在现有的实验条件达不到指定要求的条件下，在头脑和思想中构画理想实验条件，再按照严格的逻辑推理而做出的思想实验。首先要在思想中塑造理想模型，建立理想条件下的运动方程，再运用理想模型进行严密推理并得出结论。它仅是抽象思维的活动过程。它在头脑中实现实验物体、实验条件和实验过程，是一个严密的逻辑推理体系。例如伽利略的斜面实验，由设想“如果没有摩擦阻力”的理想条件，而得到“球将永远滚下去”的科学推论。\n\n牛顿在前人研究的基础上总结出了",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_070_科学_8年级下册_沪教版_2013版_四_牛顿第一定律_main_024_7c6a3c7a_big_001",
+    "parent_index": 1,
+    "small_index": 1
+  },
+  {
+    "chunk_id": "science_textbooks_070_科学_8年级下册_沪教版_2013版_四_牛顿第一定律_main_024_7c6a3c7a_big_001_small_002",
+    "source": "science_textbooks/070_科学_8年级下册_沪教版_2013版_四_牛顿第一定律_main_024.md",
+    "content": "程，是一个严密的逻辑推理体系。例如伽利略的斜面实验，由设想“如果没有摩擦阻力”的理想条件，而得到“球将永远滚下去”的科学推论。\n\n牛顿在前人研究的基础上总结出了一条力学定律，即牛顿第一定律：一切物体在没有受到外力作用的时候，总是保持匀速直线运动状态或静止状态。这个规律叫牛顿第一定律，通常也叫做惯性定律。\n\n一切物体都有保持其匀速直线运动或静止状态的性质，我们把物体的这种性质称为惯性（inertia）。无论物体是否静止，也无论物体是否受力，一切物\n\n体在任何情况下都具有惯性。物体惯性的大小跟其质量有关，物体质量越大，惯性也越大。物体惯性的大小与其速度无关。\n\n惯性现象随处可见（图1-4-3）。当\n\n(a)  \n图1-4-3 惯性现象\n\n(b)\n\n你骑自行车时，如果停止蹬脚踏板，自行车也会继续前进；子弹从枪膛中射出后，尽管不再受到推力，仍会继续前进；当你乘坐的公共汽车突然刹车时，你的身体会向前倾斜；突然敲击一摞棋子中下方的棋子，棋子飞出去，上方的棋子落在正下方，这些都是惯性现象。",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_070_科学_8年级下册_沪教版_2013版_四_牛顿第一定律_main_024_7c6a3c7a_big_001",
+    "parent_index": 1,
+    "small_index": 2
+  },
+  {
+    "chunk_id": "science_textbooks_070_科学_8年级下册_沪教版_2013版_四_牛顿第一定律_main_024_7c6a3c7a_big_001_small_003",
+    "source": "science_textbooks/070_科学_8年级下册_沪教版_2013版_四_牛顿第一定律_main_024.md",
+    "content": "飞出去，上方的棋子落在正下方，这些都是惯性现象。",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_070_科学_8年级下册_沪教版_2013版_四_牛顿第一定律_main_024_7c6a3c7a_big_001",
+    "parent_index": 1,
+    "small_index": 3
+  },
+  {
+    "chunk_id": "science_textbooks_071_科学_9年级上册_沪教版_2013版_四_电阻_滑动变阻器_main_190_0f243efa_big_001_small_001",
+    "source": "science_textbooks/071_科学_9年级上册_沪教版_2013版_四_电阻_滑动变阻器_main_190.md",
+    "content": "# 初中科学教材：科学_9年级上册_沪教版_2013版 - 四、电阻，滑动变阻器\n\n## 教材元信息\n- 教材：科学_9年级上册_沪教版_2013版\n- 年级：9\n- 册次：上册\n- 出版社：沪教版\n- 学段：初中\n- 章节：四、电阻，滑动变阻器\n- 内容类型：experiment\n- 原始 token 数：417\n- 原始文件：../ch-3/knowledge_base_builder/data/textbooks/初中科学/沪教版初中科学/科学_9年级上册_沪教版_2013版_四、电阻，滑动变阻器_main_190.md\n\n## 教材正文\n# 活动-探究\n\n# 决定导体电阻大小的主要因素\n\n提出问题：决定导体电阻大小的因素主要有哪些？\n\n提出假设：\n\n设计实验：（提示：你提出的影响电阻大小的因素的假设可能不止一个，因此在研究上属于“多因一果”问题。研究此类问题，可以将各个因素分别研究，在研究某个因素的时候控制其他因素保持不变。）\n\n进行实验：（提示：设计表格记录数据。）\n\n交流与讨论：（提示：你所假设的因素都是决定导体电阻大小的因素吗？你所设计的实验方案有无不合理的地方？你在这个",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_071_科学_9年级上册_沪教版_2013版_四_电阻_滑动变阻器_main_190_0f243efa_big_001",
+    "parent_index": 1,
+    "small_index": 1
+  },
+  {
+    "chunk_id": "science_textbooks_071_科学_9年级上册_沪教版_2013版_四_电阻_滑动变阻器_main_190_0f243efa_big_001_small_002",
+    "source": "science_textbooks/071_科学_9年级上册_沪教版_2013版_四_电阻_滑动变阻器_main_190.md",
+    "content": "变。）\n\n进行实验：（提示：设计表格记录数据。）\n\n交流与讨论：（提示：你所假设的因素都是决定导体电阻大小的因素吗？你所设计的实验方案有无不合理的地方？你在这个探究活动过程中是否巧妙地采用了某些方法？请将想法记在这里，并和其他同学交流。）\n\n大量实验表明：导体的电阻大小跟导体的长度、横截面积和材料的种类有关。电阻是导体本身对电流的一种阻碍作用。不同导体对电流的阻碍作用一般不同。下表列出了一些长  $1 \\mathrm{~m}$  、横截面积是  $1 \\mathrm{~mm}^{2}$  的材料在  $20^{\\circ} \\mathrm{C}$  时的电阻值。",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_071_科学_9年级上册_沪教版_2013版_四_电阻_滑动变阻器_main_190_0f243efa_big_001",
+    "parent_index": 1,
+    "small_index": 2
+  },
+  {
+    "chunk_id": "science_textbooks_072_科学_9年级下册_沪教版_2013版_第四章_main_088_25836529_big_001_small_001",
+    "source": "science_textbooks/072_科学_9年级下册_沪教版_2013版_第四章_main_088.md",
+    "content": "# 初中科学教材：科学_9年级下册_沪教版_2013版 - 第四章\n\n## 教材元信息\n- 教材：科学_9年级下册_沪教版_2013版\n- 年级：9\n- 册次：下册\n- 出版社：沪教版\n- 学段：初中\n- 章节：第四章\n- 内容类型：exercise\n- 原始 token 数：784\n- 原始文件：../ch-3/knowledge_base_builder/data/textbooks/初中科学/沪教版初中科学/科学_9年级下册_沪教版_2013版_第四章_main_088.md\n\n## 教材正文\n# 第四章\n\n# 人体的自我保护\n\n在我们周围的环境中，有很多物理的、化学的、生物的社会的因素，时时侵扰我们，特别是一些致病的微生物，造成我们“生病”。有些疾病还具有传染性。但是，人在长期的进化过程中，发展出来一套相当复杂的自我防御系统，它能有效地抵御来自外界的各种侵袭，保证自身生命活动的正常进行。\n\n# 人体的防御机制\n\n人所处的外界环境中有很多有毒、有害物质及病原体等，它们时时在侵袭着人体，但是在大多数时候这些侵袭却对人类没有太大的影响。原来，人体凭借自身的多重防御机制有效地抵御了它们",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_072_科学_9年级下册_沪教版_2013版_第四章_main_088_25836529_big_001",
+    "parent_index": 1,
+    "small_index": 1
+  },
+  {
+    "chunk_id": "science_textbooks_072_科学_9年级下册_沪教版_2013版_第四章_main_088_25836529_big_001_small_002",
+    "source": "science_textbooks/072_科学_9年级下册_沪教版_2013版_第四章_main_088.md",
+    "content": "外界环境中有很多有毒、有害物质及病原体等，它们时时在侵袭着人体，但是在大多数时候这些侵袭却对人类没有太大的影响。原来，人体凭借自身的多重防御机制有效地抵御了它们的侵害。你知道人体都有哪些防御机制吗？\n\n# 皮肤和黏膜是人体的最外层屏障\n\n我们身体所接触的空气、水以及各种物体上有各种各样的细菌、病毒等，其中有些是病原体。人体的皮肤和黏膜与外界环境直接接触，它们是保护身体免受病菌侵害的最外层屏障（图4-1-1）。\n\n# 1. 皮肤的保护作用\n\n皮肤很柔软，还有许多毛孔、汗腺开口等，能透气排汗，但它却能有效地防止病原体的入侵，这是为什么呢？\n\n图4-1-1 电子显微镜下的皮肤及皮肤上的细菌\n\n从图4- 1- 2中我们可以看到，皮肤由表皮和真皮构成。表皮分为角质层与\n\n图4-1-2 皮肤的结构模式图\n\n生发层。角质层位于最外面，由一些角质化的死细胞构成，这些细胞排列非常紧密，能有效地将环境中的病菌、化学物质等与下面的活细胞隔离开。随着这些死细胞的脱落，附着在上面的病菌也随之脱落。\n\n角质层下的生发层是一群有旺盛分裂能力的细胞，能不",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_072_科学_9年级下册_沪教版_2013版_第四章_main_088_25836529_big_001",
+    "parent_index": 1,
+    "small_index": 2
+  },
+  {
+    "chunk_id": "science_textbooks_072_科学_9年级下册_沪教版_2013版_第四章_main_088_25836529_big_001_small_003",
+    "source": "science_textbooks/072_科学_9年级下册_沪教版_2013版_第四章_main_088.md",
+    "content": "些死细胞的脱落，附着在上面的病菌也随之脱落。\n\n角质层下的生发层是一群有旺盛分裂能力的细胞，能不",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_072_科学_9年级下册_沪教版_2013版_第四章_main_088_25836529_big_001",
+    "parent_index": 1,
+    "small_index": 3
+  },
+  {
+    "chunk_id": "science_textbooks_073_科学_7年级上册_沪教版_2012版_四_茎_物质的运输_main_058_b218412a_big_001_small_001",
+    "source": "science_textbooks/073_科学_7年级上册_沪教版_2012版_四_茎_物质的运输_main_058.md",
+    "content": "# 初中科学教材：科学_7年级上册_沪教版_2012版 - 四、茎——物质的运输\n\n## 教材元信息\n- 教材：科学_7年级上册_沪教版_2012版\n- 年级：7\n- 册次：上册\n- 出版社：沪教版\n- 学段：初中\n- 章节：四、茎——物质的运输\n- 内容类型：concept\n- 原始 token 数：178\n- 原始文件：../ch-3/knowledge_base_builder/data/textbooks/初中科学/沪教版初中科学/科学_7年级上册_沪教版_2012版_四、茎——物质的运输_main_058.md\n\n## 教材正文\n# 四、茎——物质的运输\n\n茎（stalk）象征着力量，支撑起植物全身的叶子、花朵和果实；茎象征着桥梁，沟通着植物地上和地下部分的运输。\n\n# 茎连接着根和叶\n\n根吸收的水和无机盐将自下而上到达植物体的其他部位，而叶制造的有机物将自上而下到达根及其他部位，位于根和叶之间的茎是否具有一个双向运输的“管道系统”呢？",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_073_科学_7年级上册_沪教版_2012版_四_茎_物质的运输_main_058_b218412a_big_001",
+    "parent_index": 1,
+    "small_index": 1
+  },
+  {
+    "chunk_id": "science_textbooks_073_科学_7年级上册_沪教版_2012版_四_茎_物质的运输_main_058_b218412a_big_001_small_002",
+    "source": "science_textbooks/073_科学_7年级上册_沪教版_2012版_四_茎_物质的运输_main_058.md",
+    "content": "的“管道系统”呢？",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_073_科学_7年级上册_沪教版_2012版_四_茎_物质的运输_main_058_b218412a_big_001",
+    "parent_index": 1,
+    "small_index": 2
+  },
+  {
+    "chunk_id": "science_textbooks_074_科学_7年级下册_沪教版_2012版_四_燃烧与灭火_main_063_52a85a81_big_001_small_001",
+    "source": "science_textbooks/074_科学_7年级下册_沪教版_2012版_四_燃烧与灭火_main_063.md",
+    "content": "# 初中科学教材：科学_7年级下册_沪教版_2012版 - 四、燃烧与灭火\n\n## 教材元信息\n- 教材：科学_7年级下册_沪教版_2012版\n- 年级：7\n- 册次：下册\n- 出版社：沪教版\n- 学段：初中\n- 章节：四、燃烧与灭火\n- 内容类型：exercise\n- 原始 token 数：185\n- 原始文件：../ch-3/knowledge_base_builder/data/textbooks/初中科学/沪教版初中科学/科学_7年级下册_沪教版_2012版_四、燃烧与灭火_main_063.md\n\n## 教材正文\n# 思考·练习\n\n1. 试结合物质燃烧的条件说明完全燃烧与不完全燃烧、爆炸与缓慢氧化的区别，并各举一例。  \n2. 用煤或天然气做燃料时, 可能会有一氧化碳生成, 为什么? 怎样才能减少一氧化碳的生成?  \n3. 有些场所，如面粉厂、化工厂等，进入厂区都会被告知不允许穿带铁钉的鞋。为什么？",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_074_科学_7年级下册_沪教版_2012版_四_燃烧与灭火_main_063_52a85a81_big_001",
+    "parent_index": 1,
+    "small_index": 1
+  },
+  {
+    "chunk_id": "science_textbooks_075_科学_8年级上册_沪教版_2013版_第十一章_main_238_a65f8177_big_001_small_001",
+    "source": "science_textbooks/075_科学_8年级上册_沪教版_2013版_第十一章_main_238.md",
+    "content": "# 初中科学教材：科学_8年级上册_沪教版_2013版 - 第十一章\n\n## 教材元信息\n- 教材：科学_8年级上册_沪教版_2013版\n- 年级：8\n- 册次：上册\n- 出版社：沪教版\n- 学段：初中\n- 章节：第十一章\n- 内容类型：exercise\n- 原始 token 数：350\n- 原始文件：../ch-3/knowledge_base_builder/data/textbooks/初中科学/沪教版初中科学/科学_8年级上册_沪教版_2013版_第十一章_main_238.md\n\n## 教材正文\n# 思考·练习\n\n1. 试从微粒的角度，解释水的三态变化和电解水过程中发生的变化。  \n2. 水、金属铜、氧气、氯化钠、二氧化碳等物质分别是由什么微粒构成的？  \n3. 原子是构成物质的一种微粒，以下关于原子的说法哪些是正确的？\n\n(1) 它们是最小的微粒  \n(2) 它们太小, 肉眼无法看见  \n(3) 原子一定要形成分子或离子后, 才能构成物质  \n(4) 原子比质子和电子都大  \n(5) 原子有一定的质量和体积\n\n4. 请你根据自己的理解，用图示表示原子的构成。\n\n5. 请你从",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_075_科学_8年级上册_沪教版_2013版_第十一章_main_238_a65f8177_big_001",
+    "parent_index": 1,
+    "small_index": 1
+  },
+  {
+    "chunk_id": "science_textbooks_075_科学_8年级上册_沪教版_2013版_第十一章_main_238_a65f8177_big_001_small_002",
+    "source": "science_textbooks/075_科学_8年级上册_沪教版_2013版_第十一章_main_238.md",
+    "content": "离子后, 才能构成物质  \n(4) 原子比质子和电子都大  \n(5) 原子有一定的质量和体积\n\n4. 请你根据自己的理解，用图示表示原子的构成。\n\n5. 请你从分子、原子的角度来解释混合物与纯净物、化合物与单质有什么不同？  \n6. 你知道物质、元素、分子、原子、离子之间分别具有怎样的关系？请用图示表示它们之间的关系，并和其他同学进行交流。",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_075_科学_8年级上册_沪教版_2013版_第十一章_main_238_a65f8177_big_001",
+    "parent_index": 1,
+    "small_index": 2
+  },
+  {
+    "chunk_id": "science_textbooks_076_科学_8年级下册_沪教版_2013版_第四章_main_088_14293bcf_big_001_small_001",
+    "source": "science_textbooks/076_科学_8年级下册_沪教版_2013版_第四章_main_088.md",
+    "content": "# 初中科学教材：科学_8年级下册_沪教版_2013版 - 第四章\n\n## 教材元信息\n- 教材：科学_8年级下册_沪教版_2013版\n- 年级：8\n- 册次：下册\n- 出版社：沪教版\n- 学段：初中\n- 章节：第四章\n- 内容类型：concept\n- 原始 token 数：142\n- 原始文件：../ch-3/knowledge_base_builder/data/textbooks/初中科学/沪教版初中科学/科学_8年级下册_沪教版_2013版_第四章_main_088.md\n\n## 教材正文\n# 第四章\n\n# 神经调节与激素调节\n\n人体是由细胞组成的复杂结构，数目庞大的细胞构成不同的组织、器官和系统，执行不同的功能。这些结构之间、结构与环境之间都应保持协调的状态。人体具有一套复杂的体系来维持这种协调和稳定。其中，神经调节与激素调节的作用最为重要。",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_076_科学_8年级下册_沪教版_2013版_第四章_main_088_14293bcf_big_001",
+    "parent_index": 1,
+    "small_index": 1
+  },
+  {
+    "chunk_id": "science_textbooks_077_科学_9年级上册_沪教版_2013版_第四章_main_093_926dcd1b_big_001_small_001",
+    "source": "science_textbooks/077_科学_9年级上册_沪教版_2013版_第四章_main_093.md",
+    "content": "# 初中科学教材：科学_9年级上册_沪教版_2013版 - 第四章\n\n## 教材元信息\n- 教材：科学_9年级上册_沪教版_2013版\n- 年级：9\n- 册次：上册\n- 出版社：沪教版\n- 学段：初中\n- 章节：第四章\n- 内容类型：concept\n- 原始 token 数：157\n- 原始文件：../ch-3/knowledge_base_builder/data/textbooks/初中科学/沪教版初中科学/科学_9年级上册_沪教版_2013版_第四章_main_093.md\n\n## 教材正文\n# 第四章\n\n# 生物体怎样获得营养\n\n生物体一刻不停地与外界环境进行物质和能量的交换。以人为本例，食物是我们在这种交换中从外界获得的最重要的物质之一。那么，你是否想过，食物到底为我们提供了什么？食物在我们的身体里发生了哪些变化？自己的饮食习惯科学吗？怎样吃才更有利于健康？",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_077_科学_9年级上册_沪教版_2013版_第四章_main_093_926dcd1b_big_001",
+    "parent_index": 1,
+    "small_index": 1
+  },
+  {
+    "chunk_id": "science_textbooks_078_科学_9年级下册_沪教版_2013版_第四章_main_110_5d58ef66_big_001_small_001",
+    "source": "science_textbooks/078_科学_9年级下册_沪教版_2013版_第四章_main_110.md",
+    "content": "# 初中科学教材：科学_9年级下册_沪教版_2013版 - 第四章\n\n## 教材元信息\n- 教材：科学_9年级下册_沪教版_2013版\n- 年级：9\n- 册次：下册\n- 出版社：沪教版\n- 学段：初中\n- 章节：第四章\n- 内容类型：exercise\n- 原始 token 数：683\n- 原始文件：../ch-3/knowledge_base_builder/data/textbooks/初中科学/沪教版初中科学/科学_9年级下册_沪教版_2013版_第四章_main_110.md\n\n## 教材正文\n报告，被认为“青蒿素的发现不仅增加一个抗疟新药，更重要的意义还在于发现这一新化合物的独特化学结构，它将为合成设计新药指出方向”。2011年9月，青蒿素研究成果获拉斯克临床医学奖，获奖理由是“因为发现青蒿素——一种用于治疗疟疾的药物，挽救了全球特别是发展中国家的数百万人的生命”。2015年10月5日，瑞典卡罗琳医学院在斯德哥尔摩宣布，中国科学家屠呦呦与爱尔兰科学家威廉·坎贝尔和日本科学家大村智分享2015年诺贝尔生理学或医学奖。屠呦呦的获奖原因是发现了青蒿素，这种药品可以有效降低疟疾患者的死",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_078_科学_9年级下册_沪教版_2013版_第四章_main_110_5d58ef66_big_001",
+    "parent_index": 1,
+    "small_index": 1
+  },
+  {
+    "chunk_id": "science_textbooks_078_科学_9年级下册_沪教版_2013版_第四章_main_110_5d58ef66_big_001_small_002",
+    "source": "science_textbooks/078_科学_9年级下册_沪教版_2013版_第四章_main_110.md",
+    "content": "中国科学家屠呦呦与爱尔兰科学家威廉·坎贝尔和日本科学家大村智分享2015年诺贝尔生理学或医学奖。屠呦呦的获奖原因是发现了青蒿素，这种药品可以有效降低疟疾患者的死亡率。这是中国科学家因为在中国本土进行的科学研究而首次获得诺贝尔科学奖。青蒿素的发现表明，中国医药学是一个伟大的宝库，采用现代科学方法加以研究，一定可以有所发现，有所创新，从而造福人类。\n\n# 思考·练习\n\n1. 上海曾发生过一次人们食用被甲肝病毒污染的毛蚶而引起的甲肝流行, 请问毛蚶在传染病流行的三个基本环节中属于哪个环节? 为什么?  \n2. 在流感高发的春秋季节，我们应该采取哪些措施控制流感的传播？  \n3. 一个勤奋好强的学生染上了肝炎，不愿意因住院耽误学习，你认为医生应该批准他回到学校吗？  \n4. 打预防针和我们感冒发烧时注射青霉素有区别吗？它属于预防传染病三项措施中的哪一项？",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_078_科学_9年级下册_沪教版_2013版_第四章_main_110_5d58ef66_big_001",
+    "parent_index": 1,
+    "small_index": 2
+  },
+  {
+    "chunk_id": "science_textbooks_079_科学_7年级上册_沪教版_2012版_第四章_main_037_c85647d4_big_001_small_001",
+    "source": "science_textbooks/079_科学_7年级上册_沪教版_2012版_第四章_main_037.md",
+    "content": "# 初中科学教材：科学_7年级上册_沪教版_2012版 - 第四章\n\n## 教材元信息\n- 教材：科学_7年级上册_沪教版_2012版\n- 年级：7\n- 册次：上册\n- 出版社：沪教版\n- 学段：初中\n- 章节：第四章\n- 内容类型：concept\n- 原始 token 数：318\n- 原始文件：../ch-3/knowledge_base_builder/data/textbooks/初中科学/沪教版初中科学/科学_7年级上册_沪教版_2012版_第四章_main_037.md\n\n## 教材正文\n# 第四章\n\n# 走进植物世界\n\n在一个温暖的日子，一棵嫩绿的幼苗破土而出。它沐浴着阳光雨露一天天长大，伸展着枝叶，开花，结果，一步一步地走过自己的生命历程。这是地球上每时每刻都在发生着的故事。\n\n绿色植物用自己的枝叶为地球编织了绿色的“外衣”，用自己的花朵把地球装点得绚丽多彩；它们从空气中吸收二氧化碳，从土壤中吸收水和无机盐，为自己制造“食物”，也为地球上所有的生物提供着氧气，为大量生物提供了食物；它们实现了从无机物到有机物的转化，是阳光下最伟大的“生产者”和“魔术师”，在漫长的岁月里把地",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_079_科学_7年级上册_沪教版_2012版_第四章_main_037_c85647d4_big_001",
+    "parent_index": 1,
+    "small_index": 1
+  },
+  {
+    "chunk_id": "science_textbooks_079_科学_7年级上册_沪教版_2012版_第四章_main_037_c85647d4_big_001_small_002",
+    "source": "science_textbooks/079_科学_7年级上册_沪教版_2012版_第四章_main_037.md",
+    "content": "制造“食物”，也为地球上所有的生物提供着氧气，为大量生物提供了食物；它们实现了从无机物到有机物的转化，是阳光下最伟大的“生产者”和“魔术师”，在漫长的岁月里把地球营造得生机盎然。",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_079_科学_7年级上册_沪教版_2012版_第四章_main_037_c85647d4_big_001",
+    "parent_index": 1,
+    "small_index": 2
+  },
+  {
+    "chunk_id": "science_textbooks_080_科学_7年级下册_沪教版_2012版_第四章_main_064_31d31826_big_001_small_001",
+    "source": "science_textbooks/080_科学_7年级下册_沪教版_2012版_第四章_main_064.md",
+    "content": "# 初中科学教材：科学_7年级下册_沪教版_2012版 - 第四章\n\n## 教材元信息\n- 教材：科学_7年级下册_沪教版_2012版\n- 年级：7\n- 册次：下册\n- 出版社：沪教版\n- 学段：初中\n- 章节：第四章\n- 内容类型：concept\n- 原始 token 数：162\n- 原始文件：../ch-3/knowledge_base_builder/data/textbooks/初中科学/沪教版初中科学/科学_7年级下册_沪教版_2012版_第四章_main_064.md\n\n## 教材正文\n# 第四章\n\n# 空气质量\n\n我们每时每刻都要呼吸，空气质量影响到每个人的健康和生活。你经常收看本地电视台的空气质量报告节目吗？空气质量报告包含哪些内容？你明白其中各项内容的含义吗？空气中有哪些主要污染物？分别用哪些指标来衡量？有哪些主要来源？你知道这些污染物对人体的危害吗？",
+    "chunk_type": "small",
+    "parent_chunk_id": "science_textbooks_080_科学_7年级下册_沪教版_2012版_第四章_main_064_31d31826_big_001",
+    "parent_index": 1,
+    "small_index": 1
+  },
+  {
+    "chunk_id": "vector_database_01d63d61_big_001_small_001",
+    "source": "vector_database.md",
+    "content": "# 向量数据库在 RAG 中的作用\n\n向量数据库用于存储和检索 Embedding 向量，是 RAG 系统的核心基础设施之一。普通数据库更擅长按字段精确查询，例如按标题、时间或编号查询；向量数据库更擅长按语义相似度查询，例如用户问“RAG 检索流程是什么”，系统可以找到包含“问题向量化、相似度检索、Top-K 召回、上下文拼接”的资料片段。\n\n当前项目使用 ChromaDB 作为向量数据库。构建索引时，系统会读取 `data/chunks/chunks.json`，取出每个 chunk 的 content 生成 Embedding，并把向量、文本、chunk_id 和 source 写入 Chroma collection。ChromaDB 会把向量库持久化到 `vector_db/` 目录，因此构建完成后，后续问答可以直接加载已经保存的向量索引。\n\n向量数据库检索的基本流程是：先把用户问题转换成查询向量，再在 collection 中查找距离最近的若干文本向量。这个返回数量通常叫 Top-K。Top-K 越小，返回内容越精简，但可能漏掉有用资料；Top-K 越大，召回更充分，但也可能",
+    "chunk_type": "small",
+    "parent_chunk_id": "vector_database_01d63d61_big_001",
+    "parent_index": 1,
+    "small_index": 1
+  },
+  {
+    "chunk_id": "vector_database_01d63d61_big_001_small_002",
+    "source": "vector_database.md",
+    "content": "on 中查找距离最近的若干文本向量。这个返回数量通常叫 Top-K。Top-K 越小，返回内容越精简，但可能漏掉有用资料；Top-K 越大，召回更充分，但也可能带来噪声，增加大模型上下文压力。当前项目默认会根据配置或调用参数返回若干条最相关 chunks。\n\nChromaDB 返回的检索结果中包含 distance。distance 表示查询向量和文档向量之间的距离，通常距离越小，语义越相关。为了便于展示和融合，项目会把 distance 转换为 dense_score，例如使用 `1 / (1 + distance)` 得到一个越大越相关的分数。\n\n一个向量数据库中的每条记录通常包含：\n\n- id：文本块唯一标识，例如 chunk_id；\n- document：原始文本块内容；\n- embedding：由 Embedding 模型生成的向量；\n- metadata：来源文件、chunk_id 或其他辅助字段；\n- distance 或 score：查询时返回的相关性信息。\n\n向量数据库不是知识库的全部。它只保存向量和可检索文本，真正的知识组织还依赖文档质量、切分策略、元数据和检索流程",
+    "chunk_type": "small",
+    "parent_chunk_id": "vector_database_01d63d61_big_001",
+    "parent_index": 1,
+    "small_index": 2
+  },
+  {
+    "chunk_id": "vector_database_01d63d61_big_001_small_003",
+    "source": "vector_database.md",
+    "content": "ce 或 score：查询时返回的相关性信息。\n\n向量数据库不是知识库的全部。它只保存向量和可检索文本，真正的知识组织还依赖文档质量、切分策略、元数据和检索流程。如果 raw_docs 中加入了新的 Markdown 文件，需要先运行文本切分脚本生成新的 chunks，再删除旧的 `vector_db/` 并重新构建索引。这样新增资料才会进入 ChromaDB，被后续 RAG 问答检索到。",
+    "chunk_type": "small",
+    "parent_chunk_id": "vector_database_01d63d61_big_001",
+    "parent_index": 1,
+    "small_index": 3
+  },
+  {
+    "chunk_id": "vector_knowledge_base_e0280685_big_001_small_001",
+    "source": "vector_knowledge_base.md",
+    "content": "# 向量知识库构建流程\n\n向量知识库是把原始文档整理成“可被语义检索的资料库”的过程。它不是简单地把文件放进目录，而是要经过文档读取、文本切分、Embedding 向量化、向量数据库写入和检索验证等步骤。当前项目的知识库主线围绕教育资料问答，因此适合加入概念清晰、主题集中的 Markdown 文档。\n\n在当前项目中，原始资料放在 `data/raw_docs/`。文档读取模块会读取这些 Markdown 文件，并保留文件名作为 source。随后文本切分模块会把长文档切成多个 chunks。每个 chunk 都有自己的 chunk_id，例如某个文件的第一个片段会生成类似 `embedding_intro_001` 的编号。chunk_id 的作用是让检索结果能够追溯到具体片段，方便日志分析、页面展示和答案引用。\n\n切分后的 chunks 会保存到 `data/chunks/chunks.json`。向量库构建脚本会读取这个 JSON 文件，提取每个 chunk 的 content，调用 BAAI/bge-m3 生成 Embedding，然后写入 ChromaDB。写入时通常会保存三类",
+    "chunk_type": "small",
+    "parent_chunk_id": "vector_knowledge_base_e0280685_big_001",
+    "parent_index": 1,
+    "small_index": 1
+  },
+  {
+    "chunk_id": "vector_knowledge_base_e0280685_big_001_small_002",
+    "source": "vector_knowledge_base.md",
+    "content": "SON 文件，提取每个 chunk 的 content，调用 BAAI/bge-m3 生成 Embedding，然后写入 ChromaDB。写入时通常会保存三类信息：文本内容、向量表示和元数据。文本内容用于拼接 RAG 上下文，向量表示用于相似度检索，元数据用于显示来源和定位片段。\n\n适合进入向量知识库的文档应满足以下条件：\n\n- 主题和系统定位一致，例如 RAG、Embedding、向量数据库、检索优化；\n- 每篇文档有明确标题和小标题，便于切分后仍保留语义；\n- 内容不宜过度发散，一个段落最好只讲一个技术点；\n- 避免加入和当前向量检索主线关系不大的扩展主题；\n- 避免大量代码堆叠，优先写清楚概念、流程、输入输出和使用场景。\n\n向量知识库的质量会影响 RAG 的最终回答。若原始文档主题混杂，检索阶段可能召回无关 chunks；若文档过短，模型可能缺少足够上下文；若文档过长，切分后可能产生重复或边界模糊的问题。对于教育资料 RAG，推荐把每个技术主题整理成独立 Markdown 文件，让每个 chunk 都能回答一个相对完整的问题。\n\n构建完成后，需要用典型问题验证检索结果。例如询问",
+    "chunk_type": "small",
+    "parent_chunk_id": "vector_knowledge_base_e0280685_big_001",
+    "parent_index": 1,
+    "small_index": 2
+  },
+  {
+    "chunk_id": "vector_knowledge_base_e0280685_big_001_small_003",
+    "source": "vector_knowledge_base.md",
+    "content": "AG，推荐把每个技术主题整理成独立 Markdown 文件，让每个 chunk 都能回答一个相对完整的问题。\n\n构建完成后，需要用典型问题验证检索结果。例如询问“什么是 Top-K 检索”“Hybrid Search 为什么能提升召回”“Rerank 在 RAG 中解决什么问题”。如果返回的 chunks 能稳定命中相关文档，说明向量知识库的主题覆盖和切分质量比较合适。",
+    "chunk_type": "small",
+    "parent_chunk_id": "vector_knowledge_base_e0280685_big_001",
+    "parent_index": 1,
+    "small_index": 3
   }
 ]

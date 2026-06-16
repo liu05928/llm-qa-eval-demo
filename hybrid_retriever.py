@@ -17,6 +17,13 @@ STOPWORDS = {
     "吗", "呢", "吧"
 }
 
+CHUNK_METADATA_FIELDS = [
+    "chunk_type",
+    "parent_chunk_id",
+    "parent_index",
+    "small_index",
+]
+
 
 def load_chunks(chunks_file: str = CHUNKS_FILE) -> List[Dict[str, Any]]:
     """读取 chunks.json"""
@@ -105,7 +112,7 @@ def bm25_search(query: str, top_k: int = 5) -> List[Dict[str, Any]]:
             )
 
         if bm25_score > 0:
-            results.append({
+            result = {
                 "chunk_id": chunk.get("chunk_id"),
                 "source": chunk.get("source"),
                 "content": content,
@@ -114,7 +121,12 @@ def bm25_search(query: str, top_k: int = 5) -> List[Dict[str, Any]]:
                 "distance": None,
                 "hybrid_score": 0.0,
                 "retrieval_type": "bm25"
-            })
+            }
+
+            for field in CHUNK_METADATA_FIELDS:
+                result[field] = chunk.get(field)
+
+            results.append(result)
 
     results = sorted(results, key=lambda x: x["bm25_score"], reverse=True)
     return results[:top_k]
@@ -140,7 +152,7 @@ def dense_search(query: str, top_k: int = 5) -> List[Dict[str, Any]]:
         else:
             dense_score = 1 / (1 + float(distance))
 
-        results.append({
+        result = {
             "chunk_id": item.get("chunk_id"),
             "source": item.get("source"),
             "content": item.get("content"),
@@ -149,7 +161,12 @@ def dense_search(query: str, top_k: int = 5) -> List[Dict[str, Any]]:
             "bm25_score": 0.0,
             "hybrid_score": 0.0,
             "retrieval_type": "dense"
-        })
+        }
+
+        for field in CHUNK_METADATA_FIELDS:
+            result[field] = item.get(field)
+
+        results.append(result)
 
     return results
 
@@ -159,8 +176,8 @@ def reciprocal_rank_fusion(
     bm25_results: List[Dict[str, Any]],
     top_k: int = 5,
     k: int = 60,
-    dense_weight: float = 0.75,
-    bm25_weight: float = 0.25
+    dense_weight: float = 0.5,
+    bm25_weight: float = 0.5
 ) -> List[Dict[str, Any]]:
     """
     加权 RRF 排名融合。
@@ -169,8 +186,8 @@ def reciprocal_rank_fusion(
     score = 1 / (rank + k)
 
     当前改进：
-    - 向量检索 dense 权重更高；
-    - BM25 稀疏召回用于补充术语、模型名、专有名词等精确匹配信号。
+    - dense 与 BM25 权重保持均衡；
+    - 垂直领域知识库中教材术语、章节名、专有名词的精确匹配信号很重要。
     """
 
     fused = {}

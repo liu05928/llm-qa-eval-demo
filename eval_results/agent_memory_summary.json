@@ -1,0 +1,9 @@
+{
+  "case_count": 7,
+  "turn_count": 17,
+  "memory_used_accuracy": 1.0,
+  "memory_rewrite_hit_rate": 1.0,
+  "source_hit_rate": 0.9375,
+  "topic_follow_hit_rate": 1.0,
+  "no_context_reject_rate": 1.0
+}
