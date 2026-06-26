@@ -2,15 +2,15 @@
 
 ## 一、项目目标
 
-本项目是一个面向教育资料与初中科学教材的大模型 RAG Agent 问答与评测优化系统，目标是在基础 RAG 问答链路上，引入 Single-Agent 工作流、垂直领域知识库构建、Dense Rerank、BM25 Hybrid、自动评测、日志分析和 Streamlit 可视化展示能力，提升系统在知识库问答场景下的检索稳定性、回答可信度和结果可分析性。
+本项目是一个面向企业内部知识库问答场景的大模型 RAG Agent 问答与评测优化系统。当前使用教育资料与初中科学教材作为实验语料，模拟企业制度文档、产品手册、培训资料、客服 FAQ 等内部文档问答流程。
 
-系统支持本地状态机 Agent、会话记忆、问题类型识别、检索策略路由、Query Rewrite、初中科学教材导入、Long-text RAG、Small-to-Big 上下文扩展、本地教育资料读取、递归文档加载、文本切分、Embedding 向量化、向量库构建、向量检索、BM25 稀疏召回、RRF 融合检索、Rerank 重排序、Prompt 构造、大模型回答生成、来源引用、日志记录和自动评测。
+项目目标是在基础 RAG 问答链路上，引入 LangGraph Skills Agent、本地状态机 fallback、会话记忆、垂直领域知识库构建、Dense Rerank、BM25 Hybrid、Small-to-Big Long-text RAG、Redis 缓存限流、Docker Compose 服务化、自动评测、日志分析和 Streamlit 可视化展示能力，提升系统在企业知识库问答场景下的检索稳定性、回答可信度、工程可交付性和问题可复盘性。
 
 ## 二、核心流程
 
 Agent 主流程：
 
-用户问题 → 会话记忆补全 → 问题类型识别 → 检索策略路由 → Query Rewrite（可选）→ 向量检索 / BM25 Hybrid → Rerank → 上下文充分性判断 → 大模型生成或资料不足拒答 → 来源引用 → Agent Trace 日志 → Streamlit 展示
+用户问题 → 会话记忆补全 → LangGraph Skills 编排 / 本地状态机 fallback → 问题类型识别 → 检索策略路由 → Query Rewrite（可选）→ 向量检索 / BM25 Hybrid → Rerank → 上下文充分性判断 → 大模型生成或资料不足拒答 → 来源引用 → Agent Trace / Graph Trace 日志 → Streamlit 展示
 
 RAG 检索流程：
 
@@ -22,9 +22,11 @@ ch-3 初中科学教材 Markdown → 均衡抽样 → 元数据提取 → 写入
 
 ## 三、项目功能设计
 
-### 1. Single-Agent RAG 问答
+### 1. LangGraph Skills Agent 问答
 
-系统新增本地状态机 Agent，不依赖 LangGraph 或 LangChain Agent。Agent 根据用户问题和会话记忆动态完成以下步骤：
+系统新增 LangGraph Skills Agent，并保留原本地状态机 Agent 作为 fallback。这样既能体现 Agent 工作流编排能力，又能保证 LangGraph 依赖不可用时系统仍可运行。
+
+Agent 根据用户问题和会话记忆动态完成以下步骤：
 
 1. resolve_memory：读取当前学习主题和最近对话，补全“它、这个技术、前者、后者”等多轮追问；
 2. classify_query：识别概念解释、对比分析、学习建议、资料缺失候选、模糊问题和普通问题；
@@ -39,7 +41,7 @@ ch-3 初中科学教材 Markdown → 均衡抽样 → 元数据提取 → 写入
 
 Query Rewrite 采用 LLM 优先、规则兜底的设计。真实 API 模式下调用专用 `query_rewrite` Prompt 生成检索查询；Mock 模式、API 失败、输出为空或输出与原问题重复时回退到规则改写。Agent Trace 会记录 `rewrite_strategy`、`fallback_used` 和改写后的查询，便于解释每次改写是否真正由 LLM 完成。
 
-Agent 只展示可观测执行轨迹，例如节点名、工具名、输入摘要、输出摘要、状态和耗时，不暴露长篇推理内容。
+Agent 只展示可观测执行轨迹，例如节点名、工具名、输入摘要、输出摘要、状态和耗时，不暴露长篇推理内容。LangGraph 版本额外返回 `graph_trace` 和 `skill_trace`，用于展示节点路径和工具编排。
 
 ### 2. 会话记忆
 
@@ -47,11 +49,24 @@ Agent 只展示可观测执行轨迹，例如节点名、工具名、输入摘�
 
 当前记忆是会话级短期记忆，优先解决多轮追问中的指代消解和主题延续，不引入长期向量记忆库，避免增加不必要的复杂度。
 
-### 3. 基础 RAG 问答
+### 3. 工程化服务层
+
+系统通过 FastAPI 暴露 `/agent/chat`，支持 `session_id` 会话复用、`agent_engine` 引擎选择、`context_mode` 上下文模式选择和 `reset_memory` 记忆重置。
+
+Redis 作为运行时控制组件，当前承担两个明确职责：
+
+1. 热点单轮问题结果缓存，降低重复大模型调用成本；
+2. Agent Chat API 固定窗口限流，避免接口被高频调用。
+
+Redis 不可用时系统自动 fail-open，保证本地脚本、Mock 模式和 Streamlit 演示不被外部服务阻塞。
+
+Docker Compose 提供一键启动能力，同时启动 FastAPI、Streamlit 和 Redis，并挂载 `data/`、`vector_db/`、`logs/`、`eval_results/`，使项目从本地脚本升级为可交付服务。
+
+### 4. 基础 RAG 问答
 
 系统支持读取本地教育资料文档，将文档切分为多个知识片段，并通过 Embedding 模型将文本片段转换为向量后写入本地向量数据库。用户输入问题后，系统可以进行相似度检索，召回相关知识片段，并结合大模型生成回答。
 
-### 4. 垂直领域知识库
+### 5. 垂直领域知识库
 
 系统新增初中科学教材垂直知识库，语料来自 `../ch-3/knowledge_base_builder/data/textbooks/初中科学/沪教版初中科学`。
 
@@ -65,7 +80,7 @@ Agent 只展示可观测执行轨迹，例如节点名、工具名、输入摘�
 
 该模块将项目定位从“通用学习资料 RAG Demo”扩展为“初中科学教材垂直领域 RAG Agent 问答系统”。当前实现优先强调可复现导入、来源可追溯和演示稳定性，不一次性导入 ch-3 的全量 99573 篇 Markdown。
 
-### 5. Long-text RAG：Small-to-Big
+### 6. Long-text RAG：Small-to-Big
 
 系统新增 Small-to-Big 长文本 RAG 能力，解决长文档问答中“召回片段太碎、回答缺少前后文”的问题。
 
@@ -82,29 +97,29 @@ Agent 只展示可观测执行轨迹，例如节点名、工具名、输入摘�
 
 该设计保持“小 chunk 适合召回、大 chunk 适合回答”的职责分离，适合教材、政策、公文制度等长文本知识库。
 
-### 6. 来源引用返回
+### 7. 来源引用返回
 
 系统在生成回答时返回对应的来源文档和检索片段，便于用户追溯回答依据，提高问答结果的可信度和可解释性。
 
-### 7. BM25 Hybrid 检索优化
+### 8. BM25 Hybrid 检索优化
 
 在原有向量检索基础上，系统新增 BM25 稀疏召回能力，并将向量召回结果与 BM25 召回结果进行融合。BM25 Hybrid 可以同时利用语义相似度和术语精确匹配信号，改善单一向量检索可能出现的漏召回问题。
 
-### 8. Rerank 重排序
+### 9. Rerank 重排序
 
 系统支持对向量候选或 BM25 Hybrid 候选知识片段进行轻量级重排序。流程上先扩大候选召回范围，再根据问题与 chunk 的相关性对候选片段进行排序，最终选择更相关的片段作为 Prompt 上下文。
 
-### 9. 自动评测
+### 10. 自动评测
 
 系统构建了 60 条 RAG 测试问题，覆盖概念解释、原理机制、对比辨析、教育应用和资料缺失等类型，并从来源命中率、关键词命中率、引用完整率和无资料拒答率等指标评估系统效果。
 
 系统新增 `data/science_rag_test_questions.json`，包含 30 条初中科学教材问题，用于验证教材知识库的来源命中、关键词覆盖、实验现象回答、生活应用回答、对比分析和资料缺失拒答能力。
 
-### 10. 日志记录与失败样例分析
+### 11. 日志记录与失败样例分析
 
 系统记录 RAG 问答日志、检索日志和 Agent Trace 日志，用于分析检索结果、来源引用、回答长度、工具调用路径、上下文充分性和失败样例。评测结果可以进一步用于定位检索失败、切分问题、Prompt 约束不足、知识库缺失和问题表达模糊等问题。科学教材评测额外输出 `eval_results/science_failure_cases.md`，区分硬性失败和关键词表达变体造成的软性观察。
 
-### 11. Streamlit 可视化展示
+### 12. Streamlit 可视化展示
 
 系统提供 Streamlit 演示页面，支持 Agent 问答、会话记忆、原始 RAG 问答、评测展示和日志查看。Agent 页面展示问题类型、检索策略、Query Rewrite、上下文充分性、记忆补全问题、模型回答、引用来源、检索片段和工具调用轨迹。
 
@@ -158,9 +173,21 @@ Agent 只展示可观测执行轨迹，例如节点名、工具名、输入摘�
 
 负责定义 AgentState 和 AgentTraceStep，用于维护 Agent 运行状态、记忆状态和可展示的工具调用轨迹。
 
+### agent_skills.py
+
+负责将问题分类、策略选择、Query Rewrite、检索、上下文判断、回答生成、记忆更新等能力封装为可复用 Skills，并统一记录节点名、工具名、输入摘要、输出摘要、状态和耗时。
+
 ### rag_agent.py
 
-负责 Single-Agent RAG 工作流，包括会话记忆、问题分类、策略选择、LLM Query Rewrite、规则兜底改写、上下文判断、回答生成、拒答控制和 Agent Trace 日志记录。
+负责本地状态机 Single-Agent RAG 工作流，包括会话记忆、问题分类、策略选择、LLM Query Rewrite、规则兜底改写、上下文判断、回答生成、拒答控制和 Agent Trace 日志记录。该模块作为 LangGraph 版本的 fallback 和回归对照。
+
+### langgraph_agent.py
+
+负责 LangGraph Agent 编排，将 `resolve_memory → classify_query → select_strategy → maybe_rewrite → retrieve_context → judge_context → rewrite_query → generate_answer → update_memory → finalize_response` 组织成可控图工作流，并返回 `graph_trace` 与 `skill_trace`。
+
+### runtime_controls.py
+
+负责 Redis 运行时控制，包括热点问答缓存、Agent Chat API 限流和 Redis 可用性状态检查。Redis 不可用时采用 fail-open 策略。
 
 ### rag_pipeline.py
 
@@ -190,6 +217,10 @@ Agent 只展示可观测执行轨迹，例如节点名、工具名、输入摘�
 
 负责分析科学教材评测 CSV，输出 `eval_results/science_failure_cases.md`。报告会标记检索未命中、回答覆盖不足、引用缺失、资料缺失拒答不足，以及严格关键词未命中但同义关键词命中的软性观察。
 
+### engineering_experiment_runner.py
+
+负责运行工程化升级实验，覆盖 LangGraph Agent 与本地状态机对照、`/agent/chat` session 级记忆、Redis 缓存/限流运行状态，以及原 `/rag_chat` API 回归稳定性。输出 JSON、Markdown 和 CSV 明细报告。
+
 ### log_analyzer.py
 
 负责分析评测结果和日志，输出失败样例分析。
@@ -210,13 +241,35 @@ POST /agent/chat
 
 1. question：用户问题；
 2. session_id：会话 ID，为空时自动生成；
-3. top_k：最终上下文片段数；
-4. candidate_k：候选召回片段数；
-5. max_rewrites：最大 Query Rewrite 次数；
-6. use_rerank：是否启用 Rerank；
-7. reset_memory：是否在本轮问答前清空当前 session 记忆。
+3. agent_engine：Agent 引擎，支持 `langgraph` 和 `local`；
+4. top_k：最终上下文片段数；
+5. candidate_k：候选召回片段数；
+6. max_rewrites：最大 Query Rewrite 次数；
+7. use_rerank：是否启用 Rerank；
+8. context_mode：上下文模式，支持 `small` 和 `small_to_big`；
+9. reset_memory：是否在本轮问答前清空当前 session 记忆；
+10. enable_cache：是否启用 Redis 热点单轮问题缓存；
+11. enable_rate_limit：是否启用 Redis 固定窗口限流。
 
-响应字段包括 session_id、question、resolved_question、answer、sources、retrieved_chunks、query_type、retriever_mode、memory_used、memory_snapshot 和 agent_trace。
+响应字段包括 session_id、question、resolved_question、answer、sources、retrieved_chunks、query_type、retriever_mode、memory_used、memory_snapshot、agent_trace、graph_trace、skill_trace、cache_status 和 rate_limit。
+
+请求示例：
+
+```json
+{
+  "question": "它为什么可以减少幻觉？",
+  "session_id": "demo-session-001",
+  "agent_engine": "langgraph",
+  "top_k": 3,
+  "candidate_k": 10,
+  "max_rewrites": 1,
+  "use_rerank": true,
+  "context_mode": "small_to_big",
+  "reset_memory": false,
+  "enable_cache": false,
+  "enable_rate_limit": true
+}
+```
 
 ### Agent Session API
 
@@ -341,6 +394,9 @@ eval_results/science_small_to_big_eval.csv
 eval_results/science_small_to_big_summary.json
 eval_results/science_small_to_big_report.md
 eval_results/science_failure_cases.md
+eval_results/engineering_experiment_summary.json
+eval_results/engineering_experiment_report.md
+eval_results/engineering_experiment_details.csv
 eval_results/build_kb_summary.json
 ```
 
@@ -361,7 +417,10 @@ eval_results/build_kb_summary.json
 13. science_small_to_big_summary.json 保存 Small-to-Big 对比指标汇总；
 14. science_small_to_big_report.md 保存 Small-to-Big 对比实验报告；
 15. science_failure_cases.md 保存科学教材失败样例和边界分析；
-16. build_kb_summary.json 保存一键构建摘要。
+16. engineering_experiment_summary.json 保存工程化升级实验汇总；
+17. engineering_experiment_report.md 保存工程化升级实验报告；
+18. engineering_experiment_details.csv 保存工程化升级实验明细；
+19. build_kb_summary.json 保存一键构建摘要。
 
 ## 九、后续优化方向
 
@@ -371,3 +430,14 @@ eval_results/build_kb_summary.json
 4. 扩充教育资料知识库，提升知识覆盖范围；
 5. 接入 Ragas 等更完整的 RAG 评测框架；
 6. 后续扩展 Multi-Agent 或 MCP Server，增强复杂任务处理能力。
+
+## 十、当前不优先引入的技术
+
+当前项目主线是企业知识库 RAG Agent，不追求堆满所有工程组件。以下能力暂不作为第一优先级：
+
+1. Kubernetes：当前服务规模较小，Docker Compose 足够表达部署能力；
+2. Kafka / RocketMQ：当前没有真实异步任务队列需求；
+3. Milvus：当前数据规模下 ChromaDB 足够，换库收益不如 Agent 编排和评测体系明显；
+4. OAuth：暂未做完整企业权限系统；
+5. Temporal / XXL-JOB：当前工作流是在线问答链路，不需要复杂异步编排；
+6. 复杂 Multi-Agent：当前采用 Single-Agent + Skills 更可控，也更容易在面试中讲清楚。

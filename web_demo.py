@@ -11,13 +11,14 @@ from agent_session_store import (
     reset_session,
     save_session,
 )
+from langgraph_agent import run_langgraph_rag_agent
 from rag_agent import run_rag_agent
 from rag_pipeline import rag_answer
 from config import CHAT_MODEL, EMBEDDING_MODEL, RERANK_MODEL
 
 
 st.set_page_config(
-    page_title="教育资料 RAG 知识库问答系统",
+    page_title="企业知识库 RAG Agent 问答系统",
     page_icon="📚",
     layout="wide"
 )
@@ -113,11 +114,11 @@ def show_eval_summary(title, rows):
         st.dataframe(rows, width="stretch")
 
 
-st.title("📚 教育资料 RAG Agent 问答与检索优化系统")
+st.title("📚 企业知识库 RAG Agent 问答与检索优化系统")
 
 st.markdown(
     f"""
-本系统支持 Single-Agent RAG、基础向量检索、Dense Rerank、BM25 Hybrid、Small-to-Big Long-text RAG、来源引用、检索日志记录和自动评测展示。
+本系统面向企业内部制度文档、产品手册、培训资料、客服 FAQ 等知识库问答场景，当前使用教育资料作为实验语料。系统支持 LangGraph Skills Agent、本地状态机 Agent、BM25 Hybrid、Rerank、Small-to-Big Long-text RAG、会话记忆、来源引用、检索日志和自动评测。
 
 **生成模型：** `{CHAT_MODEL}`  
 **Embedding 模型：** `{EMBEDDING_MODEL}`  
@@ -151,6 +152,14 @@ with tab_agent:
         )
 
     with col_right:
+        agent_engine_label = st.selectbox(
+            "Agent 编排引擎",
+            options=["LangGraph Skills", "本地状态机"],
+            index=0,
+            help="LangGraph Skills 用于展示图编排工作流；本地状态机用于稳定 fallback 和回归对照。",
+        )
+        agent_engine = "langgraph" if agent_engine_label == "LangGraph Skills" else "local"
+
         enable_memory = st.checkbox(
             "启用会话记忆",
             value=True,
@@ -229,15 +238,27 @@ with tab_agent:
                     )
                     st.session_state.agent_session_id = session_id
 
-                agent_result = run_rag_agent(
-                    question=agent_question.strip(),
-                    top_k=agent_top_k,
-                    candidate_k=agent_candidate_k,
-                    max_rewrites=agent_max_rewrites,
-                    use_rerank=agent_use_rerank,
-                    context_mode="small_to_big" if agent_use_small_to_big else "small",
-                    memory=memory,
-                )
+                if agent_engine == "langgraph":
+                    agent_result = run_langgraph_rag_agent(
+                        question=agent_question.strip(),
+                        top_k=agent_top_k,
+                        candidate_k=agent_candidate_k,
+                        max_rewrites=agent_max_rewrites,
+                        use_rerank=agent_use_rerank,
+                        context_mode="small_to_big" if agent_use_small_to_big else "small",
+                        memory=memory,
+                    )
+                else:
+                    agent_result = run_rag_agent(
+                        question=agent_question.strip(),
+                        top_k=agent_top_k,
+                        candidate_k=agent_candidate_k,
+                        max_rewrites=agent_max_rewrites,
+                        use_rerank=agent_use_rerank,
+                        context_mode="small_to_big" if agent_use_small_to_big else "small",
+                        memory=memory,
+                    )
+                    agent_result["agent_engine"] = "local"
 
             if enable_memory:
                 save_session(st.session_state.agent_session_id, memory)
@@ -255,7 +276,7 @@ with tab_agent:
 
             st.subheader("Agent 决策概览")
 
-            col_a, col_b, col_c, col_d, col_e, col_f, col_g = st.columns(7)
+            col_a, col_b, col_c, col_d, col_e, col_f, col_g, col_h = st.columns(8)
 
             with col_a:
                 st.metric("问题类型", agent_result.get("query_type_label", "未知"))
@@ -282,6 +303,9 @@ with tab_agent:
 
             with col_g:
                 st.metric("上下文模式", agent_result.get("context_mode", "small"))
+
+            with col_h:
+                st.metric("引擎", agent_result.get("agent_engine", agent_engine))
 
             st.caption(f"session_id: `{agent_result.get('session_id')}`")
             st.caption(agent_result.get("query_reason", ""))
@@ -319,6 +343,17 @@ with tab_agent:
 
             if agent_trace:
                 st.dataframe(agent_trace, width="stretch")
+
+                graph_trace = agent_result.get("graph_trace") or []
+
+                if graph_trace:
+                    st.caption("Graph 节点轨迹：" + " -> ".join(graph_trace))
+
+                skill_trace = agent_result.get("skill_trace") or []
+
+                if skill_trace:
+                    with st.expander("查看 Skills 结构化轨迹"):
+                        st.dataframe(skill_trace, width="stretch")
 
                 with st.expander("查看工具调用详情"):
                     for step in agent_trace:

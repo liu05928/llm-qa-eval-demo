@@ -10,6 +10,7 @@ from experiment_runner import (
     check_keyword_hit,
     check_no_context_reject,
     check_source_hit,
+    collect_keyword_hits,
     load_test_questions,
     normalize_sources,
     print_summary,
@@ -76,9 +77,13 @@ def run_agent_eval(
             retrieved_sources = normalize_sources(sources)
 
             source_hit = check_source_hit(expected_source, retrieved_sources)
+            keyword_hits = collect_keyword_hits(expected_keywords, answer)
             keyword_hit = check_keyword_hit(expected_keywords, answer)
             has_citation = check_has_citation(sources)
             no_context_reject = check_no_context_reject(question_type, answer)
+            if question_type == "missing" and no_context_reject:
+                keyword_hit = True
+                keyword_hits.append("no_context_reject")
 
             rows.append({
                 "id": qid,
@@ -98,6 +103,7 @@ def run_agent_eval(
                 "retrieved_sources": "|".join(retrieved_sources),
                 "source_hit": source_hit,
                 "expected_keywords": "|".join(expected_keywords),
+                "keyword_hits": "|".join(keyword_hits),
                 "keyword_hit": keyword_hit,
                 "has_citation": has_citation,
                 "no_context_reject": no_context_reject,
@@ -128,6 +134,7 @@ def run_agent_eval(
                 "retrieved_sources": "",
                 "source_hit": False if expected_source is not None else None,
                 "expected_keywords": "|".join(expected_keywords),
+                "keyword_hits": "",
                 "keyword_hit": False,
                 "has_citation": False,
                 "no_context_reject": False if question_type == "missing" else None,

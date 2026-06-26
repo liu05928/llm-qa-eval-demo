@@ -8,7 +8,13 @@ from config import (
     SILICONFLOW_BASE_URL,
     RERANK_MODEL,
 )
-from hybrid_retriever import hybrid_search
+from hybrid_retriever import (
+    INTRO_MARKERS,
+    bm25_tokenize,
+    extract_definition_terms,
+    extract_markdown_title,
+    hybrid_search,
+)
 
 
 def _safe_float(value: Any) -> float:
@@ -40,13 +46,37 @@ class RerankerClient:
         Mock Rerank 分数。
         只用于 USE_MOCK=true 时跑通流程。
         """
-        query_chars = set(query)
-        doc_chars = set(document)
+        query_tokens = set(bm25_tokenize(query))
+        doc_tokens = set(bm25_tokenize(document))
 
-        if not query_chars:
+        if not query_tokens:
             return 0.0
 
-        return len(query_chars.intersection(doc_chars)) / len(query_chars)
+        overlap_score = len(query_tokens.intersection(doc_tokens)) / len(query_tokens)
+        score = 0.65 * overlap_score
+        definition_terms = extract_definition_terms(query)
+
+        if definition_terms:
+            title = extract_markdown_title(document)
+            title_text = title.lower()
+            title_tokens = set(bm25_tokenize(title))
+
+            if all(term in title_tokens for term in definition_terms):
+                score += 0.15
+
+                joined_with_space = " ".join(definition_terms)
+                joined_compact = "".join(definition_terms)
+
+                if (
+                    title_text.startswith(joined_with_space)
+                    or title_text.startswith(joined_compact)
+                ):
+                    score += 0.05
+
+                if any(marker in title_text for marker in INTRO_MARKERS):
+                    score += 0.2
+
+        return min(score, 1.0)
 
     def rerank(
         self,

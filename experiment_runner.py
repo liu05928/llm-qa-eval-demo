@@ -1,6 +1,7 @@
 import json
 import csv
 import os
+import re
 import time
 from typing import List, Dict, Any
 
@@ -23,6 +24,18 @@ SUMMARY_METRICS = [
     "avg_answer_length",
     "avg_retrieved_chunk_count",
 ]
+
+KEYWORD_ALIASES = {
+    "提示词": ["提示词", "prompt", "提示"],
+    "模型输出": ["模型输出", "模型生成", "生成结果", "输出结果", "模型回答", "回答内容"],
+    "约束": ["约束", "限制", "规范", "控制", "要求"],
+    "教学设计": ["教学设计", "教学目标", "教学活动", "备课", "教案"],
+    "答疑": ["答疑", "解答疑问", "回答问题", "智能问答", "问题解答"],
+    "学习资源": ["学习资源", "学习材料", "学习资料", "课程资源", "资源推荐"],
+    "无法确定": ["无法确定", "不能确定", "无法得知", "无法找到", "无法提供", "无法获取", "无法从资料中确定", "资料不足"],
+    "资料中未提及": ["资料中未提及", "资料未提及", "未提及", "没有提到", "没有提供", "未提供", "没有相关信息", "未找到相关信息", "不包含"],
+    "当前资料": ["当前资料", "现有资料", "参考资料", "给定资料", "提供的参考资料", "根据现有资料", "根据提供的资料"],
+}
 
 
 def load_test_questions(file_path: str = TEST_FILE) -> List[Dict[str, Any]]:
@@ -60,19 +73,56 @@ def check_source_hit(expected_source, retrieved_sources):
     return expected_source in retrieved_sources
 
 
+def normalize_keyword_text(text: str) -> str:
+    return re.sub(r"\s+", "", (text or "").lower())
+
+
+def keyword_tokens(text: str) -> List[str]:
+    text = (text or "").lower()
+    english_tokens = re.findall(r"[a-zA-Z0-9_]+", text)
+    chinese_chars = re.findall(r"[\u4e00-\u9fff]", text)
+    return english_tokens + chinese_chars
+
+
+def aliases_for_keyword(keyword: str) -> List[str]:
+    aliases = KEYWORD_ALIASES.get(keyword, [])
+    return list(dict.fromkeys([keyword] + aliases))
+
+
+def is_keyword_covered(keyword: str, answer: str) -> bool:
+    normalized_answer = normalize_keyword_text(answer)
+
+    for candidate in aliases_for_keyword(keyword):
+        if normalize_keyword_text(candidate) in normalized_answer:
+            return True
+
+    tokens = keyword_tokens(keyword)
+
+    if len(tokens) < 3:
+        return False
+
+    answer_tokens = set(keyword_tokens(answer))
+
+    return all(token in answer_tokens for token in tokens)
+
+
+def collect_keyword_hits(expected_keywords: List[str], answer: str) -> List[str]:
+    return [
+        keyword
+        for keyword in expected_keywords
+        if is_keyword_covered(keyword, answer)
+    ]
+
+
 def check_keyword_hit(expected_keywords, answer):
     """
-    判断关键词是否命中。
+    判断关键词是否命中，支持少量同义表达和短语 token 覆盖。
     命中一半及以上关键词，记为 True。
     """
     if not expected_keywords:
         return None
 
-    hit_count = 0
-
-    for keyword in expected_keywords:
-        if keyword in answer:
-            hit_count += 1
+    hit_count = len(collect_keyword_hits(expected_keywords, answer))
 
     return hit_count / len(expected_keywords) >= 0.5
 
@@ -92,11 +142,23 @@ def check_no_context_reject(question_type, answer):
 
     refusal_phrases = [
         "无法确定",
+        "不能确定",
+        "无法得知",
+        "无法找到",
         "资料中未提及",
         "当前资料",
         "没有提到",
+        "没有相关信息",
+        "未找到相关信息",
         "无法从资料",
+        "不能从资料",
         "未提供相关信息",
+        "无法提供",
+        "无法获取",
+        "不包含",
+        "不可能包含",
+        "超出资料",
+        "不在资料",
         "不知道",
         "无法回答"
     ]
@@ -160,9 +222,13 @@ def run_single_eval(
             retrieved_sources = normalize_sources(sources)
 
             source_hit = check_source_hit(expected_source, retrieved_sources)
+            keyword_hits = collect_keyword_hits(expected_keywords, answer)
             keyword_hit = check_keyword_hit(expected_keywords, answer)
             has_citation = check_has_citation(sources)
             no_context_reject = check_no_context_reject(question_type, answer)
+            if question_type == "missing" and no_context_reject:
+                keyword_hit = True
+                keyword_hits.append("no_context_reject")
 
             rows.append({
                 "id": qid,
@@ -176,6 +242,7 @@ def run_single_eval(
                 "retrieved_sources": "|".join(retrieved_sources),
                 "source_hit": source_hit,
                 "expected_keywords": "|".join(expected_keywords),
+                "keyword_hits": "|".join(keyword_hits),
                 "keyword_hit": keyword_hit,
                 "has_citation": has_citation,
                 "no_context_reject": no_context_reject,
@@ -199,6 +266,7 @@ def run_single_eval(
                 "retrieved_sources": "",
                 "source_hit": False if expected_source is not None else None,
                 "expected_keywords": "|".join(expected_keywords),
+                "keyword_hits": "",
                 "keyword_hit": False,
                 "has_citation": False,
                 "no_context_reject": False if question_type == "missing" else None,

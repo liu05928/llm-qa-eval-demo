@@ -1,0 +1,11 @@
+.git
+.venv
+__pycache__
+*.pyc
+.env
+logs
+results
+eval_results
+vector_db
+.streamlit
+llm_rag_interview_guide.docx

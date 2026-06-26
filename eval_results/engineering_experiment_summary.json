@@ -1,0 +1,48 @@
+{
+  "generated_at": "2026-06-17 10:16:25",
+  "use_mock": false,
+  "langgraph_available": true,
+  "agent_engine_compare": {
+    "question_count": 4,
+    "row_count": 8,
+    "langgraph_available": true,
+    "pass_rate": 1.0,
+    "langgraph_graph_trace_pass_rate": 1.0,
+    "langgraph_avg_skill_trace_count": 9.0
+  },
+  "memory_api": {
+    "session_id": "engineering-memory-20260617101805",
+    "turn_count": 2,
+    "pass_rate": 1.0,
+    "memory_used_accuracy": 1.0,
+    "resolved_hit_rate": 1.0,
+    "session_snapshot_ok": true,
+    "session_recent_turn_count": 2
+  },
+  "cache_rate_limit": {
+    "redis_available": true,
+    "runtime_status": {
+      "redis_available": true,
+      "redis_url": "redis://localhost:6379/0",
+      "redis_disabled_reason": "",
+      "cache_ttl_seconds": 300,
+      "rate_limit_per_minute": 20
+    },
+    "mode": "redis_available",
+    "cache_test": "passed",
+    "rate_limit_test": "passed",
+    "cache_passed": true,
+    "rate_limit_passed": true
+  },
+  "rag_api_regression": {
+    "question_count": 6,
+    "route_ok_rate": 1.0,
+    "source_hit_rate": 1.0,
+    "keyword_hit_rate": 1.0,
+    "has_citation_rate": 1.0,
+    "no_context_reject_rate": 1.0,
+    "source_miss_count": 0,
+    "source_miss_cases": [],
+    "avg_answer_length": 576.8333333333334
+  }
+}

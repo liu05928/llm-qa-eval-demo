@@ -1,6 +1,6 @@
 from typing import Literal, Optional
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from pydantic import BaseModel
 from agent_session_store import (
     get_or_create_session,
@@ -9,7 +9,15 @@ from agent_session_store import (
     save_session,
 )
 from rag_agent import run_rag_agent
+from langgraph_agent import run_langgraph_rag_agent
 from rag_pipeline import rag_answer
+from runtime_controls import (
+    build_cache_key,
+    check_rate_limit,
+    get_cached_response,
+    get_runtime_controls_status,
+    set_cached_response,
+)
 
 from config import MODEL, USE_MOCK
 from llm_client import call_llm
@@ -19,9 +27,9 @@ from evaluator import run_evaluation, load_eval_results
 
 
 app = FastAPI(
-    title="教育资料 RAG Agent 问答与评测优化系统",
-    description="基于 FastAPI 的教育资料 RAG Agent 系统，支持会话记忆、基础向量检索、Dense Rerank、BM25 Hybrid、Small-to-Big Long-text RAG、来源引用和自动评测。",
-    version="0.7.0"
+    title="企业知识库 RAG Agent 问答与检索优化系统",
+    description="面向企业内部文档问答场景的 RAG Agent 服务，支持 LangGraph/本地状态机双引擎、会话记忆、BM25 Hybrid、Rerank、Small-to-Big Long-text RAG、来源引用、缓存限流和自动评测。",
+    version="0.8.0"
 )
 
 
@@ -67,12 +75,15 @@ class AgentChatRequest(BaseModel):
 
     question: str
     session_id: Optional[str] = None
+    agent_engine: Literal["langgraph", "local"] = "langgraph"
     top_k: int = 3
     candidate_k: int = 10
     max_rewrites: int = 1
     use_rerank: bool = True
     context_mode: Literal["small", "small_to_big"] = "small_to_big"
     reset_memory: bool = False
+    enable_cache: bool = False
+    enable_rate_limit: bool = True
 
 class ChatResponse(BaseModel):
     """
@@ -93,7 +104,7 @@ def root():
     """
 
     return {
-        "message": "大模型问答接口系统已启动",
+        "message": "企业知识库 RAG Agent 问答接口系统已启动",
         "docs": "请访问 /docs 查看接口文档",
         "available_modes": get_available_modes()
     }
@@ -113,7 +124,9 @@ def health_check():
         "agent_api": {
             "chat": "/agent/chat",
             "session": "/agent/session/{session_id}",
+            "engines": ["langgraph", "local"],
         },
+        "runtime_controls": get_runtime_controls_status(),
     }
 
 
@@ -163,6 +176,8 @@ def chat(request: ChatRequest):
             mock=USE_MOCK
         )
 
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -214,18 +229,23 @@ def rag_chat(request: RagChatRequest):
 
         return result
 
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.post("/agent/chat")
-def agent_chat(request: AgentChatRequest):
+def agent_chat(request: AgentChatRequest, http_request: Request):
     """
     支持会话记忆的 Agent 问答接口。
 
     - 不传 session_id 时自动生成；
     - 传入 session_id 时复用对应会话记忆；
     - reset_memory=true 时先清空该 session 的短期记忆；
+    - agent_engine=langgraph 时使用 LangGraph Skills 编排，local 时使用本地状态机；
+    - enable_cache=true 时仅缓存无显式 session 的热点单轮问题，避免污染多轮记忆；
+    - enable_rate_limit=true 时在 Redis 可用时进行固定窗口限流；
     - 返回 resolved_question、memory_snapshot 和 agent_trace，便于调试。
     """
 
@@ -235,32 +255,134 @@ def agent_chat(request: AgentChatRequest):
         raise HTTPException(status_code=400, detail="问题不能为空")
 
     try:
-        session_id, memory, session_created = get_or_create_session(
-            request.session_id
-        )
+        session_id, memory, session_created = get_or_create_session(request.session_id)
 
         if request.reset_memory:
             reset_session(session_id)
             session_id, memory, _ = get_or_create_session(session_id)
 
-        result = run_rag_agent(
-            question=question,
-            top_k=request.top_k,
-            candidate_k=request.candidate_k,
-            max_rewrites=request.max_rewrites,
-            use_rerank=request.use_rerank,
-            context_mode=request.context_mode,
-            memory=memory,
+        rate_limit_info = {
+            "enabled": False,
+            "allowed": True,
+            "reason": "disabled by request",
+        }
+
+        if request.enable_rate_limit:
+            client_host = http_request.client.host if http_request.client else "unknown"
+            rate_identifier = session_id or client_host
+            allowed, rate_limit_info = check_rate_limit(rate_identifier)
+
+            if not allowed:
+                raise HTTPException(
+                    status_code=429,
+                    detail={
+                        "message": "请求过于频繁，请稍后再试。",
+                        "rate_limit": rate_limit_info,
+                    },
+                )
+
+        cache_allowed = (
+            request.enable_cache
+            and not request.session_id
+            and not request.reset_memory
         )
+        cache_status = "disabled"
+        cache_key = ""
+
+        if request.enable_cache and not cache_allowed:
+            cache_status = "skipped_for_session_memory"
+
+        if cache_allowed and not get_runtime_controls_status().get("redis_available"):
+            cache_status = "unavailable"
+            cache_allowed = False
+
+        if cache_allowed:
+            cache_key = build_cache_key(
+                namespace="agent_chat",
+                payload={
+                    "question": question,
+                    "agent_engine": request.agent_engine,
+                    "top_k": request.top_k,
+                    "candidate_k": request.candidate_k,
+                    "max_rewrites": request.max_rewrites,
+                    "use_rerank": request.use_rerank,
+                    "context_mode": request.context_mode,
+                    "memory_snapshot": memory.to_dict(),
+                },
+            )
+            cached_result = get_cached_response(cache_key)
+
+            if cached_result:
+                memory.update_from_result(
+                    question=question,
+                    resolved_question=cached_result.get("resolved_question", question),
+                    answer=cached_result.get("answer", ""),
+                    sources=cached_result.get("sources", []),
+                    query_type=cached_result.get("query_type", "general"),
+                    retriever_mode=cached_result.get("retriever_mode", ""),
+                    rewritten_queries=cached_result.get("rewritten_queries", []),
+                )
+                save_session(session_id, memory)
+
+                cached_result["session_id"] = session_id
+                cached_result["session_created"] = session_created
+                cached_result["reset_memory"] = request.reset_memory
+                cached_result["cache_hit"] = True
+                cached_result["cache_status"] = "hit"
+                cached_result["cache_key"] = cache_key
+                cached_result["rate_limit"] = rate_limit_info
+                cached_result["memory_snapshot"] = memory.to_dict()
+                return cached_result
+
+            cache_status = "miss"
+
+        if request.agent_engine == "langgraph":
+            result = run_langgraph_rag_agent(
+                question=question,
+                top_k=request.top_k,
+                candidate_k=request.candidate_k,
+                max_rewrites=request.max_rewrites,
+                use_rerank=request.use_rerank,
+                context_mode=request.context_mode,
+                memory=memory,
+            )
+        else:
+            result = run_rag_agent(
+                question=question,
+                top_k=request.top_k,
+                candidate_k=request.candidate_k,
+                max_rewrites=request.max_rewrites,
+                use_rerank=request.use_rerank,
+                context_mode=request.context_mode,
+                memory=memory,
+            )
+            result["agent_engine"] = "local"
 
         save_session(session_id, memory)
 
         result["session_id"] = session_id
         result["session_created"] = session_created
         result["reset_memory"] = request.reset_memory
+        result["cache_hit"] = False
+        result["cache_status"] = cache_status
+        result["cache_key"] = cache_key
+        result["rate_limit"] = rate_limit_info
+
+        if cache_allowed and cache_key:
+            cached_payload = dict(result)
+            cached_payload.pop("session_id", None)
+            cached_payload.pop("session_created", None)
+            cached_payload.pop("reset_memory", None)
+            cached_payload.pop("cache_hit", None)
+            cached_payload.pop("cache_status", None)
+            cached_payload.pop("cache_key", None)
+            cached_payload.pop("rate_limit", None)
+            set_cached_response(cache_key, cached_payload)
 
         return result
 
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

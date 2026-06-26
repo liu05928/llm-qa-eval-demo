@@ -24,6 +24,15 @@ CHUNK_METADATA_FIELDS = [
     "small_index",
 ]
 
+INTRO_MARKERS = {
+    "intro",
+    "introduction",
+    "overview",
+    "入门",
+    "介绍",
+    "概述",
+}
+
 
 def load_chunks(chunks_file: str = CHUNKS_FILE) -> List[Dict[str, Any]]:
     """读取 chunks.json"""
@@ -52,6 +61,72 @@ def bm25_tokenize(text: str) -> List[str]:
     return [token for token in tokens if token not in STOPWORDS]
 
 
+def extract_markdown_title(content: str) -> str:
+    """提取 chunk 里的第一个 Markdown 标题。"""
+    for line in (content or "").splitlines():
+        match = re.match(r"\s*#{1,6}\s+(.+?)\s*$", line)
+
+        if match:
+            return match.group(1).strip()
+
+    return ""
+
+
+def extract_definition_terms(query: str) -> List[str]:
+    """
+    提取“什么是 X / X 是什么”这类定义题里的核心概念。
+    """
+    query = (query or "").strip()
+    patterns = [
+        r"^什么是\s*([^？?，,。；;]+)",
+        r"^([^？?，,。；;]+?)\s*是什么",
+    ]
+
+    for pattern in patterns:
+        match = re.search(pattern, query)
+
+        if not match:
+            continue
+
+        target = match.group(1).strip(" 「」“”'\"")
+        terms = bm25_tokenize(target)
+
+        if terms:
+            return terms
+
+    return []
+
+
+def metadata_definition_boost(
+    query_terms: List[str],
+    chunk: Dict[str, Any],
+    content: str,
+) -> float:
+    if not query_terms:
+        return 0.0
+
+    title = extract_markdown_title(content)
+    source = chunk.get("source", "")
+    source_name = source.rsplit("/", 1)[-1].rsplit(".", 1)[0]
+    metadata_text = f"{title} {source_name}".lower()
+    metadata_tokens = set(bm25_tokenize(metadata_text))
+
+    if not all(term in metadata_tokens for term in query_terms):
+        return 0.0
+
+    boost = 1.5
+
+    if any(marker in metadata_text for marker in INTRO_MARKERS):
+        boost += 3.0
+
+    joined_terms = "_".join(query_terms)
+
+    if source_name.lower().startswith(joined_terms):
+        boost += 1.0
+
+    return boost
+
+
 def bm25_search(query: str, top_k: int = 5) -> List[Dict[str, Any]]:
     """
     BM25 稀疏召回：
@@ -62,6 +137,7 @@ def bm25_search(query: str, top_k: int = 5) -> List[Dict[str, Any]]:
     """
     chunks = load_chunks()
     query_tokens = bm25_tokenize(query)
+    definition_terms = extract_definition_terms(query)
 
     if not query_tokens:
         return []
@@ -111,12 +187,21 @@ def bm25_search(query: str, top_k: int = 5) -> List[Dict[str, Any]]:
                 / denominator
             )
 
-        if bm25_score > 0:
+        metadata_boost = metadata_definition_boost(
+            query_terms=definition_terms,
+            chunk=chunk,
+            content=content,
+        )
+        final_bm25_score = bm25_score + metadata_boost
+
+        if final_bm25_score > 0:
             result = {
                 "chunk_id": chunk.get("chunk_id"),
                 "source": chunk.get("source"),
                 "content": content,
-                "bm25_score": bm25_score,
+                "bm25_score": final_bm25_score,
+                "bm25_base_score": bm25_score,
+                "metadata_boost": metadata_boost,
                 "dense_score": 0.0,
                 "distance": None,
                 "hybrid_score": 0.0,
