@@ -19,6 +19,15 @@ load_dotenv(BASE_DIR / ".env")
 # USE_MOCK=false 调用硅基流动真实 API
 USE_MOCK = os.getenv("USE_MOCK", "true").lower() == "true"
 
+# 生成模型后端：
+# mock      本地模拟回答，用于离线演示和单元校验
+# api       SiliconFlow / DeepSeek API，作为 baseline 或 fallback
+# local_sft OpenAI-compatible 本地/云端微调模型服务
+GENERATION_BACKEND = os.getenv(
+    "GENERATION_BACKEND",
+    "mock" if USE_MOCK else "api",
+)
+
 
 # =========================
 # 硅基流动统一 API 配置
@@ -40,6 +49,46 @@ CHAT_MODEL = os.getenv(
     "CHAT_MODEL",
     os.getenv("DEEPSEEK_MODEL", "deepseek-ai/DeepSeek-V3")
 )
+
+# 本地或云端 SFT 模型服务，后续云端训练完成后只需要把 endpoint 填到 .env。
+LOCAL_SFT_MODEL = os.getenv(
+    "LOCAL_SFT_MODEL",
+    "qwen2.5-3b-instruct-edu-lora",
+)
+
+LOCAL_SFT_BASE_URL = os.getenv(
+    "LOCAL_SFT_BASE_URL",
+    "http://127.0.0.1:8001/v1/chat/completions",
+)
+
+LOCAL_SFT_API_KEY = os.getenv("LOCAL_SFT_API_KEY", "EMPTY")
+
+
+def _get_float_env(name: str, default: float) -> float:
+    value = os.getenv(name, "")
+    if not value:
+        return default
+    try:
+        return float(value)
+    except ValueError:
+        return default
+
+
+def _get_int_env(name: str, default: int) -> int:
+    value = os.getenv(name, "")
+    if not value:
+        return default
+    try:
+        return int(value)
+    except ValueError:
+        return default
+
+
+LOCAL_SFT_TEMPERATURE = _get_float_env("LOCAL_SFT_TEMPERATURE", 0.2)
+LOCAL_SFT_TOP_P = _get_float_env("LOCAL_SFT_TOP_P", 0.8)
+LOCAL_SFT_MAX_TOKENS = _get_int_env("LOCAL_SFT_MAX_TOKENS", 512)
+LOCAL_SFT_TIMEOUT_SECONDS = _get_int_env("LOCAL_SFT_TIMEOUT_SECONDS", 120)
+LOCAL_SFT_REPETITION_PENALTY = _get_float_env("LOCAL_SFT_REPETITION_PENALTY", 1.1)
 
 # Embedding 向量模型
 EMBEDDING_MODEL = os.getenv(

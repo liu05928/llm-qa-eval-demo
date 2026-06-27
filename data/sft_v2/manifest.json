@@ -1,0 +1,100 @@
+{
+  "version": "v2",
+  "total": 2400,
+  "target_total": 2400,
+  "split_counts": {
+    "train": 1920,
+    "dev": 240,
+    "test": 240
+  },
+  "split_ratio": {
+    "train": 0.8,
+    "dev": 0.1,
+    "test": 0.1
+  },
+  "split_source_counts": {
+    "train": 72,
+    "dev": 9,
+    "test": 9
+  },
+  "type_counts": {
+    "citation_qa": 480,
+    "compare_or_reasoning": 240,
+    "grounded_qa": 1080,
+    "query_rewrite": 240,
+    "refusal": 360
+  },
+  "type_ratio": {
+    "grounded_qa": 0.45,
+    "citation_qa": 0.2,
+    "refusal": 0.15,
+    "query_rewrite": 0.1,
+    "compare_or_reasoning": 0.1
+  },
+  "domain_counts": {
+    "project": 480,
+    "science": 1920
+  },
+  "science_ratio": 0.8,
+  "project_ratio": 0.2,
+  "source_count": 90,
+  "samples_per_source": {
+    "min": 24,
+    "max": 48
+  },
+  "top_sources": [
+    [
+      "agent_intro.md",
+      48
+    ],
+    [
+      "education_ai.md",
+      48
+    ],
+    [
+      "embedding_intro.md",
+      48
+    ],
+    [
+      "hybrid_search.md",
+      48
+    ],
+    [
+      "prompt_engineering.md",
+      48
+    ],
+    [
+      "rag_intro.md",
+      48
+    ],
+    [
+      "rerank_intro.md",
+      48
+    ],
+    [
+      "retrieval_optimization.md",
+      48
+    ],
+    [
+      "vector_database.md",
+      48
+    ],
+    [
+      "vector_knowledge_base.md",
+      48
+    ]
+  ],
+  "format": "alpaca_jsonl",
+  "fields": [
+    "instruction",
+    "input",
+    "output"
+  ],
+  "seed": 42,
+  "note": "Generated from big_chunks.json, chunks.json and science_textbooks. Splits are stable at source level to avoid leakage between train/dev/test.",
+  "quality_eval_questions": {
+    "file": "quality_eval_questions.json",
+    "count": 50,
+    "not_in_train": true
+  }
+}

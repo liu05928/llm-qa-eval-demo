@@ -8,4 +8,16 @@ results
 eval_results
 vector_db
 .streamlit
-llm_rag_interview_guide.docx
+*.docx
+private
+training/outputs
+training/cloud_runs
+training/CLOUD_*
+*.safetensors
+*.bin
+*.pt
+*.pth
+*.gguf
+data/sft/**/*.jsonl
+data/sft_v2/**/*.jsonl
+data/sft_v21/**/*.jsonl

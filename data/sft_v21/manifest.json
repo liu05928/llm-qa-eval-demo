@@ -1,0 +1,58 @@
+{
+  "version": "v2.1",
+  "total": 3000,
+  "base_v2_total": 2400,
+  "patch_total": 600,
+  "split_counts": {
+    "train": 2400,
+    "dev": 300,
+    "test": 300
+  },
+  "patch_split_counts": {
+    "train": 480,
+    "dev": 60,
+    "test": 60
+  },
+  "type_counts": {
+    "anti_repetition": 120,
+    "citation_qa": 480,
+    "compare_or_reasoning": 240,
+    "grounded_qa": 1080,
+    "query_rewrite": 240,
+    "refusal": 840
+  },
+  "subtype_counts": {
+    "anti_repetition": 120,
+    "citation_qa": 480,
+    "compare_or_reasoning": 240,
+    "grounded_qa": 1080,
+    "hard_refusal": 480,
+    "query_rewrite": 240,
+    "refusal": 360
+  },
+  "domain_counts": {
+    "project": 600,
+    "science": 2400
+  },
+  "science_ratio": 0.8,
+  "project_ratio": 0.2,
+  "source_count": 90,
+  "format": "alpaca_jsonl",
+  "fields": [
+    "instruction",
+    "input",
+    "output"
+  ],
+  "seed": 43,
+  "note": "Built from v2 plus hard-refusal and anti-repetition patch samples. Original source-level train/dev/test split is preserved.",
+  "hard_refusal_eval_questions": {
+    "file": "hard_refusal_eval_questions.json",
+    "not_in_train": true,
+    "count": 100
+  },
+  "quality_eval_questions": {
+    "file": "quality_eval_questions.json",
+    "count": 50,
+    "not_in_train": true
+  }
+}

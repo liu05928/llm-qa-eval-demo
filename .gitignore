@@ -1,6 +1,10 @@
 # Environment variables
 .env
 
+# Private career notes and local-only material
+private/
+*.docx
+
 # Virtual environment
 .venv/
 venv/
@@ -17,6 +21,26 @@ results/
 
 # Vector database
 vector_db/
+
+# Model training outputs
+training/cloud_runs/
+training/CLOUD_*
+training/outputs/
+training/checkpoints/
+training/cache/
+*.safetensors
+*.bin
+*.pt
+*.pth
+*.gguf
+
+# Large or overly detailed generated artifacts
+data/sft/**/*.jsonl
+data/sft_v2/**/*.jsonl
+data/sft_v21/**/*.jsonl
+eval_results/**/*_details.csv
+eval_results/**/*_details.jsonl
+eval_results/**/details.csv
 
 # System files
 .DS_Store

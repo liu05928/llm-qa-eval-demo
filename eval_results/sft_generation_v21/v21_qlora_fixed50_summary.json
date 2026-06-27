@@ -1,0 +1,1971 @@
+{
+  "run_name": "v21_qlora_fixed50",
+  "model": "qwen25-3b-edu-qlora-v21",
+  "base_url": "http://127.0.0.1:8001/v1/chat/completions",
+  "started_at": "2026-06-27T12:59:05",
+  "finished_at": "2026-06-27T13:05:24",
+  "questions_meta": {
+    "version": "v2.1",
+    "count": 50,
+    "note": "Original v2 fixed generation-quality questions retained for comparable v2/v2.1 evaluation."
+  },
+  "settings": {
+    "temperature": 0.2,
+    "max_tokens": 700,
+    "timeout": 240
+  },
+  "summary": {
+    "question_count": 50,
+    "completed_count": 50,
+    "error_count": 0,
+    "avg_keyword_score": 0.8317,
+    "keyword_any_hit_rate": 1.0,
+    "keyword_all_hit_rate": 0.46,
+    "citation_complete_rate": 1.0,
+    "structure_complete_rate": 1.0,
+    "repeated_section_rate": 0.0,
+    "refusal_correct_rate": 0.0909,
+    "unsupported_refusal_rate": 0.0,
+    "reference_mismatch_rate": 0.0,
+    "possible_fabrication_rate": 0.2,
+    "avg_latency_s": 7.5792,
+    "by_type": {
+      "grounded_qa": {
+        "count": 17,
+        "avg_keyword_score": 0.8382,
+        "keyword_any_hit_rate": 1.0,
+        "keyword_all_hit_rate": 0.4706,
+        "citation_complete_rate": 1.0,
+        "structure_complete_rate": 1.0,
+        "repeated_section_rate": 0.0,
+        "reference_mismatch_rate": 0.0,
+        "possible_fabrication_rate": 0.0
+      },
+      "citation_qa": {
+        "count": 11,
+        "avg_keyword_score": 0.8409,
+        "keyword_any_hit_rate": 1.0,
+        "keyword_all_hit_rate": 0.4545,
+        "citation_complete_rate": 1.0,
+        "structure_complete_rate": 1.0,
+        "repeated_section_rate": 0.0,
+        "reference_mismatch_rate": 0.0,
+        "possible_fabrication_rate": 0.0
+      },
+      "compare_or_reasoning": {
+        "count": 11,
+        "avg_keyword_score": 0.9318,
+        "keyword_any_hit_rate": 1.0,
+        "keyword_all_hit_rate": 0.7273,
+        "citation_complete_rate": 1.0,
+        "structure_complete_rate": 1.0,
+        "repeated_section_rate": 0.0,
+        "reference_mismatch_rate": 0.0,
+        "possible_fabrication_rate": 0.0
+      },
+      "refusal": {
+        "count": 11,
+        "avg_keyword_score": 0.7121,
+        "keyword_any_hit_rate": 1.0,
+        "keyword_all_hit_rate": 0.1818,
+        "citation_complete_rate": 1.0,
+        "structure_complete_rate": 1.0,
+        "repeated_section_rate": 0.0,
+        "reference_mismatch_rate": 0.0,
+        "possible_fabrication_rate": 0.9091,
+        "refusal_correct_rate": 0.0909
+      }
+    }
+  },
+  "details": [
+    {
+      "id": "sft_v2_eval_001",
+      "type": "grounded_qa",
+      "domain": "science",
+      "question": "如果同学问电流为什么重要，可以怎样依据教材回答？",
+      "expected_reference": "science_textbooks/053_科学_9年级上册_沪教版_2013版_二_电生磁_main_232.md",
+      "expected_keywords": [
+        "电生磁",
+        "电压",
+        "电流",
+        "电路"
+      ],
+      "answer": "关键词：电生磁、电流、磁、电生磁\n\n教材依据：\n1. 请描述你观察到的情况，并与单刀双掷开关（图8-2-11）作比较。\n(3) 在线圈的电路上再串联一个电源和小灯泡, 组成一个工作电路, 用继电器电路中的电键控制小灯泡的点亮和熄灭。\n\n回答：\n比较或解释时，可以先分别定位“电生磁”和“电流”在资料中的表述。资料中与“电生磁”相关的依据是“请描述你观察到的情况，并与单刀双掷开关（图8-2-11）作比较”；与“电流”相关的依据是“请描述你观察到的情况，并与单刀双掷开关（图8-2-11）作比较”。在当前资料范围内，应围绕这些原句说明二者的联系、区别或现象原因，不能补充资料外结论。\n\n学习建议：复习时先把“电生磁”和“电流”对应到教材原句，再用一个例子、公式或实验现象检查自己是否真正理解。\n\n参考来源：science_textbooks/053_科学_9年级上册_沪教版_2013版_二_电生磁_main_232.md",
+      "latency_s": 8.621,
+      "error": "",
+      "keyword_score": 0.75,
+      "keyword_any_hit": true,
+      "keyword_all_hit": false,
+      "hit_keywords": [
+        "电生磁",
+        "电流",
+        "电路"
+      ],
+      "missed_keywords": [
+        "电压"
+      ],
+      "citation_complete": true,
+      "reference_mismatch": false,
+      "extracted_sources": [
+        "science_textbooks/053_科学_9年级上册_沪教版_2013版_二_电生磁_main_232.md"
+      ],
+      "unexpected_sources": [],
+      "structure_complete": true,
+      "repeated_section": false,
+      "refusal_detected": false,
+      "refusal_correct": null,
+      "unsupported_refusal": false,
+      "possible_fabrication": false
+    },
+    {
+      "id": "sft_v2_eval_002",
+      "type": "grounded_qa",
+      "domain": "science",
+      "question": "教材中关于观察和感受周围的世界的核心观点是什么？",
+      "expected_reference": "science_textbooks/031_科学_7年级上册_沪教版_2012版_三_声音的特征_main_183.md",
+      "expected_keywords": [
+        "观察",
+        "感受周围的世界",
+        "观察和感受周围的世界",
+        "四季星空"
+      ],
+      "answer": "关键词：观察和感受周围的世界、声音的特征、本册的主题是\n\n教材依据：\n1. 本册的主题是“观察和感受周围的世界”。\n2. 面对刚刚升入初中的学生，作为一门新的科学课程的开始，本册教材引导他们借助初步的科学方法认识新的学习环境，进而认识我们周围的世界。\n3. 本册教材立足于学生已有的知识和经验，由近及远，由表及里，由简单到复杂，对科学知识的关联和层次、科学方法的运用和扩展都作了较为细致的设计，力图较为充分地体现科学课程的特点，发挥其优势。\n\n回答：\n比较或解释时，可以先分别定位“观察和感受周围的世界”和“声音的特征”在资料中的表述。资料中与“观察和感受周围的世界”相关的依据是“本册的主题是“观察和感受周围的世界””；与“声音的特征”相关的依据是“本册的主题是“观察和感受周围的世界””。在当前资料范围内，应围绕这些原句说明二者的联系、区别或现象原因，不能补充资料外结论。\n\n学习建议：复习时先把“观察和感受周围的世界”和“声音的特征”对应到教材原句，再用一个例子、公式或实验现象检查自己是否真正理解。\n\n参考来源：science_textbooks/031_科学_7年级上册_沪教版_2012版_三_声音的特征_main_183.md",
+      "latency_s": 9.073,
+      "error": "",
+      "keyword_score": 0.75,
+      "keyword_any_hit": true,
+      "keyword_all_hit": false,
+      "hit_keywords": [
+        "观察",
+        "感受周围的世界",
+        "观察和感受周围的世界"
+      ],
+      "missed_keywords": [
+        "四季星空"
+      ],
+      "citation_complete": true,
+      "reference_mismatch": false,
+      "extracted_sources": [
+        "science_textbooks/031_科学_7年级上册_沪教版_2012版_三_声音的特征_main_183.md"
+      ],
+      "unexpected_sources": [],
+      "structure_complete": true,
+      "repeated_section": false,
+      "refusal_detected": false,
+      "refusal_correct": null,
+      "unsupported_refusal": false,
+      "possible_fabrication": false
+    },
+    {
+      "id": "sft_v2_eval_003",
+      "type": "grounded_qa",
+      "domain": "science",
+      "question": "请把生态系统的结构的知识点整理成适合复习的答案。",
+      "expected_reference": "science_textbooks/057_科学_8年级上册_沪教版_2013版_二_生态系统的结构_main_144.md",
+      "expected_keywords": [
+        "生态系统的结构",
+        "生态系统",
+        "土壤",
+        "空气"
+      ],
+      "answer": "关键词：生态系统的结构、能量、土壤\n\n教材依据：\n1. 生态系统的组成。\n2. 生态系统的中的植物，可以利用太阳能，通过光合作用制造有机物。\n3. 植物制造的有机物不仅养活了自身，还为动物的生存提供食物，因此，绿色植物是生态系统中的生产者（producer）。\n\n回答：\n比较或解释时，可以先分别定位“生态系统的结构”和“能量”在资料中的表述。资料中与“生态系统的结构”相关的依据是“生态系统的组成”；与“能量”相关的依据是“生态系统的组成”。在当前资料范围内，应围绕这些原句说明二者的联系、区别或现象原因，不能补充资料外结论。\n\n学习建议：复习时先把“生态系统的结构”和“能量”对应到教材原句，再用一个例子、公式或实验现象检查自己是否真正理解。\n\n参考来源：science_textbooks/057_科学_8年级上册_沪教版_2013版_二_生态系统的结构_main_144.md",
+      "latency_s": 6.524,
+      "error": "",
+      "keyword_score": 0.75,
+      "keyword_any_hit": true,
+      "keyword_all_hit": false,
+      "hit_keywords": [
+        "生态系统的结构",
+        "生态系统",
+        "土壤"
+      ],
+      "missed_keywords": [
+        "空气"
+      ],
+      "citation_complete": true,
+      "reference_mismatch": false,
+      "extracted_sources": [
+        "science_textbooks/057_科学_8年级上册_沪教版_2013版_二_生态系统的结构_main_144.md"
+      ],
+      "unexpected_sources": [],
+      "structure_complete": true,
+      "repeated_section": false,
+      "refusal_detected": false,
+      "refusal_correct": null,
+      "unsupported_refusal": false,
+      "possible_fabrication": false
+    },
+    {
+      "id": "sft_v2_eval_004",
+      "type": "grounded_qa",
+      "domain": "science",
+      "question": "教材中关于四季星空的核心观点是什么？",
+      "expected_reference": "science_textbooks/025_科学_7年级上册_沪教版_2012版_三_四季星空_main_115.md",
+      "expected_keywords": [
+        "四季星空",
+        "地球自转",
+        "春季星空"
+      ],
+      "answer": "关键词：四季星空、星空、星空变化、地球自转\n\n教材依据：\n1. 春季星空（图7-3-1）的代表星座是狮子座。\n2. 春季傍晚观察南方天空，可看见6颗亮星构成一个反写的问号，“反问号”的那一点是狮子座最亮的星——狮子座 $\\alpha$，是一颗白色1等星，我国古代称为“轩辕十四”。\n3. 在春夏秋冬四季，如果天黑后你观察南方夜空，看到的主要星座是不同的，它们依次是：狮子座、天蝎座、飞马座和猎户座。\n\n回答：\n比较或解释时，可以先分别定位“四季星空”和“星空”在资料中的表述。资料中与“四季星空”相关的依据是“春季星空（图7-3-1）的代表星座是狮子座”；与“星空”相关的依据是“春季星空（图7-3-1）的代表星座是狮子座”。在当前资料范围内，应围绕这些原句说明二者的联系、区别或现象原因，不能补充资料外结论。\n\n学习建议：复习时先把“四季星空”和“星空”对应到教材原句，再用一个例子、公式或实验现象检查自己是否真正理解。\n\n参考来源：science_textbooks/025_科学_7年级上册_沪教版_2012版_三_四季星空_main_115.md",
+      "latency_s": 8.784,
+      "error": "",
+      "keyword_score": 1.0,
+      "keyword_any_hit": true,
+      "keyword_all_hit": true,
+      "hit_keywords": [
+        "四季星空",
+        "地球自转",
+        "春季星空"
+      ],
+      "missed_keywords": [],
+      "citation_complete": true,
+      "reference_mismatch": false,
+      "extracted_sources": [
+        "science_textbooks/025_科学_7年级上册_沪教版_2012版_三_四季星空_main_115.md"
+      ],
+      "unexpected_sources": [],
+      "structure_complete": true,
+      "repeated_section": false,
+      "refusal_detected": false,
+      "refusal_correct": null,
+      "unsupported_refusal": false,
+      "possible_fabrication": false
+    },
+    {
+      "id": "sft_v2_eval_005",
+      "type": "grounded_qa",
+      "domain": "science",
+      "question": "请把人体的自我保护的知识点整理成适合复习的答案。",
+      "expected_reference": "science_textbooks/072_科学_9年级下册_沪教版_2013版_第四章_main_088.md",
+      "expected_keywords": [
+        "人体的自我保护",
+        "空气",
+        "进化",
+        "人体的防御机制"
+      ],
+      "answer": "关键词：人体的自我保护、皮肤和黏膜是人体的最外层屏障、人体的防御机制\n\n教材依据：\n1. 但是，人在长期的进化过程中，发展出来一套相当复杂的自我防御系统，它能有效地抵御来自外界的各种侵袭，保证自身生命活动的正常进行。\n2. 皮肤很柔软，还有许多毛孔、汗腺开口等，能透气排汗，但它却能有效地防止病原体的入侵，这是为什么呢。\n3. 皮肤由表皮和真皮构成。\n\n回答：\n比较或解释时，可以先分别定位“人体的自我保护”和“皮肤和黏膜是人体的最外层屏障”在资料中的表述。资料中与“人体的自我保护”相关的依据是“但是，人在长期的进化过程中，发展出来一套相当复杂的自我防御系统，它能有效地抵御来自外界的各种侵袭，保证自身生命活动的正常进行”；与“皮肤和黏膜是人体的最外层屏障”相关的依据是“皮肤很柔软，还有许多毛孔、汗腺开口等，能透气排汗，但它却能有效地防止病原体的入侵，这是为什么呢”。在当前资料范围内，应围绕这些原句说明二者的联系、区别或现象原因，不能补充资料外结论。\n\n学习建议：复习时先把“人体的自我保护”和“皮肤和黏膜是人体的最外层屏障”对应到教材原句，再用一个例子、公式或实验现象检查自己是否真正理解。\n\n参考来源：science_textbooks/072_科学_9年级下册_沪教版_2013版_第四章_main_088.md",
+      "latency_s": 9.987,
+      "error": "",
+      "keyword_score": 0.75,
+      "keyword_any_hit": true,
+      "keyword_all_hit": false,
+      "hit_keywords": [
+        "人体的自我保护",
+        "进化",
+        "人体的防御机制"
+      ],
+      "missed_keywords": [
+        "空气"
+      ],
+      "citation_complete": true,
+      "reference_mismatch": false,
+      "extracted_sources": [
+        "science_textbooks/072_科学_9年级下册_沪教版_2013版_第四章_main_088.md"
+      ],
+      "unexpected_sources": [],
+      "structure_complete": true,
+      "repeated_section": false,
+      "refusal_detected": false,
+      "refusal_correct": null,
+      "unsupported_refusal": false,
+      "possible_fabrication": false
+    },
+    {
+      "id": "sft_v2_eval_006",
+      "type": "grounded_qa",
+      "domain": "science",
+      "question": "地球自转在四季星空中有什么作用或含义？",
+      "expected_reference": "science_textbooks/025_科学_7年级上册_沪教版_2012版_三_四季星空_main_115.md",
+      "expected_keywords": [
+        "四季星空",
+        "地球自转",
+        "春季星空"
+      ],
+      "answer": "关键词：四季星空、星空、地球自转、四季\n\n教材依据：\n1. 春季星空（图7-3-1）的代表星座是狮子座。\n2. 春季傍晚观察南方天空，可看见6颗亮星构成一个反写的问号，“反问号”的那一点是狮子座最亮的星——狮子座 $\\alpha$，是一颗白色1等星，我国古代称为“轩辕十四”。\n3. 在春夏秋冬四季，如果天黑后你观察南方夜空，看到的主要星座是不同的，它们依次是：狮子座、天蝎座、飞马座和猎户座。\n\n回答：\n比较或解释时，可以先分别定位“四季星空”和“星空”在资料中的表述。资料中与“四季星空”相关的依据是“春季星空（图7-3-1）的代表星座是狮子座”；与“星空”相关的依据是“春季星空（图7-3-1）的代表星座是狮子座”。在当前资料范围内，应围绕这些原句说明二者的联系、区别或现象原因，不能补充资料外结论。\n\n学习建议：复习时先把“四季星空”和“星空”对应到教材原句，再用一个例子、公式或实验现象检查自己是否真正理解。\n\n参考来源：science_textbooks/025_科学_7年级上册_沪教版_2012版_三_四季星空_main_115.md",
+      "latency_s": 8.766,
+      "error": "",
+      "keyword_score": 1.0,
+      "keyword_any_hit": true,
+      "keyword_all_hit": true,
+      "hit_keywords": [
+        "四季星空",
+        "地球自转",
+        "春季星空"
+      ],
+      "missed_keywords": [],
+      "citation_complete": true,
+      "reference_mismatch": false,
+      "extracted_sources": [
+        "science_textbooks/025_科学_7年级上册_沪教版_2012版_三_四季星空_main_115.md"
+      ],
+      "unexpected_sources": [],
+      "structure_complete": true,
+      "repeated_section": false,
+      "refusal_detected": false,
+      "refusal_correct": null,
+      "unsupported_refusal": false,
+      "possible_fabrication": false
+    },
+    {
+      "id": "sft_v2_eval_007",
+      "type": "grounded_qa",
+      "domain": "science",
+      "question": "请把浮力的知识点整理成适合复习的答案。",
+      "expected_reference": "science_textbooks/063_科学_8年级上册_沪教版_2013版_五_浮力_main_058.md",
+      "expected_keywords": [
+        "浮力",
+        "空气",
+        "验证空气浮力的大小",
+        "验证空气浮力的大"
+      ],
+      "answer": "关键词：浮力、大气、燃烧、燃烧\n\n教材依据：\n1. 验证空气浮力的大小与物体排开空气的体积有关。\n2. 设计实验：空气的质量很小，采用和水同样的实验方法显然不行，我们可以采用对照的方法。\n3. 步骤：1. 向带有自行车进气阀的大塑料瓶中打气（约十几次）后，将进气阀关紧。\n\n回答：\n根据参考资料，浮力的学习重点可以围绕“浮力、大气、燃烧”来组织。关键依据是“验证空气浮力的大小与物体排开空气的体积有关”。作答时应先给出核心结论，再把结论和资料中的原句对应起来。\n\n学习建议：复习时先把“浮力”和“大气”对应到教材原句，再用一个例子、公式或实验现象检查自己是否真正理解。\n\n参考来源：science_textbooks/063_科学_8年级上册_沪教版_2013版_五_浮力_main_058.md",
+      "latency_s": 6.331,
+      "error": "",
+      "keyword_score": 1.0,
+      "keyword_any_hit": true,
+      "keyword_all_hit": true,
+      "hit_keywords": [
+        "浮力",
+        "空气",
+        "验证空气浮力的大小",
+        "验证空气浮力的大"
+      ],
+      "missed_keywords": [],
+      "citation_complete": true,
+      "reference_mismatch": false,
+      "extracted_sources": [
+        "science_textbooks/063_科学_8年级上册_沪教版_2013版_五_浮力_main_058.md"
+      ],
+      "unexpected_sources": [],
+      "structure_complete": true,
+      "repeated_section": false,
+      "refusal_detected": false,
+      "refusal_correct": null,
+      "unsupported_refusal": false,
+      "possible_fabrication": false
+    },
+    {
+      "id": "sft_v2_eval_008",
+      "type": "grounded_qa",
+      "domain": "science",
+      "question": "如果同学问土壤为什么重要，可以怎样依据教材回答？",
+      "expected_reference": "science_textbooks/057_科学_8年级上册_沪教版_2013版_二_生态系统的结构_main_144.md",
+      "expected_keywords": [
+        "生态系统的结构",
+        "生态系统",
+        "土壤",
+        "空气"
+      ],
+      "answer": "关键词：生态系统的结构、土壤、生态系统、能量\n\n教材依据：\n1. 生态系统的组成\n2. 生态系统的组成\n\n回答：\n比较或解释时，可以先分别定位“生态系统的结构”和“土壤”在资料中的表述。资料中与“生态系统的结构”相关的依据是“生态系统的组成”；与“土壤”相关的依据是“生态系统的组成”。在当前资料范围内，应围绕这些原句说明二者的联系、区别或现象原因，不能补充资料外结论。\n\n学习建议：复习时先把“生态系统的结构”和“土壤”对应到教材原句，再用一个例子、公式或实验现象检查自己是否真正理解。\n\n参考来源：science_textbooks/057_科学_8年级上册_沪教版_2013版_二_生态系统的结构_main_144.md",
+      "latency_s": 5.148,
+      "error": "",
+      "keyword_score": 0.75,
+      "keyword_any_hit": true,
+      "keyword_all_hit": false,
+      "hit_keywords": [
+        "生态系统的结构",
+        "生态系统",
+        "土壤"
+      ],
+      "missed_keywords": [
+        "空气"
+      ],
+      "citation_complete": true,
+      "reference_mismatch": false,
+      "extracted_sources": [
+        "science_textbooks/057_科学_8年级上册_沪教版_2013版_二_生态系统的结构_main_144.md"
+      ],
+      "unexpected_sources": [],
+      "structure_complete": true,
+      "repeated_section": false,
+      "refusal_detected": false,
+      "refusal_correct": null,
+      "unsupported_refusal": false,
+      "possible_fabrication": false
+    },
+    {
+      "id": "sft_v2_eval_009",
+      "type": "grounded_qa",
+      "domain": "science",
+      "question": "学到电生磁时，容易忽略哪些教材依据？",
+      "expected_reference": "science_textbooks/053_科学_9年级上册_沪教版_2013版_二_电生磁_main_232.md",
+      "expected_keywords": [
+        "电生磁",
+        "电压",
+        "电流",
+        "电路"
+      ],
+      "answer": "关键词：电生磁、磁、电流的磁效应、电生磁\n\n教材依据：\n1. (3) 更换不同材料的铁心, 再重复步骤 (2) 的操作和观察。\n2. (4) 更换线圈疏密不同的螺线管, 再重复步骤 (2) 的操作和观察。\n3. (2) 找出继电器中电磁铁线圈的两个接线端, 将它串联一电键后接上电源 (电源电压根据继电器工作电压而定)。\n\n回答：\n比较或解释时，可以先分别定位“电生磁”和“磁”在资料中的表述。资料中与“电生磁”相关的依据是“(3) 更换不同材料的铁心, 再重复步骤 (2) 的操作和观察”；与“磁”相关的依据是“(3) 更换不同材料的铁心, 再重复步骤 (2) 的操作和观察”。在当前资料范围内，应围绕这些原句说明二者的联系、区别或现象原因，不能补充资料外结论。\n\n学习建议：复习时先把“电生磁”和“磁”对应到教材原句，再用一个例子、公式或实验现象检查自己是否真正理解。\n\n参考来源：science_textbooks/053_科学_9年级上册_沪教版_2013版_二_电生磁_main_232.md",
+      "latency_s": 8.557,
+      "error": "",
+      "keyword_score": 0.75,
+      "keyword_any_hit": true,
+      "keyword_all_hit": false,
+      "hit_keywords": [
+        "电生磁",
+        "电压",
+        "电流"
+      ],
+      "missed_keywords": [
+        "电路"
+      ],
+      "citation_complete": true,
+      "reference_mismatch": false,
+      "extracted_sources": [
+        "science_textbooks/053_科学_9年级上册_沪教版_2013版_二_电生磁_main_232.md"
+      ],
+      "unexpected_sources": [],
+      "structure_complete": true,
+      "repeated_section": false,
+      "refusal_detected": false,
+      "refusal_correct": null,
+      "unsupported_refusal": false,
+      "possible_fabrication": false
+    },
+    {
+      "id": "sft_v2_eval_010",
+      "type": "grounded_qa",
+      "domain": "science",
+      "question": "请根据资料概括能源的学习重点。",
+      "expected_reference": "science_textbooks/036_科学_9年级下册_沪教版_2013版_三_能源_main_148.md",
+      "expected_keywords": [
+        "能源",
+        "地表",
+        "随着水流经地表流",
+        "入湖泊"
+      ],
+      "answer": "关键词：能源、地表、水力发电\n\n教材依据：\n1. 开发水能对江河的综合治理和综合利用具有积极作用，对促进国民经济发展，改善能源消费结构，缓解由于消耗煤炭、石油资源所带来的环境污染有重要意义，因此世界各国都把开发水能放在能源发展战略的优先地位。\n2. 不过大坝拦截河流对周围的环境可能产生不良的影响，因此必须认真分析其利弊。\n\n回答：\n根据参考资料，能源的学习重点可以围绕“能源、地表、水力发电”来组织。关键依据是“开发水能对江河的综合治理和综合利用具有积极作用，对促进国民经济发展，改善能源消费结构，缓解由于消耗煤炭、石油资源所带来的环境污染有重要意义，因此世界各国都把开发水能放在能源发展战略的优先地位”。作答时应先给出核心结论，再把结论和资料中的原句对应起来。\n\n学习建议：复习时先把“能源”和“地表”对应到教材原句，再用一个例子、公式或实验现象检查自己是否真正理解。\n\n参考来源：science_textbooks/036_科学_9年级下册_沪教版_2013版_三_能源_main_148.md",
+      "latency_s": 7.125,
+      "error": "",
+      "keyword_score": 0.5,
+      "keyword_any_hit": true,
+      "keyword_all_hit": false,
+      "hit_keywords": [
+        "能源",
+        "地表"
+      ],
+      "missed_keywords": [
+        "随着水流经地表流",
+        "入湖泊"
+      ],
+      "citation_complete": true,
+      "reference_mismatch": false,
+      "extracted_sources": [
+        "science_textbooks/036_科学_9年级下册_沪教版_2013版_三_能源_main_148.md"
+      ],
+      "unexpected_sources": [],
+      "structure_complete": true,
+      "repeated_section": false,
+      "refusal_detected": false,
+      "refusal_correct": null,
+      "unsupported_refusal": false,
+      "possible_fabrication": false
+    },
+    {
+      "id": "sft_v2_eval_011",
+      "type": "grounded_qa",
+      "domain": "science",
+      "question": "人体的自我保护这一节需要抓住哪些关键词？",
+      "expected_reference": "science_textbooks/072_科学_9年级下册_沪教版_2013版_第四章_main_088.md",
+      "expected_keywords": [
+        "人体的自我保护",
+        "空气",
+        "进化",
+        "人体的防御机制"
+      ],
+      "answer": "关键词：人体的自我保护、皮肤、黏膜、自我保护\n\n教材依据：\n1. 但是，人在长期的进化过程中，发展出来一套相当复杂的自我防御系统，它能有效地抵御来自外界的各种侵袭，保证自身生命活动的正常进行。\n2. 皮肤很柔软，还有许多毛孔、汗腺开口等，能透气排汗，但它却能有效地防止病原体的入侵，这是为什么呢。\n3. 皮肤由表皮和真皮构成。\n\n回答：\n比较或解释时，可以先分别定位“人体的自我保护”和“皮肤”在资料中的表述。资料中与“人体的自我保护”相关的依据是“但是，人在长期的进化过程中，发展出来一套相当复杂的自我防御系统，它能有效地抵御来自外界的各种侵袭，保证自身生命活动的正常进行”；与“皮肤”相关的依据是“皮肤很柔软，还有许多毛孔、汗腺开口等，能透气排汗，但它却能有效地防止病原体的入侵，这是为什么呢”。在当前资料范围内，应围绕这些原句说明二者的联系、区别或现象原因，不能补充资料外结论。\n\n学习建议：复习时先把“人体的自我保护”和“皮肤”对应到教材原句，再用一个例子、公式或实验现象检查自己是否真正理解。\n\n参考来源：science_textbooks/072_科学_9年级下册_沪教版_2013版_第四章_main_088.md",
+      "latency_s": 8.793,
+      "error": "",
+      "keyword_score": 0.5,
+      "keyword_any_hit": true,
+      "keyword_all_hit": false,
+      "hit_keywords": [
+        "人体的自我保护",
+        "进化"
+      ],
+      "missed_keywords": [
+        "空气",
+        "人体的防御机制"
+      ],
+      "citation_complete": true,
+      "reference_mismatch": false,
+      "extracted_sources": [
+        "science_textbooks/072_科学_9年级下册_沪教版_2013版_第四章_main_088.md"
+      ],
+      "unexpected_sources": [],
+      "structure_complete": true,
+      "repeated_section": false,
+      "refusal_detected": false,
+      "refusal_correct": null,
+      "unsupported_refusal": false,
+      "possible_fabrication": false
+    },
+    {
+      "id": "sft_v2_eval_012",
+      "type": "grounded_qa",
+      "domain": "science",
+      "question": "学到空气的性质时，容易忽略哪些教材依据？",
+      "expected_reference": "science_textbooks/056_科学_7年级下册_沪教版_2012版_二_空气的性质_main_051.md",
+      "expected_keywords": [
+        "空气的性质",
+        "空气",
+        "自然资源",
+        "空气有质量"
+      ],
+      "answer": "关键词：空气的性质、空气、氧气、燃烧\n\n教材依据：\n1. 空气是我们接触最多的物质之一，也是一种重要的自然资源。\n2. 空气的密度较小。\n3. 在 $0^{\\circ}\\mathrm{C}$ ， $1.01 \\times 10^{5} \\mathrm{~Pa}$ 时，空气的密度约是 $1.29 \\mathrm{~g} \\cdot \\mathrm{L}^{-1}$。\n\n回答：\n比较或解释时，可以先分别定位“空气的性质”和“空气”在资料中的表述。资料中与“空气的性质”相关的依据是“空气是我们接触最多的物质之一，也是一种重要的自然资源”；与“空气”相关的依据是“空气是我们接触最多的物质之一，也是一种重要的自然资源”。在当前资料范围内，应围绕这些原句说明二者的联系、区别或现象原因，不能补充资料外结论。\n\n学习建议：复习时先把“空气的性质”和“空气”对应到教材原句，再用一个例子、公式或实验现象检查自己是否真正理解。\n\n参考来源：science_textbooks/056_科学_7年级下册_沪教版_2012版_二_空气的性质_main_051.md",
+      "latency_s": 7.588,
+      "error": "",
+      "keyword_score": 0.75,
+      "keyword_any_hit": true,
+      "keyword_all_hit": false,
+      "hit_keywords": [
+        "空气的性质",
+        "空气",
+        "自然资源"
+      ],
+      "missed_keywords": [
+        "空气有质量"
+      ],
+      "citation_complete": true,
+      "reference_mismatch": false,
+      "extracted_sources": [
+        "science_textbooks/056_科学_7年级下册_沪教版_2012版_二_空气的性质_main_051.md"
+      ],
+      "unexpected_sources": [],
+      "structure_complete": true,
+      "repeated_section": false,
+      "refusal_detected": false,
+      "refusal_correct": null,
+      "unsupported_refusal": false,
+      "possible_fabrication": false
+    },
+    {
+      "id": "sft_v2_eval_013",
+      "type": "citation_qa",
+      "domain": "science",
+      "question": "如果学生复习生态系统的结构，应该怎样回答并引用来源？",
+      "expected_reference": "science_textbooks/057_科学_8年级上册_沪教版_2013版_二_生态系统的结构_main_144.md",
+      "expected_keywords": [
+        "生态系统的结构",
+        "生态系统",
+        "土壤",
+        "空气"
+      ],
+      "answer": "关键词：生态系统的结构、能量、土壤\n\n教材依据：\n1. 生态系统的组成。\n2. 生态系统的组成。\n3. 生态系统的组成。\n\n回答：\n比较或解释时，可以先分别定位“生态系统的结构”和“能量”在资料中的表述。资料中与“生态系统的结构”相关的依据是“生态系统的组成”；与“能量”相关的依据是“生态系统的组成”。在当前资料范围内，应围绕这些原句说明二者的联系、区别或现象原因，不能补充资料外结论。\n\n学习建议：复习时先把“生态系统的结构”和“能量”对应到教材原句，再用一个例子、公式或实验现象检查自己是否真正理解。\n\n参考来源：science_textbooks/057_科学_8年级上册_沪教版_2013版_二_生态系统的结构_main_144.md",
+      "latency_s": 5.28,
+      "error": "",
+      "keyword_score": 0.75,
+      "keyword_any_hit": true,
+      "keyword_all_hit": false,
+      "hit_keywords": [
+        "生态系统的结构",
+        "生态系统",
+        "土壤"
+      ],
+      "missed_keywords": [
+        "空气"
+      ],
+      "citation_complete": true,
+      "reference_mismatch": false,
+      "extracted_sources": [
+        "science_textbooks/057_科学_8年级上册_沪教版_2013版_二_生态系统的结构_main_144.md"
+      ],
+      "unexpected_sources": [],
+      "structure_complete": true,
+      "repeated_section": false,
+      "refusal_detected": false,
+      "refusal_correct": null,
+      "unsupported_refusal": false,
+      "possible_fabrication": false
+    },
+    {
+      "id": "sft_v2_eval_014",
+      "type": "citation_qa",
+      "domain": "science",
+      "question": "请根据资料回答：空气的性质主要讲了什么？答案末尾写参考来源。",
+      "expected_reference": "science_textbooks/056_科学_7年级下册_沪教版_2012版_二_空气的性质_main_051.md",
+      "expected_keywords": [
+        "空气的性质",
+        "空气",
+        "自然资源",
+        "空气有质量"
+      ],
+      "answer": "关键词：空气的性质、空气、氧气、燃烧\n\n教材依据：\n1. 空气是我们接触最多的物质之一，也是一种重要的自然资源。\n2. 空气的密度较小。\n3. 在 $0^{\\circ}\\mathrm{C}$ ， $1.01 \\times 10^{5} \\mathrm{~Pa}$ 时，空气的密度约是 $1.29 \\mathrm{~g} \\cdot \\mathrm{L}^{-1}$。\n\n回答：\n比较或解释时，可以先分别定位“空气的性质”和“空气”在资料中的表述。资料中与“空气的性质”相关的依据是“空气是我们接触最多的物质之一，也是一种重要的自然资源”；与“空气”相关的依据是“空气是我们接触最多的物质之一，也是一种重要的自然资源”。在当前资料范围内，应围绕这些原句说明二者的联系、区别或现象原因，不能补充资料外结论。\n\n学习建议：复习时先把“空气的性质”和“空气”对应到教材原句，再用一个例子、公式或实验现象检查自己是否真正理解。\n\n参考来源：science_textbooks/056_科学_7年级下册_沪教版_2012版_二_空气的性质_main_051.md",
+      "latency_s": 7.583,
+      "error": "",
+      "keyword_score": 0.75,
+      "keyword_any_hit": true,
+      "keyword_all_hit": false,
+      "hit_keywords": [
+        "空气的性质",
+        "空气",
+        "自然资源"
+      ],
+      "missed_keywords": [
+        "空气有质量"
+      ],
+      "citation_complete": true,
+      "reference_mismatch": false,
+      "extracted_sources": [
+        "science_textbooks/056_科学_7年级下册_沪教版_2012版_二_空气的性质_main_051.md"
+      ],
+      "unexpected_sources": [],
+      "structure_complete": true,
+      "repeated_section": false,
+      "refusal_detected": false,
+      "refusal_correct": null,
+      "unsupported_refusal": false,
+      "possible_fabrication": false
+    },
+    {
+      "id": "sft_v2_eval_015",
+      "type": "citation_qa",
+      "domain": "science",
+      "question": "如果学生复习人体的自我保护，应该怎样回答并引用来源？",
+      "expected_reference": "science_textbooks/072_科学_9年级下册_沪教版_2013版_第四章_main_088.md",
+      "expected_keywords": [
+        "人体的自我保护",
+        "空气",
+        "进化",
+        "人体的防御机制"
+      ],
+      "answer": "关键词：人体的自我保护、皮肤和黏膜是人体的最外层屏障、人体的防御机制\n\n教材依据：\n1. 但是，人在长期的进化过程中，发展出来一套相当复杂的自我防御系统，它能有效地抵御来自外界的各种侵袭，保证自身生命活动的正常进行。\n2. 皮肤很柔软，还有许多毛孔、汗腺开口等，能透气排汗，但它却能有效地防止病原体的入侵，这是为什么呢。\n3. 皮肤由表皮和真皮构成。\n\n回答：\n比较或解释时，可以先分别定位“人体的自我保护”和“皮肤和黏膜是人体的最外层屏障”在资料中的表述。资料中与“人体的自我保护”相关的依据是“但是，人在长期的进化过程中，发展出来一套相当复杂的自我防御系统，它能有效地抵御来自外界的各种侵袭，保证自身生命活动的正常进行”；与“皮肤和黏膜是人体的最外层屏障”相关的依据是“皮肤很柔软，还有许多毛孔、汗腺开口等，能透气排汗，但它却能有效地防止病原体的入侵，这是为什么呢”。在当前资料范围内，应围绕这些原句说明二者的联系、区别或现象原因，不能补充资料外结论。\n\n学习建议：复习时先把“人体的自我保护”和“皮肤和黏膜是人体的最外层屏障”对应到教材原句，再用一个例子、公式或实验现象检查自己是否真正理解。\n\n参考来源：science_textbooks/072_科学_9年级下册_沪教版_2013版_第四章_main_088.md",
+      "latency_s": 9.898,
+      "error": "",
+      "keyword_score": 0.75,
+      "keyword_any_hit": true,
+      "keyword_all_hit": false,
+      "hit_keywords": [
+        "人体的自我保护",
+        "进化",
+        "人体的防御机制"
+      ],
+      "missed_keywords": [
+        "空气"
+      ],
+      "citation_complete": true,
+      "reference_mismatch": false,
+      "extracted_sources": [
+        "science_textbooks/072_科学_9年级下册_沪教版_2013版_第四章_main_088.md"
+      ],
+      "unexpected_sources": [],
+      "structure_complete": true,
+      "repeated_section": false,
+      "refusal_detected": false,
+      "refusal_correct": null,
+      "unsupported_refusal": false,
+      "possible_fabrication": false
+    },
+    {
+      "id": "sft_v2_eval_016",
+      "type": "citation_qa",
+      "domain": "science",
+      "question": "请根据资料回答：观察和感受周围的世界主要讲了什么？答案末尾写参考来源。",
+      "expected_reference": "science_textbooks/031_科学_7年级上册_沪教版_2012版_三_声音的特征_main_183.md",
+      "expected_keywords": [
+        "观察",
+        "感受周围的世界",
+        "观察和感受周围的世界",
+        "四季星空"
+      ],
+      "answer": "关键词：观察和感受周围的世界、声音的特征、本册的主题是\n\n教材依据：\n1. 本册的主题是“观察和感受周围的世界”。\n2. 面对刚刚升入初中的学生，作为一门新的科学课程的开始，本册教材引导他们借助初步的科学方法认识新的学习环境，进而认识我们周围的世界。\n3. 本册教材立足于学生已有的知识和经验，由近及远，由表及里，由简单到复杂，对科学知识的关联和层次、科学方法的运用和扩展都作了较为细致的设计，力图较为充分地体现科学课程的特点，发挥其优势。\n\n回答：\n比较或解释时，可以先分别定位“观察和感受周围的世界”和“声音的特征”在资料中的表述。资料中与“观察和感受周围的世界”相关的依据是“本册的主题是“观察和感受周围的世界””；与“声音的特征”相关的依据是“面对刚刚升入初中的学生，作为一门新的科学课程的开始，本册教材引导他们借助初步的科学方法认识新的学习环境，进而认识我们周围的世界”。在当前资料范围内，应围绕这些原句说明二者的联系、区别或现象原因，不能补充资料外结论。\n\n学习建议：复习时先把“观察和感受周围的世界”和“声音的特征”对应到教材原句，再用一个例子、公式或实验现象检查自己是否真正理解。\n\n参考来源：science_textbooks/031_科学_7年级上册_沪教版_2012版_三_声音的特征_main_183.md",
+      "latency_s": 10.23,
+      "error": "",
+      "keyword_score": 0.75,
+      "keyword_any_hit": true,
+      "keyword_all_hit": false,
+      "hit_keywords": [
+        "观察",
+        "感受周围的世界",
+        "观察和感受周围的世界"
+      ],
+      "missed_keywords": [
+        "四季星空"
+      ],
+      "citation_complete": true,
+      "reference_mismatch": false,
+      "extracted_sources": [
+        "science_textbooks/031_科学_7年级上册_沪教版_2012版_三_声音的特征_main_183.md"
+      ],
+      "unexpected_sources": [],
+      "structure_complete": true,
+      "repeated_section": false,
+      "refusal_detected": false,
+      "refusal_correct": null,
+      "unsupported_refusal": false,
+      "possible_fabrication": false
+    },
+    {
+      "id": "sft_v2_eval_017",
+      "type": "citation_qa",
+      "domain": "science",
+      "question": "如果学生复习浮力，应该怎样回答并引用来源？",
+      "expected_reference": "science_textbooks/063_科学_8年级上册_沪教版_2013版_五_浮力_main_058.md",
+      "expected_keywords": [
+        "浮力",
+        "空气",
+        "验证空气浮力的大小",
+        "验证空气浮力的大"
+      ],
+      "answer": "关键词：浮力、大气、大气压、燃烧\n\n教材依据：\n1. 验证空气浮力的大小与物体排开空气的体积有关。\n2. 设计实验：空气的质量很小，采用和水同样的实验方法显然不行，我们可以采用对照的方法。\n3. 步骤：1. 向带有自行车进气阀的大塑料瓶中打气（约十几次）后，将进气阀关紧。\n\n回答：\n比较或解释时，可以先分别定位“浮力”和“大气”在资料中的表述。资料中与“浮力”相关的依据是“验证空气浮力的大小与物体排开空气的体积有关”；与“大气”相关的依据是“大气的质量很小，采用和水同样的实验方法显然不行，我们可以采用对照的方法”。在当前资料范围内，应围绕这些原句说明二者的联系、区别或现象原因，不能补充资料外结论。\n\n学习建议：复习时先把“浮力”和“大气”对应到教材原句，再用一个例子、公式或实验现象检查自己是否真正理解。\n\n参考来源：science_textbooks/063_科学_8年级上册_沪教版_2013版_五_浮力_main_058.md",
+      "latency_s": 7.549,
+      "error": "",
+      "keyword_score": 1.0,
+      "keyword_any_hit": true,
+      "keyword_all_hit": true,
+      "hit_keywords": [
+        "浮力",
+        "空气",
+        "验证空气浮力的大小",
+        "验证空气浮力的大"
+      ],
+      "missed_keywords": [],
+      "citation_complete": true,
+      "reference_mismatch": false,
+      "extracted_sources": [
+        "science_textbooks/063_科学_8年级上册_沪教版_2013版_五_浮力_main_058.md"
+      ],
+      "unexpected_sources": [],
+      "structure_complete": true,
+      "repeated_section": false,
+      "refusal_detected": false,
+      "refusal_correct": null,
+      "unsupported_refusal": false,
+      "possible_fabrication": false
+    },
+    {
+      "id": "sft_v2_eval_018",
+      "type": "citation_qa",
+      "domain": "science",
+      "question": "如果学生复习能源，应该怎样回答并引用来源？",
+      "expected_reference": "science_textbooks/036_科学_9年级下册_沪教版_2013版_三_能源_main_148.md",
+      "expected_keywords": [
+        "能源",
+        "地表",
+        "随着水流经地表流",
+        "入湖泊"
+      ],
+      "answer": "关键词：能源、地表、水力发电\n\n教材依据：\n1. 开发水能对江河的综合治理和综合利用具有积极作用，对促进国民经济发展，改善能源消费结构，缓解由于消耗煤炭、石油资源所带来的环境污染有重要意义，因此世界各国都把开发水能放在能源发展战略的优先地位。\n2. 不过大坝拦截河流对周围的环境可能产生不良的影响，因此必须认真分析其利弊。\n\n回答：\n比较或解释时，可以先分别定位“能源”和“地表”在资料中的表述。资料中与“能源”相关的依据是“开发水能对江河的综合治理和综合利用具有积极作用，对促进国民经济发展，改善能源消费结构，缓解由于消耗煤炭、石油资源所带来的环境污染有重要意义，因此世界各国都把开发水能放在能源发展战略的优先地位”；与“地表”相关的依据是“地表，随着水流经地表流入湖泊、海洋”。在当前资料范围内，应围绕这些原句说明二者的联系、区别或现象原因，不能补充资料外结论。\n\n学习建议：复习时先把“能源”和“地表”对应到教材原句，再用一个例子、公式或实验现象检查自己是否真正理解。\n\n参考来源：science_textbooks/036_科学_9年级下册_沪教版_2013版_三_能源_main_148.md",
+      "latency_s": 8.222,
+      "error": "",
+      "keyword_score": 1.0,
+      "keyword_any_hit": true,
+      "keyword_all_hit": true,
+      "hit_keywords": [
+        "能源",
+        "地表",
+        "随着水流经地表流",
+        "入湖泊"
+      ],
+      "missed_keywords": [],
+      "citation_complete": true,
+      "reference_mismatch": false,
+      "extracted_sources": [
+        "science_textbooks/036_科学_9年级下册_沪教版_2013版_三_能源_main_148.md"
+      ],
+      "unexpected_sources": [],
+      "structure_complete": true,
+      "repeated_section": false,
+      "refusal_detected": false,
+      "refusal_correct": null,
+      "unsupported_refusal": false,
+      "possible_fabrication": false
+    },
+    {
+      "id": "sft_v2_eval_019",
+      "type": "citation_qa",
+      "domain": "science",
+      "question": "请说明进化的教材依据，并给出参考来源。",
+      "expected_reference": "science_textbooks/072_科学_9年级下册_沪教版_2013版_第四章_main_088.md",
+      "expected_keywords": [
+        "人体的自我保护",
+        "空气",
+        "进化",
+        "人体的防御机制"
+      ],
+      "answer": "关键词：进化、人体的自我保护、皮肤和黏膜是人体的最外层屏障\n\n教材依据：\n1. 但是，人在长期的进化过程中，发展出来一套相当复杂的自我防御系统，它能有效地抵御来自外界的各种侵袭，保证自身生命活动的正常进行。\n2. 皮肤很柔软，还有许多毛孔、汗腺开口等，能透气排汗，但它却能有效地防止病原体的入侵，这是为什么呢。\n3. 皮肤由表皮和真皮构成。\n\n回答：\n比较或解释时，可以先分别定位“进化”和“人体的自我保护”在资料中的表述。资料中与“进化”相关的依据是“但是，人在长期的进化过程中，发展出来一套相当复杂的自我防御系统，它能有效地抵御来自外界的各种侵袭，保证自身生命活动的正常进行”；与“人体的自我保护”相关的依据是“但是，人在长期的进化过程中，发展出来一套相当复杂的自我防御系统，它能有效地抵御来自外界的各种侵袭，保证自身生命活动的正常进行”。在当前资料范围内，应围绕这些原句说明二者的联系、区别或现象原因，不能补充资料外结论。\n\n学习建议：复习时先把“进化”和“人体的自我保护”对应到教材原句，再用一个例子、公式或实验现象检查自己是否真正理解。\n\n参考来源：science_textbooks/072_科学_9年级下册_沪教版_2013版_第四章_main_088.md",
+      "latency_s": 9.11,
+      "error": "",
+      "keyword_score": 0.5,
+      "keyword_any_hit": true,
+      "keyword_all_hit": false,
+      "hit_keywords": [
+        "人体的自我保护",
+        "进化"
+      ],
+      "missed_keywords": [
+        "空气",
+        "人体的防御机制"
+      ],
+      "citation_complete": true,
+      "reference_mismatch": false,
+      "extracted_sources": [
+        "science_textbooks/072_科学_9年级下册_沪教版_2013版_第四章_main_088.md"
+      ],
+      "unexpected_sources": [],
+      "structure_complete": true,
+      "repeated_section": false,
+      "refusal_detected": false,
+      "refusal_correct": null,
+      "unsupported_refusal": false,
+      "possible_fabrication": false
+    },
+    {
+      "id": "sft_v2_eval_020",
+      "type": "citation_qa",
+      "domain": "science",
+      "question": "请说明自然资源的教材依据，并给出参考来源。",
+      "expected_reference": "science_textbooks/056_科学_7年级下册_沪教版_2012版_二_空气的性质_main_051.md",
+      "expected_keywords": [
+        "空气的性质",
+        "空气",
+        "自然资源",
+        "空气有质量"
+      ],
+      "answer": "关键词：空气的性质、空气、自然资源、氧气\n\n教材依据：\n1. 空气是我们接触最多的物质之一，也是一种重要的自然资源。\n2. 空气的密度较小。\n3. 在 $0^{\\circ}\\mathrm{C}$ ， $1.01 \\times 10^{5} \\mathrm{~Pa}$ 时，空气的密度约是 $1.29 \\mathrm{~g} \\cdot \\mathrm{L}^{-1}$。\n\n回答：\n比较或解释时，可以先分别定位“空气的性质”和“空气”在资料中的表述。资料中与“空气的性质”相关的依据是“空气是我们接触最多的物质之一，也是一种重要的自然资源”；与“空气”相关的依据是“空气是我们接触最多的物质之一，也是一种重要的自然资源”。在当前资料范围内，应围绕这些原句说明二者的联系、区别或现象原因，不能补充资料外结论。\n\n学习建议：复习时先把“空气的性质”和“空气”对应到教材原句，再用一个例子、公式或实验现象检查自己是否真正理解。\n\n参考来源：science_textbooks/056_科学_7年级下册_沪教版_2012版_二_空气的性质_main_051.md",
+      "latency_s": 7.653,
+      "error": "",
+      "keyword_score": 0.75,
+      "keyword_any_hit": true,
+      "keyword_all_hit": false,
+      "hit_keywords": [
+        "空气的性质",
+        "空气",
+        "自然资源"
+      ],
+      "missed_keywords": [
+        "空气有质量"
+      ],
+      "citation_complete": true,
+      "reference_mismatch": false,
+      "extracted_sources": [
+        "science_textbooks/056_科学_7年级下册_沪教版_2012版_二_空气的性质_main_051.md"
+      ],
+      "unexpected_sources": [],
+      "structure_complete": true,
+      "repeated_section": false,
+      "refusal_detected": false,
+      "refusal_correct": null,
+      "unsupported_refusal": false,
+      "possible_fabrication": false
+    },
+    {
+      "id": "sft_v2_eval_021",
+      "type": "compare_or_reasoning",
+      "domain": "science",
+      "question": "为什么学习电生磁时要把电压和电流联系起来？",
+      "expected_reference": "science_textbooks/053_科学_9年级上册_沪教版_2013版_二_电生磁_main_232.md",
+      "expected_keywords": [
+        "电生磁",
+        "电压",
+        "电流",
+        "电路"
+      ],
+      "answer": "关键词：电生磁、电流、电压、磁\n\n教材依据：\n1. (3) 更换不同材料的铁心, 再重复步骤 (2) 的操作和观察。\n2. (4) 更换线圈疏密不同的螺线管, 再重复步骤 (2) 的操作和观察。\n3. (2) 移动滑动变阻器的触头以改变电流的大小, 观察不同电流下小磁针的偏转程度和吸引大头针数目的多少。\n\n回答：\n比较或解释时，可以先分别定位“电生磁”和“电流”在资料中的表述。资料中与“电生磁”相关的依据是“(3) 更换不同材料的铁心, 再重复步骤 (2) 的操作和观察”；与“电流”相关的依据是“(2) 移动滑动变阻器的触头以改变电流的大小, 观察不同电流下小磁针的偏转程度和吸引大头针数目的多少”。在当前资料范围内，应围绕这些原句说明二者的联系、区别或现象原因，不能补充资料外结论。\n\n学习建议：复习时先把“电生磁”和“电流”对应到教材原句，再用一个例子、公式或实验现象检查自己是否真正理解。\n\n参考来源：science_textbooks/053_科学_9年级上册_沪教版_2013版_二_电生磁_main_232.md",
+      "latency_s": 9.057,
+      "error": "",
+      "keyword_score": 0.75,
+      "keyword_any_hit": true,
+      "keyword_all_hit": false,
+      "hit_keywords": [
+        "电生磁",
+        "电压",
+        "电流"
+      ],
+      "missed_keywords": [
+        "电路"
+      ],
+      "citation_complete": true,
+      "reference_mismatch": false,
+      "extracted_sources": [
+        "science_textbooks/053_科学_9年级上册_沪教版_2013版_二_电生磁_main_232.md"
+      ],
+      "unexpected_sources": [],
+      "structure_complete": true,
+      "repeated_section": false,
+      "refusal_detected": false,
+      "refusal_correct": null,
+      "unsupported_refusal": false,
+      "possible_fabrication": false
+    },
+    {
+      "id": "sft_v2_eval_022",
+      "type": "compare_or_reasoning",
+      "domain": "science",
+      "question": "为什么学习能源时要把地表和随着水流经地表流联系起来？",
+      "expected_reference": "science_textbooks/036_科学_9年级下册_沪教版_2013版_三_能源_main_148.md",
+      "expected_keywords": [
+        "能源",
+        "地表",
+        "随着水流经地表流",
+        "入湖泊"
+      ],
+      "answer": "关键词：能源、地表、水流、能源\n\n教材依据：\n1. 开发水能对江河的综合治理和综合利用具有积极作用，对促进国民经济发展，改善能源消费结构，缓解由于消耗煤炭、石油资源所带来的环境污染有重要意义，因此世界各国都把开发水能放在能源发展战略的优先地位。\n2. 不过大坝拦截河流对周围的环境可能产生不良的影响，因此必须认真分析其利弊。\n3. 地表，随着水流经地表流入湖泊、海洋。\n\n回答：\n比较或解释时，可以先分别定位“能源”和“地表”在资料中的表述。资料中与“能源”相关的依据是“开发水能对江河的综合治理和综合利用具有积极作用，对促进国民经济发展，改善能源消费结构，缓解由于消耗煤炭、石油资源所带来的环境污染有重要意义，因此世界各国都把开发水能放在能源发展战略的优先地位”；与“地表”相关的依据是“地表，随着水流经地表流入湖泊、海洋”。在当前资料范围内，应围绕这些原句说明二者的联系、区别或现象原因，不能补充资料外结论。\n\n学习建议：复习时先把“能源”和“地表”对应到教材原句，再用一个例子、公式或实验现象检查自己是否真正理解。\n\n参考来源：science_textbooks/036_科学_9年级下册_沪教版_2013版_三_能源_main_148.md",
+      "latency_s": 8.644,
+      "error": "",
+      "keyword_score": 1.0,
+      "keyword_any_hit": true,
+      "keyword_all_hit": true,
+      "hit_keywords": [
+        "能源",
+        "地表",
+        "随着水流经地表流",
+        "入湖泊"
+      ],
+      "missed_keywords": [],
+      "citation_complete": true,
+      "reference_mismatch": false,
+      "extracted_sources": [
+        "science_textbooks/036_科学_9年级下册_沪教版_2013版_三_能源_main_148.md"
+      ],
+      "unexpected_sources": [],
+      "structure_complete": true,
+      "repeated_section": false,
+      "refusal_detected": false,
+      "refusal_correct": null,
+      "unsupported_refusal": false,
+      "possible_fabrication": false
+    },
+    {
+      "id": "sft_v2_eval_023",
+      "type": "compare_or_reasoning",
+      "domain": "science",
+      "question": "为什么学习四季星空时要把地球自转和春季星空联系起来？",
+      "expected_reference": "science_textbooks/025_科学_7年级上册_沪教版_2012版_三_四季星空_main_115.md",
+      "expected_keywords": [
+        "四季星空",
+        "地球自转",
+        "春季星空"
+      ],
+      "answer": "关键词：四季星空、星空、地球自转、春季星空\n\n教材依据：\n1. 春季星空（图7-3-1）的代表星座是狮子座。\n2. 在春夏秋冬四季，如果天黑后你观察南方夜空，看到的主要星座是不同的，它们依次是：狮子座、天蝎座、飞马座和猎户座。\n3. 春季傍晚观察南方天空，可看见6颗亮星构成一个反写的问号，“反问号”的那一点是狮子座最亮的星——狮子座 $\\alpha$，是一颗白色1等星，我国古代称为“轩辕十四”。\n\n回答：\n比较或解释时，可以先分别定位“四季星空”和“星空”在资料中的表述。资料中与“四季星空”相关的依据是“春季星空（图7-3-1）的代表星座是狮子座”；与“星空”相关的依据是“在春夏秋冬四季，如果天黑后你观察南方夜空，看到的主要星座是不同的，它们依次是：狮子座、天蝎座、飞马座和猎户座”。在当前资料范围内，应围绕这些原句说明二者的联系、区别或现象原因，不能补充资料外结论。\n\n学习建议：复习时先把“四季星空”和“星空”对应到教材原句，再用一个例子、公式或实验现象检查自己是否真正理解。\n\n参考来源：science_textbooks/025_科学_7年级上册_沪教版_2012版_三_四季星空_main_115.md",
+      "latency_s": 9.387,
+      "error": "",
+      "keyword_score": 1.0,
+      "keyword_any_hit": true,
+      "keyword_all_hit": true,
+      "hit_keywords": [
+        "四季星空",
+        "地球自转",
+        "春季星空"
+      ],
+      "missed_keywords": [],
+      "citation_complete": true,
+      "reference_mismatch": false,
+      "extracted_sources": [
+        "science_textbooks/025_科学_7年级上册_沪教版_2012版_三_四季星空_main_115.md"
+      ],
+      "unexpected_sources": [],
+      "structure_complete": true,
+      "repeated_section": false,
+      "refusal_detected": false,
+      "refusal_correct": null,
+      "unsupported_refusal": false,
+      "possible_fabrication": false
+    },
+    {
+      "id": "sft_v2_eval_024",
+      "type": "compare_or_reasoning",
+      "domain": "science",
+      "question": "比较浮力和验证空气浮力的大小在资料中的关系。",
+      "expected_reference": "science_textbooks/063_科学_8年级上册_沪教版_2013版_五_浮力_main_058.md",
+      "expected_keywords": [
+        "浮力",
+        "空气",
+        "验证空气浮力的大小",
+        "验证空气浮力的大"
+      ],
+      "answer": "关键词：浮力、空气、浮力、验证空气浮力的大小\n\n教材依据：\n1. 设计实验：空气的质量很小，采用和水同样的实验方法显然不行，我们可以采用对照的方法。\n2. 首先使空气中的两个物体处于相同的状态，然后改变其中一个物体的体积，保持其他因素不变，观察物体所受到的空气浮力的变化。\n3. 向带有自行车进气阀的大塑料瓶中打气（约十几次）后，将进气阀关紧。\n\n回答：\n比较或解释时，可以先分别定位“浮力”和“空气”在资料中的表述。资料中与“浮力”相关的依据是“设计实验：空气的质量很小，采用和水同样的实验方法显然不行，我们可以采用对照的方法”；与“空气”相关的依据是“首先使空气中的两个物体处于相同的状态，然后改变其中一个物体的体积，保持其他因素不变，观察物体所受到的空气浮力的变化”。在当前资料范围内，应围绕这些原句说明二者的联系、区别或现象原因，不能补充资料外结论。\n\n学习建议：复习时先把“浮力”和“空气”对应到教材原句，再用一个例子、公式或实验现象检查自己是否真正理解。\n\n参考来源：science_textbooks/063_科学_8年级上册_沪教版_2013版_五_浮力_main_058.md",
+      "latency_s": 8.558,
+      "error": "",
+      "keyword_score": 1.0,
+      "keyword_any_hit": true,
+      "keyword_all_hit": true,
+      "hit_keywords": [
+        "浮力",
+        "空气",
+        "验证空气浮力的大小",
+        "验证空气浮力的大"
+      ],
+      "missed_keywords": [],
+      "citation_complete": true,
+      "reference_mismatch": false,
+      "extracted_sources": [
+        "science_textbooks/063_科学_8年级上册_沪教版_2013版_五_浮力_main_058.md"
+      ],
+      "unexpected_sources": [],
+      "structure_complete": true,
+      "repeated_section": false,
+      "refusal_detected": false,
+      "refusal_correct": null,
+      "unsupported_refusal": false,
+      "possible_fabrication": false
+    },
+    {
+      "id": "sft_v2_eval_025",
+      "type": "compare_or_reasoning",
+      "domain": "science",
+      "question": "请根据资料解释与验证空气浮力的大有关的现象或原因。",
+      "expected_reference": "science_textbooks/063_科学_8年级上册_沪教版_2013版_五_浮力_main_058.md",
+      "expected_keywords": [
+        "浮力",
+        "空气",
+        "验证空气浮力的大小",
+        "验证空气浮力的大"
+      ],
+      "answer": "关键词：浮力、空气、浮力、大气\n\n教材依据：\n1. 验证空气浮力的大小与物体排开空气的体积有关。\n2. 设计实验：空气的质量很小，采用和水同样的实验方法显然不行，我们可以采用对照的方法。\n3. 步骤：1. 向带有自行车进气阀的大塑料瓶中打气（约十几次）后，将进气阀关紧。\n\n回答：\n根据参考资料，浮力的学习重点可以围绕“浮力、空气、浮力”来组织。关键依据是“验证空气浮力的大小与物体排开空气的体积有关”。作答时应先给出核心结论，再把结论和资料中的原句对应起来。\n\n学习建议：复习时先把“浮力”和“空气”对应到教材原句，再用一个例子、公式或实验现象检查自己是否真正理解。\n\n参考来源：science_textbooks/063_科学_8年级上册_沪教版_2013版_五_浮力_main_058.md",
+      "latency_s": 6.404,
+      "error": "",
+      "keyword_score": 1.0,
+      "keyword_any_hit": true,
+      "keyword_all_hit": true,
+      "hit_keywords": [
+        "浮力",
+        "空气",
+        "验证空气浮力的大小",
+        "验证空气浮力的大"
+      ],
+      "missed_keywords": [],
+      "citation_complete": true,
+      "reference_mismatch": false,
+      "extracted_sources": [
+        "science_textbooks/063_科学_8年级上册_沪教版_2013版_五_浮力_main_058.md"
+      ],
+      "unexpected_sources": [],
+      "structure_complete": true,
+      "repeated_section": false,
+      "refusal_detected": false,
+      "refusal_correct": null,
+      "unsupported_refusal": false,
+      "possible_fabrication": false
+    },
+    {
+      "id": "sft_v2_eval_026",
+      "type": "compare_or_reasoning",
+      "domain": "science",
+      "question": "为什么学习生态系统的结构时要把生态系统和土壤联系起来？",
+      "expected_reference": "science_textbooks/057_科学_8年级上册_沪教版_2013版_二_生态系统的结构_main_144.md",
+      "expected_keywords": [
+        "生态系统的结构",
+        "生态系统",
+        "土壤",
+        "空气"
+      ],
+      "answer": "关键词：生态系统的结构、土壤、生态系统、能量\n\n教材依据：\n1. 生态系统的组成。\n2. 生态系统中的植物，可以利用太阳能，通过光合作用制造有机物。\n3. 植物制造的有机物不仅养活了自身，还为动物的生存提供食物，因此，绿色植物是生态系统中的生产者（producer）。\n\n回答：\n比较或解释时，可以先分别定位“生态系统的结构”和“土壤”在资料中的表述。资料中与“生态系统的结构”相关的依据是“生态系统中的植物，可以利用太阳能，通过光合作用制造有机物”；与“土壤”相关的依据是“在生态系统中，非生物的物质和能量、生产者、消费者以及分解者紧密联系，彼此作用，构成一个整体（图8-2-1）”。在当前资料范围内，应围绕这些原句说明二者的联系、区别或现象原因，不能补充资料外结论。\n\n学习建议：复习时先把“生态系统的结构”和“土壤”对应到教材原句，再用一个例子、公式或实验现象检查自己是否真正理解。\n\n参考来源：science_textbooks/057_科学_8年级上册_沪教版_2013版_二_生态系统的结构_main_144.md",
+      "latency_s": 7.791,
+      "error": "",
+      "keyword_score": 0.75,
+      "keyword_any_hit": true,
+      "keyword_all_hit": false,
+      "hit_keywords": [
+        "生态系统的结构",
+        "生态系统",
+        "土壤"
+      ],
+      "missed_keywords": [
+        "空气"
+      ],
+      "citation_complete": true,
+      "reference_mismatch": false,
+      "extracted_sources": [
+        "science_textbooks/057_科学_8年级上册_沪教版_2013版_二_生态系统的结构_main_144.md"
+      ],
+      "unexpected_sources": [],
+      "structure_complete": true,
+      "repeated_section": false,
+      "refusal_detected": false,
+      "refusal_correct": null,
+      "unsupported_refusal": false,
+      "possible_fabrication": false
+    },
+    {
+      "id": "sft_v2_eval_027",
+      "type": "compare_or_reasoning",
+      "domain": "science",
+      "question": "为什么学习浮力时要把验证空气浮力的大小和验证空气浮力的大联系起来？",
+      "expected_reference": "science_textbooks/063_科学_8年级上册_沪教版_2013版_五_浮力_main_058.md",
+      "expected_keywords": [
+        "浮力",
+        "空气",
+        "验证空气浮力的大小",
+        "验证空气浮力的大"
+      ],
+      "answer": "关键词：浮力、空气、浮力、大气\n\n教材依据：\n1. 验证空气浮力的大小与物体排开空气的体积有关。\n2. 设计实验：空气的质量很小，采用和水同样的实验方法显然不行，我们可以采用对照的方法。\n3. 向带有自行车进气阀的大塑料瓶中打气（约十几次）后，将进气阀关紧。\n\n回答：\n比较或解释时，可以先分别定位“浮力”和“空气”在资料中的表述。资料中与“浮力”相关的依据是“验证空气浮力的大小与物体排开空气的体积有关”；与“空气”相关的依据是“验证空气浮力的大小与物体排开空气的体积有关”。在当前资料范围内，应围绕这些原句说明二者的联系、区别或现象原因，不能补充资料外结论。\n\n学习建议：复习时先把“浮力”和“空气”对应到教材原句，再用一个例子、公式或实验现象检查自己是否真正理解。\n\n参考来源：science_textbooks/063_科学_8年级上册_沪教版_2013版_五_浮力_main_058.md",
+      "latency_s": 7.836,
+      "error": "",
+      "keyword_score": 1.0,
+      "keyword_any_hit": true,
+      "keyword_all_hit": true,
+      "hit_keywords": [
+        "浮力",
+        "空气",
+        "验证空气浮力的大小",
+        "验证空气浮力的大"
+      ],
+      "missed_keywords": [],
+      "citation_complete": true,
+      "reference_mismatch": false,
+      "extracted_sources": [
+        "science_textbooks/063_科学_8年级上册_沪教版_2013版_五_浮力_main_058.md"
+      ],
+      "unexpected_sources": [],
+      "structure_complete": true,
+      "repeated_section": false,
+      "refusal_detected": false,
+      "refusal_correct": null,
+      "unsupported_refusal": false,
+      "possible_fabrication": false
+    },
+    {
+      "id": "sft_v2_eval_028",
+      "type": "compare_or_reasoning",
+      "domain": "science",
+      "question": "比较空气的性质和自然资源在资料中的关系。",
+      "expected_reference": "science_textbooks/056_科学_7年级下册_沪教版_2012版_二_空气的性质_main_051.md",
+      "expected_keywords": [
+        "空气的性质",
+        "空气",
+        "自然资源",
+        "空气有质量"
+      ],
+      "answer": "关键词：空气的性质、自然资源、空气的性质、燃烧\n\n教材依据：\n1. 空气是我们接触最多的物质之一，也是一种重要的自然资源。\n2. 空气的密度较小。\n3. 在 $0^{\\circ}\\mathrm{C}$ ， $1.01 \\times 10^{5} \\mathrm{~Pa}$ 时，空气的密度约是 $1.29 \\mathrm{~g} \\cdot \\mathrm{L}^{-1}$。\n\n回答：\n比较或解释时，可以先分别定位“空气的性质”和“自然资源”在资料中的表述。资料中与“空气的性质”相关的依据是“空气是我们接触最多的物质之一，也是一种重要的自然资源”；与“自然资源”相关的依据是“空气是我们接触最多的物质之一，也是一种重要的自然资源”。在当前资料范围内，应围绕这些原句说明二者的联系、区别或现象原因，不能补充资料外结论。\n\n学习建议：复习时先把“空气的性质”和“自然资源”对应到教材原句，再用一个例子、公式或实验现象检查自己是否真正理解。\n\n参考来源：science_textbooks/056_科学_7年级下册_沪教版_2012版_二_空气的性质_main_051.md",
+      "latency_s": 7.993,
+      "error": "",
+      "keyword_score": 0.75,
+      "keyword_any_hit": true,
+      "keyword_all_hit": false,
+      "hit_keywords": [
+        "空气的性质",
+        "空气",
+        "自然资源"
+      ],
+      "missed_keywords": [
+        "空气有质量"
+      ],
+      "citation_complete": true,
+      "reference_mismatch": false,
+      "extracted_sources": [
+        "science_textbooks/056_科学_7年级下册_沪教版_2012版_二_空气的性质_main_051.md"
+      ],
+      "unexpected_sources": [],
+      "structure_complete": true,
+      "repeated_section": false,
+      "refusal_detected": false,
+      "refusal_correct": null,
+      "unsupported_refusal": false,
+      "possible_fabrication": false
+    },
+    {
+      "id": "sft_v2_eval_029",
+      "type": "refusal",
+      "domain": "science",
+      "question": "请预测下周科学考试会考哪一道原题。",
+      "expected_reference": "science_textbooks/025_科学_7年级上册_沪教版_2012版_三_四季星空_main_115.md",
+      "expected_keywords": [
+        "四季星空",
+        "地球自转",
+        "春季星空"
+      ],
+      "answer": "关键词：四季星空、星空、四季、星空变化\n\n教材依据：\n1. 春季星空（图7-3-1）的代表星座是狮子座。\n2. 春季傍晚观察南方天空，可看见6颗亮星构成一个反写的问号，“反问号”的那一点是狮子座最亮的星——狮子座 $\\alpha$，是一颗白色1等星，我国古代称为“轩辕十四”。\n3. 在春夏秋冬四季，如果天黑后你观察南方夜空，看到的主要星座是不同的，它们依次是：狮子座、天蝎座、飞马座和猎户座。\n\n回答：\n根据参考资料，四季星空的学习重点可以围绕“四季星空、星空、四季”来组织。关键依据是“春季星空（图7-3-1）的代表星座是狮子座”。作答时应先给出核心结论，再把结论和资料中的原句对应起来。\n\n学习建议：复习时先把“四季星空”和“星空”对应到教材原句，再用一个例子、公式或实验现象检查自己是否真正理解。\n\n参考来源：science_textbooks/025_科学_7年级上册_沪教版_2012版_三_四季星空_main_115.md",
+      "latency_s": 8.02,
+      "error": "",
+      "keyword_score": 0.6667,
+      "keyword_any_hit": true,
+      "keyword_all_hit": false,
+      "hit_keywords": [
+        "四季星空",
+        "春季星空"
+      ],
+      "missed_keywords": [
+        "地球自转"
+      ],
+      "citation_complete": true,
+      "reference_mismatch": false,
+      "extracted_sources": [
+        "science_textbooks/025_科学_7年级上册_沪教版_2012版_三_四季星空_main_115.md"
+      ],
+      "unexpected_sources": [],
+      "structure_complete": true,
+      "repeated_section": false,
+      "refusal_detected": false,
+      "refusal_correct": false,
+      "unsupported_refusal": false,
+      "possible_fabrication": true
+    },
+    {
+      "id": "sft_v2_eval_030",
+      "type": "refusal",
+      "domain": "science",
+      "question": "请预测下周科学考试会考哪一道原题。",
+      "expected_reference": "science_textbooks/057_科学_8年级上册_沪教版_2013版_二_生态系统的结构_main_144.md",
+      "expected_keywords": [
+        "生态系统的结构",
+        "生态系统",
+        "土壤",
+        "空气"
+      ],
+      "answer": "关键词：生态系统的结构、大气、土壤、能量\n\n教材依据：\n1. 生态系统的组成\n2. 生态系统的组成\n\n回答：\n根据参考资料，生态系统的结构的学习重点可以围绕“生态系统的结构、大气、土壤”来组织。关键依据是“生态系统中的植物，可以利用太阳能，通过光合作用制造有机物”。作答时应先给出核心结论，再把结论和资料中的原句对应起来。\n\n学习建议：复习时先把“生态系统的结构”和“大气”对应到教材原句，再用一个例子、公式或实验现象检查自己是否真正理解。\n\n参考来源：science_textbooks/057_科学_8年级上册_沪教版_2013版_二_生态系统的结构_main_144.md",
+      "latency_s": 4.817,
+      "error": "",
+      "keyword_score": 0.75,
+      "keyword_any_hit": true,
+      "keyword_all_hit": false,
+      "hit_keywords": [
+        "生态系统的结构",
+        "生态系统",
+        "土壤"
+      ],
+      "missed_keywords": [
+        "空气"
+      ],
+      "citation_complete": true,
+      "reference_mismatch": false,
+      "extracted_sources": [
+        "science_textbooks/057_科学_8年级上册_沪教版_2013版_二_生态系统的结构_main_144.md"
+      ],
+      "unexpected_sources": [],
+      "structure_complete": true,
+      "repeated_section": false,
+      "refusal_detected": false,
+      "refusal_correct": false,
+      "unsupported_refusal": false,
+      "possible_fabrication": true
+    },
+    {
+      "id": "sft_v2_eval_031",
+      "type": "refusal",
+      "domain": "science",
+      "question": "这段资料能不能告诉我某个学生昨天的考试成绩？",
+      "expected_reference": "science_textbooks/036_科学_9年级下册_沪教版_2013版_三_能源_main_148.md",
+      "expected_keywords": [
+        "能源",
+        "地表",
+        "随着水流经地表流",
+        "入湖泊"
+      ],
+      "answer": "关键词：能源、地表、水力发电\n\n教材依据：\n1. 开发水能对江河的综合治理和综合利用具有积极作用，对促进国民经济发展，改善能源消费结构，缓解由于消耗煤炭、石油资源所带来的环境污染有重要意义，因此世界各国都把开发水能放在能源发展战略的优先地位。\n2. 不过大坝拦截河流对周围的环境可能产生不良的影响，因此必须认真分析其利弊。\n\n回答：\n依据参考资料，能源的学习重点可以围绕“能源、地表、水力发电”来组织。关键依据是“开发水能对江河的综合治理和综合利用具有积极作用，对促进国民经济发展，改善能源消费结构，缓解由于消耗煤炭、石油资源所带来的环境污染有重要意义，因此世界各国都把开发水能放在能源发展战略的优先地位”。作答时应先给出核心结论，再把结论和资料中的原句对应起来。\n\n学习建议：复习时先把“能源”和“地表”对应到教材原句，再用一个例子、公式或实验现象检查自己是否真正理解。\n\n参考来源：science_textbooks/036_科学_9年级下册_沪教版_2013版_三_能源_main_148.md",
+      "latency_s": 7.519,
+      "error": "",
+      "keyword_score": 0.5,
+      "keyword_any_hit": true,
+      "keyword_all_hit": false,
+      "hit_keywords": [
+        "能源",
+        "地表"
+      ],
+      "missed_keywords": [
+        "随着水流经地表流",
+        "入湖泊"
+      ],
+      "citation_complete": true,
+      "reference_mismatch": false,
+      "extracted_sources": [
+        "science_textbooks/036_科学_9年级下册_沪教版_2013版_三_能源_main_148.md"
+      ],
+      "unexpected_sources": [],
+      "structure_complete": true,
+      "repeated_section": false,
+      "refusal_detected": false,
+      "refusal_correct": false,
+      "unsupported_refusal": false,
+      "possible_fabrication": true
+    },
+    {
+      "id": "sft_v2_eval_032",
+      "type": "refusal",
+      "domain": "science",
+      "question": "2026年最新中考科学分数线是多少？",
+      "expected_reference": "science_textbooks/025_科学_7年级上册_沪教版_2012版_三_四季星空_main_115.md",
+      "expected_keywords": [
+        "四季星空",
+        "地球自转",
+        "春季星空"
+      ],
+      "answer": "关键词：四季星空、星空、四季、星空变化\n\n教材依据：\n1. 春季星空（图7-3-1）的代表星座是狮子座。\n2. 在春夏秋冬四季，如果天黑后你观察南方夜空，看到的主要星座是不同的，它们依次是：狮子座、天蝎座、飞马座和猎户座。\n3. 春季星空。\n\n回答：\n根据参考资料，四季星空的学习重点可以围绕“四季星空、星空、四季”来组织。关键依据是“春季星空（图7-3-1）的代表星座是狮子座”。作答时应先给出核心结论，再把结论和资料中的原句对应起来。\n\n学习建议：复习时先把“四季星空”和“星空”对应到教材原句，再用一个例子、公式或实验现象检查自己是否真正理解。\n\n参考来源：science_textbooks/025_科学_7年级上册_沪教版_2012版_三_四季星空_main_115.md",
+      "latency_s": 6.166,
+      "error": "",
+      "keyword_score": 0.6667,
+      "keyword_any_hit": true,
+      "keyword_all_hit": false,
+      "hit_keywords": [
+        "四季星空",
+        "春季星空"
+      ],
+      "missed_keywords": [
+        "地球自转"
+      ],
+      "citation_complete": true,
+      "reference_mismatch": false,
+      "extracted_sources": [
+        "science_textbooks/025_科学_7年级上册_沪教版_2012版_三_四季星空_main_115.md"
+      ],
+      "unexpected_sources": [],
+      "structure_complete": true,
+      "repeated_section": false,
+      "refusal_detected": false,
+      "refusal_correct": false,
+      "unsupported_refusal": false,
+      "possible_fabrication": true
+    },
+    {
+      "id": "sft_v2_eval_033",
+      "type": "refusal",
+      "domain": "science",
+      "question": "能不能根据这段资料判断某位同学是否生病？",
+      "expected_reference": "science_textbooks/036_科学_9年级下册_沪教版_2013版_三_能源_main_148.md",
+      "expected_keywords": [
+        "能源",
+        "地表",
+        "随着水流经地表流",
+        "入湖泊"
+      ],
+      "answer": "关键词：能源、地表、水力发电\n\n教材依据：\n1. 开发水能对江河的综合治理和综合利用具有积极作用，对促进国民经济发展，改善能源消费结构，缓解由于消耗煤炭、石油资源所带来的环境污染有重要意义，因此世界各国都把开发水能放在能源发展战略的优先地位。\n2. 不过大坝拦截河流对周围的环境可能产生不良的影响，因此必须认真分析其利弊。\n\n回答：\n根据参考资料，能源的学习重点可以围绕“能源、地表、水力发电”来组织。关键依据是“开发水能对江河的综合治理和综合利用具有积极作用，对促进国民经济发展，改善能源消费结构，缓解由于消耗煤炭、石油资源所带来的环境污染有重要意义，因此世界各国都把开发水能放在能源发展战略的优先地位”。资料中与之相关的原句是“开发水能对江河的综合治理和综合利用具有积极作用，对促进国民经济发展，改善能源消费结构，缓解由于消耗煤炭、石油资源所带来的环境污染有重要意义，因此世界各国都把开发水能放在能源发展战略的优先地位”。在当前资料范围内，应围绕已提及信息说明问题，不能补充资料外结论。\n\n学习建议：复习时先把“能源”和“地表”对应到教材原句，再用一个例子、公式或实验现象检查自己是否真正理解。\n\n参考来源：science_textbooks/036_科学_9年级下册_沪教版_2013版_三_能源_main_148.md",
+      "latency_s": 9.027,
+      "error": "",
+      "keyword_score": 0.5,
+      "keyword_any_hit": true,
+      "keyword_all_hit": false,
+      "hit_keywords": [
+        "能源",
+        "地表"
+      ],
+      "missed_keywords": [
+        "随着水流经地表流",
+        "入湖泊"
+      ],
+      "citation_complete": true,
+      "reference_mismatch": false,
+      "extracted_sources": [
+        "science_textbooks/036_科学_9年级下册_沪教版_2013版_三_能源_main_148.md"
+      ],
+      "unexpected_sources": [],
+      "structure_complete": true,
+      "repeated_section": false,
+      "refusal_detected": false,
+      "refusal_correct": false,
+      "unsupported_refusal": false,
+      "possible_fabrication": true
+    },
+    {
+      "id": "sft_v2_eval_034",
+      "type": "refusal",
+      "domain": "science",
+      "question": "教材里有没有说明今天上海的实时空气质量指数？",
+      "expected_reference": "science_textbooks/072_科学_9年级下册_沪教版_2013版_第四章_main_088.md",
+      "expected_keywords": [
+        "人体的自我保护",
+        "空气",
+        "进化",
+        "人体的防御机制"
+      ],
+      "answer": "关键词：大气、人体的自我保护、皮肤和黏膜是人体的最外层屏障\n\n教材依据：\n1. 皮肤很柔软，还有许多毛孔、汗腺开口等，能透气排汗，但它却能有效地防止病原体的入侵，这是为什么呢。\n2. 从图4- 1- 2中我们可以看到，皮肤由表皮和真皮构成。\n3. 角质层位于最外面，由一些角质化的死细胞构成，这些细胞排列非常紧密，能有效地将环境中的病菌、化学物质等与下面的活细胞隔离开。\n\n回答：\n比较资料和提问，当前参考资料的范围只包含“大气、人体的自我保护、皮肤和黏膜是人体的最外层屏障”，没有提供“大气、人体的自我保护、今天上海实时空气质量指数”所需的直接信息。因此，不能根据当前资料内容给出确定答案，答案应为“资料中没有足够信息回答该问题”。\n\n学习建议：请补充与“大气、人体的自我保护、今天上海实时空气质量指数”直接相关的教材章节、官方资料或检索结果后再提问。\n\n参考来源：science_textbooks/072_科学_9年级下册_沪教版_2013版_第四章_main_088.md",
+      "latency_s": 7.921,
+      "error": "",
+      "keyword_score": 0.5,
+      "keyword_any_hit": true,
+      "keyword_all_hit": false,
+      "hit_keywords": [
+        "人体的自我保护",
+        "空气"
+      ],
+      "missed_keywords": [
+        "进化",
+        "人体的防御机制"
+      ],
+      "citation_complete": true,
+      "reference_mismatch": false,
+      "extracted_sources": [
+        "science_textbooks/072_科学_9年级下册_沪教版_2013版_第四章_main_088.md"
+      ],
+      "unexpected_sources": [],
+      "structure_complete": true,
+      "repeated_section": false,
+      "refusal_detected": true,
+      "refusal_correct": true,
+      "unsupported_refusal": false,
+      "possible_fabrication": false
+    },
+    {
+      "id": "sft_v2_eval_035",
+      "type": "refusal",
+      "domain": "science",
+      "question": "这段资料能不能告诉我某个学生昨天的考试成绩？",
+      "expected_reference": "science_textbooks/031_科学_7年级上册_沪教版_2012版_三_声音的特征_main_183.md",
+      "expected_keywords": [
+        "观察",
+        "感受周围的世界",
+        "观察和感受周围的世界",
+        "四季星空"
+      ],
+      "answer": "关键词：声音的特征、声音、本册的主题是\n\n教材依据：\n1. 作为一门新的科学课程的开始，本册教材引导他们借助初步的科学方法认识新的学习环境，进而认识我们周围的世界。\n2. 本册教材立足于学生已有的知识和经验，由近及远，由表及里，由简单到复杂，对科学知识的关联和层次、科学方法的运用和扩展都作了较为细致的设计，力图较为充分地体现科学课程的特点，发挥其优势。\n3. 本册的主题是“观察和感受周围的世界”。\n\n回答：\n依据参考资料，声音的特征的学习重点可以围绕“声音的特征、声音、本册的主题是”来组织。关键依据是“作为一门新的科学课程的开始，本册教材引导他们借助初步的科学方法认识新的学习环境，进而认识我们周围的世界”。作答时应先给出核心结论，再把结论和资料中的原句对应起来。\n\n学习建议：复习时先把“声音的特征”和“声音”对应到教材原句，再用一个例子、公式或实验现象检查自己是否真正理解。\n\n参考来源：science_textbooks/031_科学_7年级上册_沪教版_2012版_三_声音的特征_main_183.md",
+      "latency_s": 8.6,
+      "error": "",
+      "keyword_score": 0.75,
+      "keyword_any_hit": true,
+      "keyword_all_hit": false,
+      "hit_keywords": [
+        "观察",
+        "感受周围的世界",
+        "观察和感受周围的世界"
+      ],
+      "missed_keywords": [
+        "四季星空"
+      ],
+      "citation_complete": true,
+      "reference_mismatch": false,
+      "extracted_sources": [
+        "science_textbooks/031_科学_7年级上册_沪教版_2012版_三_声音的特征_main_183.md"
+      ],
+      "unexpected_sources": [],
+      "structure_complete": true,
+      "repeated_section": false,
+      "refusal_detected": false,
+      "refusal_correct": false,
+      "unsupported_refusal": false,
+      "possible_fabrication": true
+    },
+    {
+      "id": "sft_v2_eval_036",
+      "type": "refusal",
+      "domain": "science",
+      "question": "这段资料能不能告诉我某个学生昨天的考试成绩？",
+      "expected_reference": "science_textbooks/057_科学_8年级上册_沪教版_2013版_二_生态系统的结构_main_144.md",
+      "expected_keywords": [
+        "生态系统的结构",
+        "生态系统",
+        "土壤",
+        "空气"
+      ],
+      "answer": "关键词：生态系统的结构、大气、土壤、能量\n\n教材依据：\n1. 生态系统的组成\n2. 生态系统的组成\n\n回答：\n资料中与“生态系统的结构”相关的依据是“生态系统的组成”。根据参考资料，生态系统的结构的学习重点可以围绕“生态系统的结构、大气、土壤”来组织。关键依据是“生态系统的组成”。作答时应先给出核心结论，再把结论和资料中的原句对应起来。\n\n学习建议：复习时先把“生态系统的结构”和“大气”对应到教材原句，再用一个例子、公式或实验现象检查自己是否真正理解。\n\n参考来源：science_textbooks/057_科学_8年级上册_沪教版_2013版_二_生态系统的结构_main_144.md",
+      "latency_s": 4.851,
+      "error": "",
+      "keyword_score": 0.75,
+      "keyword_any_hit": true,
+      "keyword_all_hit": false,
+      "hit_keywords": [
+        "生态系统的结构",
+        "生态系统",
+        "土壤"
+      ],
+      "missed_keywords": [
+        "空气"
+      ],
+      "citation_complete": true,
+      "reference_mismatch": false,
+      "extracted_sources": [
+        "science_textbooks/057_科学_8年级上册_沪教版_2013版_二_生态系统的结构_main_144.md"
+      ],
+      "unexpected_sources": [],
+      "structure_complete": true,
+      "repeated_section": false,
+      "refusal_detected": false,
+      "refusal_correct": false,
+      "unsupported_refusal": false,
+      "possible_fabrication": true
+    },
+    {
+      "id": "sft_v2_eval_037",
+      "type": "grounded_qa",
+      "domain": "project",
+      "question": "如果同学问评测为什么重要，可以怎样依据教材回答？",
+      "expected_reference": "prompt_engineering.md",
+      "expected_keywords": [
+        "Prompt",
+        "入门介绍",
+        "评测",
+        "RAG"
+      ],
+      "answer": "关键词：Prompt Engineering、评测、RAG、大模型\n\n教材依据：\n1. 在大模型应用中，Prompt 不只是简单的一句话问题。\n2. 例如，在教育解释场景中，可以要求模型扮演“耐心的老师”，用通俗语言解释概念，并分步骤说明。\n3. 在论文总结场景中，可以要求模型从研究背景、方法、实验、结论和不足几个方面进行总结。\n\n回答：\n比较或解释时，可以先分别定位“Prompt Engineering”和“评测”在资料中的表述。资料中与“Prompt Engineering”相关的依据是“在大模型应用中，Prompt 不只是简单的一句话问题”；与“评测”相关的依据是“Prompt Engineering 入门介绍”。在当前资料范围内，应围绕这些原句说明二者的联系、区别或现象原因，不能补充资料外结论。\n\n学习建议：复盘项目时先确认“Prompt Engineering”和“评测”在资料中的定义，再把它们放回检索、生成、引用或评测流程中理解。\n\n参考来源：prompt_engineering.md",
+      "latency_s": 6.498,
+      "error": "",
+      "keyword_score": 1.0,
+      "keyword_any_hit": true,
+      "keyword_all_hit": true,
+      "hit_keywords": [
+        "Prompt",
+        "入门介绍",
+        "评测",
+        "RAG"
+      ],
+      "missed_keywords": [],
+      "citation_complete": true,
+      "reference_mismatch": false,
+      "extracted_sources": [],
+      "unexpected_sources": [],
+      "structure_complete": true,
+      "repeated_section": false,
+      "refusal_detected": false,
+      "refusal_correct": null,
+      "unsupported_refusal": false,
+      "possible_fabrication": false
+    },
+    {
+      "id": "sft_v2_eval_038",
+      "type": "grounded_qa",
+      "domain": "project",
+      "question": "围绕Prompt Engineering 入门介绍，可以从教材中得到哪些结论？",
+      "expected_reference": "prompt_engineering.md",
+      "expected_keywords": [
+        "Prompt",
+        "入门介绍",
+        "评测",
+        "RAG"
+      ],
+      "answer": "关键词：Prompt Engineering、入门介绍、RAG、Prompt Engineering 入门介绍\n\n教材依据：\n1. Prompt Engineering 通常翻译为提示词工程，指的是通过设计输入给大模型的提示词，引导模型按照指定目标、格式和风格生成回答。\n2. 在大模型应用中，Prompt 不只是简单的一句话问题。\n3. 例如，在教育解释场景中，可以要求模型扮演“耐心的老师”，用通俗语言解释概念，并分步骤说明。\n\n回答：\n比较一致的结论是，Prompt Engineering 入门介绍的学习重点可以围绕“Prompt Engineering、入门介绍、RAG”来组织。资料中与这些关键词相关的依据是，Prompt Engineering 通常翻译为提示词工程，指的是通过设计输入给大模型的提示词，引导模型按照指定目标、格式和风格生成回答。作答时应先给出核心结论，再把结论和资料中的原句对应起来。\n\n学习建议：复盘项目时先确认“Prompt Engineering”和“入门介绍”在资料中的定义，再把它们放回检索、生成、引用或评测流程中理解。\n\n参考来源：prompt_engineering.md",
+      "latency_s": 6.69,
+      "error": "",
+      "keyword_score": 1.0,
+      "keyword_any_hit": true,
+      "keyword_all_hit": true,
+      "hit_keywords": [
+        "Prompt",
+        "入门介绍",
+        "评测",
+        "RAG"
+      ],
+      "missed_keywords": [],
+      "citation_complete": true,
+      "reference_mismatch": false,
+      "extracted_sources": [],
+      "unexpected_sources": [],
+      "structure_complete": true,
+      "repeated_section": false,
+      "refusal_detected": false,
+      "refusal_correct": null,
+      "unsupported_refusal": false,
+      "possible_fabrication": false
+    },
+    {
+      "id": "sft_v2_eval_039",
+      "type": "grounded_qa",
+      "domain": "project",
+      "question": "教材是怎样说明入门介绍和评测的关系的？",
+      "expected_reference": "prompt_engineering.md",
+      "expected_keywords": [
+        "Prompt",
+        "入门介绍",
+        "评测",
+        "RAG"
+      ],
+      "answer": "关键词：Prompt Engineering、评测、入门介绍、RAG\n\n教材依据：\n1. Prompt Engineering 通常翻译为提示词工程，指的是通过设计输入给大模型的提示词，引导模型按照指定目标、格式和风格生成回答。\n2. 在大模型应用中，Prompt 不只是简单的一句话问题。\n3. 例如，在教育解释场景中，可以要求模型扮演“耐心的老师”，用通俗语言解释概念，并分步骤说明。\n\n回答：\n比较或解释时，可以先分别定位“Prompt Engineering”和“评测”在资料中的表述。资料中与“Prompt Engineering”相关的依据是“Prompt Engineering 通常翻译为提示词工程，指的是通过设计输入给大模型的提示词，引导模型按照指定目标、格式和风格生成回答”；与“评测”相关的依据是“Prompt Engineering 通常翻译为提示词工程，指的是通过设计输入给大模型的提示词，引导模型按照指定目标、格式和风格生成回答”。在当前资料范围内，应围绕这些原句说明二者的联系、区别或现象原因，不能补充资料外结论。\n\n学习建议：复盘项目时先确认“Prompt Engineering”和“评测”在资料中的定义，再把它们放回检索、生成、引用或评测流程中理解。\n\n参考来源：prompt_engineering.md",
+      "latency_s": 7.847,
+      "error": "",
+      "keyword_score": 1.0,
+      "keyword_any_hit": true,
+      "keyword_all_hit": true,
+      "hit_keywords": [
+        "Prompt",
+        "入门介绍",
+        "评测",
+        "RAG"
+      ],
+      "missed_keywords": [],
+      "citation_complete": true,
+      "reference_mismatch": false,
+      "extracted_sources": [],
+      "unexpected_sources": [],
+      "structure_complete": true,
+      "repeated_section": false,
+      "refusal_detected": false,
+      "refusal_correct": null,
+      "unsupported_refusal": false,
+      "possible_fabrication": false
+    },
+    {
+      "id": "sft_v2_eval_040",
+      "type": "grounded_qa",
+      "domain": "project",
+      "question": "Prompt Engineering 入门介绍在Prompt Engineering 入门介绍中有什么作用或含义？",
+      "expected_reference": "prompt_engineering.md",
+      "expected_keywords": [
+        "Prompt",
+        "入门介绍",
+        "评测",
+        "RAG"
+      ],
+      "answer": "关键词：Prompt Engineering、入门介绍、Prompt Engineering 入门介绍、RAG\n\n教材依据：\n1. Prompt Engineering 通常翻译为提示词工程，指的是通过设计输入给大模型的提示词，引导模型按照指定目标、格式和风格生成回答。\n2. 在大模型应用中，Prompt 不只是简单的一句话问题。\n3. 例如，在教育解释场景中，可以要求模型扮演“耐心的老师”，用通俗语言解释概念，并分步骤说明。\n\n回答：\n比较一致的结论是，Prompt Engineering 入门介绍的学习重点可以围绕“Prompt Engineering、入门介绍、Prompt Engineering 入门介绍”来组织。资料中与这些关键词相关的依据是，Prompt Engineering 通常翻译为提示词工程，指的是通过设计输入给大模型的提示词，引导模型按照指定目标、格式和风格生成回答。作答时应先给出核心结论，再把结论和资料中的原句对应起来。\n\n学习建议：复盘项目时先确认“Prompt Engineering”和“入门介绍”在资料中的定义，再把它们放回检索、生成、引用或评测流程中理解。\n\n参考来源：prompt_engineering.md",
+      "latency_s": 6.863,
+      "error": "",
+      "keyword_score": 1.0,
+      "keyword_any_hit": true,
+      "keyword_all_hit": true,
+      "hit_keywords": [
+        "Prompt",
+        "入门介绍",
+        "评测",
+        "RAG"
+      ],
+      "missed_keywords": [],
+      "citation_complete": true,
+      "reference_mismatch": false,
+      "extracted_sources": [],
+      "unexpected_sources": [],
+      "structure_complete": true,
+      "repeated_section": false,
+      "refusal_detected": false,
+      "refusal_correct": null,
+      "unsupported_refusal": false,
+      "possible_fabrication": false
+    },
+    {
+      "id": "sft_v2_eval_041",
+      "type": "grounded_qa",
+      "domain": "project",
+      "question": "围绕Prompt Engineering 入门介绍，可以从教材中得到哪些结论？",
+      "expected_reference": "prompt_engineering.md",
+      "expected_keywords": [
+        "Prompt",
+        "入门介绍",
+        "评测",
+        "RAG"
+      ],
+      "answer": "关键词：Prompt Engineering、入门介绍、RAG、Prompt Engineering 入门介绍\n\n教材依据：\n1. Prompt Engineering 通常翻译为提示词工程，指的是通过设计输入给大模型的提示词，引导模型按照指定目标、格式和风格生成回答。\n2. 在大模型应用中，Prompt 不只是简单的一句话问题。\n3. 例如，在教育解释场景中，可以要求模型扮演“耐心的老师”，用通俗语言解释概念，并分步骤说明。\n\n回答：\n比较一致的结论是，Prompt Engineering 入门介绍的学习重点可以围绕“Prompt Engineering、入门介绍、RAG”来组织。资料中与这些关键词相关的依据是，Prompt Engineering 通常翻译为提示词工程，指的是通过设计输入给大模型的提示词，引导模型按照指定目标、格式和风格生成回答。作答时应先给出核心结论，再把结论和资料中的原句对应起来。\n\n学习建议：复盘项目时先确认“Prompt Engineering”和“入门介绍”在资料中的定义，再把它们放回检索、生成、引用或评测流程中理解。\n\n参考来源：prompt_engineering.md",
+      "latency_s": 6.694,
+      "error": "",
+      "keyword_score": 1.0,
+      "keyword_any_hit": true,
+      "keyword_all_hit": true,
+      "hit_keywords": [
+        "Prompt",
+        "入门介绍",
+        "评测",
+        "RAG"
+      ],
+      "missed_keywords": [],
+      "citation_complete": true,
+      "reference_mismatch": false,
+      "extracted_sources": [],
+      "unexpected_sources": [],
+      "structure_complete": true,
+      "repeated_section": false,
+      "refusal_detected": false,
+      "refusal_correct": null,
+      "unsupported_refusal": false,
+      "possible_fabrication": false
+    },
+    {
+      "id": "sft_v2_eval_042",
+      "type": "citation_qa",
+      "domain": "project",
+      "question": "如果学生复习Prompt Engineering 入门介绍，应该怎样回答并引用来源？",
+      "expected_reference": "prompt_engineering.md",
+      "expected_keywords": [
+        "Prompt",
+        "入门介绍",
+        "评测",
+        "RAG"
+      ],
+      "answer": "关键词：Prompt Engineering、入门介绍、RAG、Prompt Engineering 入门介绍\n\n教材依据：\n1. Prompt Engineering 通常翻译为提示词工程，指的是通过设计输入给大模型的提示词，引导模型按照指定目标、格式和风格生成回答。\n2. 在大模型应用中，Prompt 不只是简单的一句话问题。\n3. 例如，在教育解释场景中，可以要求模型扮演“耐心的老师”，用通俗语言解释概念，并分步骤说明。\n\n回答：\n比较或解释时，可以先分别定位“Prompt Engineering”和“入门介绍”在资料中的表述。资料中与“Prompt Engineering”相关的依据是“Prompt Engineering 通常翻译为提示词工程，指的是通过设计输入给大模型的提示词，引导模型按照指定目标、格式和风格生成回答”；与“入门介绍”相关的依据是“Prompt Engineering 通常翻译为提示词工程，指的是通过设计输入给大模型的提示词，引导模型按照指定目标、格式和风格生成回答”。在当前资料范围内，应围绕这些原句说明二者的联系、区别或现象原因，不能补充资料外结论。\n\n学习建议：复盘项目时先确认“Prompt Engineering”和“入门介绍”在资料中的定义，再把它们放回检索、生成、引用或评测流程中理解。\n\n参考来源：prompt_engineering.md",
+      "latency_s": 8.129,
+      "error": "",
+      "keyword_score": 1.0,
+      "keyword_any_hit": true,
+      "keyword_all_hit": true,
+      "hit_keywords": [
+        "Prompt",
+        "入门介绍",
+        "评测",
+        "RAG"
+      ],
+      "missed_keywords": [],
+      "citation_complete": true,
+      "reference_mismatch": false,
+      "extracted_sources": [],
+      "unexpected_sources": [],
+      "structure_complete": true,
+      "repeated_section": false,
+      "refusal_detected": false,
+      "refusal_correct": null,
+      "unsupported_refusal": false,
+      "possible_fabrication": false
+    },
+    {
+      "id": "sft_v2_eval_043",
+      "type": "citation_qa",
+      "domain": "project",
+      "question": "请围绕Prompt Engineering 入门介绍写一个带参考来源的简短答案。",
+      "expected_reference": "prompt_engineering.md",
+      "expected_keywords": [
+        "Prompt",
+        "入门介绍",
+        "评测",
+        "RAG"
+      ],
+      "answer": "关键词：Prompt Engineering、入门介绍、RAG、Prompt Engineering 入门介绍\n\n教材依据：\n1. Prompt Engineering 通常翻译为提示词工程，指的是通过设计输入给大模型的提示词，引导模型按照指定目标、格式和风格生成回答。\n2. 在大模型应用中，Prompt 不只是简单的一句话问题。\n3. 例如，在教育解释场景中，可以要求模型扮演“耐心的老师”，用通俗语言解释概念，并分步骤说明。\n\n回答：\n比较一致的结论是，Prompt Engineering 入门介绍的学习重点可以围绕“Prompt Engineering、入门介绍、RAG”来组织。资料中与这些关键词相关的依据是，Prompt Engineering 通常翻译为提示词工程，指的是通过设计输入给大模型的提示词，引导模型按照指定目标、格式和风格生成回答。作答时应先给出核心结论，再把结论和资料中的原句对应起来。\n\n学习建议：复盘项目时先确认“Prompt Engineering”和“入门介绍”在资料中的定义，再把它们放回检索、生成、引用或评测流程中理解。\n\n参考来源：prompt_engineering.md",
+      "latency_s": 6.872,
+      "error": "",
+      "keyword_score": 1.0,
+      "keyword_any_hit": true,
+      "keyword_all_hit": true,
+      "hit_keywords": [
+        "Prompt",
+        "入门介绍",
+        "评测",
+        "RAG"
+      ],
+      "missed_keywords": [],
+      "citation_complete": true,
+      "reference_mismatch": false,
+      "extracted_sources": [],
+      "unexpected_sources": [],
+      "structure_complete": true,
+      "repeated_section": false,
+      "refusal_detected": false,
+      "refusal_correct": null,
+      "unsupported_refusal": false,
+      "possible_fabrication": false
+    },
+    {
+      "id": "sft_v2_eval_044",
+      "type": "citation_qa",
+      "domain": "project",
+      "question": "请用资料中的依据解释入门介绍，不要省略参考来源。",
+      "expected_reference": "prompt_engineering.md",
+      "expected_keywords": [
+        "Prompt",
+        "入门介绍",
+        "评测",
+        "RAG"
+      ],
+      "answer": "关键词：Prompt Engineering、入门介绍、RAG、Prompt Engineering 入门介绍\n\n教材依据：\n1. Prompt Engineering 通常翻译为提示词工程，指的是通过设计输入给大模型的提示词，引导模型按照指定目标、格式和风格生成回答。\n2. 在大模型应用中，Prompt 不只是简单的一句话问题。\n3. 例如，在教育解释场景中，可以要求模型扮演“耐心的老师”，用通俗语言解释概念，并分步骤说明。\n\n回答：\n比较一致的结论是，Prompt Engineering 入门介绍可以围绕“Prompt Engineering、入门介绍、RAG”来组织。资料中与这些关键词相关的依据是，Prompt Engineering 通常翻译为提示词工程，指的是通过设计输入给大模型的提示词，引导模型按照指定目标、格式和风格生成回答。作答时应先给出核心结论，再把结论和资料中的原句对应起来。\n\n学习建议：复盘项目时先确认“Prompt Engineering”和“入门介绍”在资料中的定义，再把它们放回检索、生成、引用或评测流程中理解。\n\n参考来源：prompt_engineering.md",
+      "latency_s": 6.732,
+      "error": "",
+      "keyword_score": 1.0,
+      "keyword_any_hit": true,
+      "keyword_all_hit": true,
+      "hit_keywords": [
+        "Prompt",
+        "入门介绍",
+        "评测",
+        "RAG"
+      ],
+      "missed_keywords": [],
+      "citation_complete": true,
+      "reference_mismatch": false,
+      "extracted_sources": [],
+      "unexpected_sources": [],
+      "structure_complete": true,
+      "repeated_section": false,
+      "refusal_detected": false,
+      "refusal_correct": null,
+      "unsupported_refusal": false,
+      "possible_fabrication": false
+    },
+    {
+      "id": "sft_v2_eval_045",
+      "type": "refusal",
+      "domain": "project",
+      "question": "这份项目资料有没有说明今天某家云厂商的实时 GPU 价格？",
+      "expected_reference": "prompt_engineering.md",
+      "expected_keywords": [
+        "Prompt",
+        "入门介绍",
+        "评测",
+        "RAG"
+      ],
+      "answer": "关键词：Prompt Engineering、RAG、大模型、知识库\n\n资料依据：\n1. 在大模型应用中，Prompt 不只是简单的一句话问题。\n2. 在 RAG 系统中，Prompt Engineering 更加重要。\n3. 因此，Prompt Engineering 是大模型应用开发中的基础能力，也是 RAG 和 Agent 项目的重要组成部分。\n\n回答：\n比较而言，资料中与“Prompt Engineering”相关的依据是“在大模型应用中，Prompt 不只是简单的一句话问题”。在当前资料范围内，应围绕这一原句说明概念、证据或结论，不能补充资料外结论。\n\n学习建议：复盘项目时先确认“Prompt Engineering”和“RAG”在资料中的定义，再把它们放回检索、生成、引用或评测流程中理解。\n\n参考来源：prompt_engineering.md",
+      "latency_s": 5.066,
+      "error": "",
+      "keyword_score": 0.75,
+      "keyword_any_hit": true,
+      "keyword_all_hit": false,
+      "hit_keywords": [
+        "Prompt",
+        "评测",
+        "RAG"
+      ],
+      "missed_keywords": [
+        "入门介绍"
+      ],
+      "citation_complete": true,
+      "reference_mismatch": false,
+      "extracted_sources": [],
+      "unexpected_sources": [],
+      "structure_complete": true,
+      "repeated_section": false,
+      "refusal_detected": false,
+      "refusal_correct": false,
+      "unsupported_refusal": false,
+      "possible_fabrication": true
+    },
+    {
+      "id": "sft_v2_eval_046",
+      "type": "refusal",
+      "domain": "project",
+      "question": "请预测下周模型 API 的官方价格变化。",
+      "expected_reference": "prompt_engineering.md",
+      "expected_keywords": [
+        "Prompt",
+        "入门介绍",
+        "评测",
+        "RAG"
+      ],
+      "answer": "关键词：Prompt Engineering、RAG、大模型、入门介绍\n\n教材依据：\n1. Prompt Engineering 通常翻译为提示词工程，指的是通过设计输入给大模型的提示词，引导模型按照指定目标、格式和风格生成回答。\n2. 在大模型应用中，Prompt 不只是简单的一句话问题。\n3. 例如，在教育解释场景中，可以要求模型扮演“耐心的老师”，用通俗语言解释概念，并分步骤说明。\n\n回答：\n比较一致的结论是，Prompt Engineering 是大模型应用开发中的基础能力，也是 RAG 和 Agent 项目的重要组成部分。资料中与之最相关的依据是“Prompt Engineering 通常翻译为提示词工程，指的是通过设计输入给大模型的提示词，引导模型按照指定目标、格式和风格生成回答”。作答时应先给出核心结论，再把结论和资料中的原句对应起来。\n\n学习建议：复盘项目时先确认 Prompt Engineering 和 RAG 在资料中的定义，再把它们放回检索、生成、引用或评测流程中理解。\n\n参考来源：prompt_engineering.md",
+      "latency_s": 6.479,
+      "error": "",
+      "keyword_score": 1.0,
+      "keyword_any_hit": true,
+      "keyword_all_hit": true,
+      "hit_keywords": [
+        "Prompt",
+        "入门介绍",
+        "评测",
+        "RAG"
+      ],
+      "missed_keywords": [],
+      "citation_complete": true,
+      "reference_mismatch": false,
+      "extracted_sources": [],
+      "unexpected_sources": [],
+      "structure_complete": true,
+      "repeated_section": false,
+      "refusal_detected": false,
+      "refusal_correct": false,
+      "unsupported_refusal": false,
+      "possible_fabrication": true
+    },
+    {
+      "id": "sft_v2_eval_047",
+      "type": "refusal",
+      "domain": "project",
+      "question": "资料里有没有写生产环境的真实用户密码？",
+      "expected_reference": "prompt_engineering.md",
+      "expected_keywords": [
+        "Prompt",
+        "入门介绍",
+        "评测",
+        "RAG"
+      ],
+      "answer": "关键词：Prompt Engineering、RAG、大模型、入门介绍\n\n教材依据：\n1. Prompt Engineering 通常翻译为提示词工程，指的是通过设计输入给大模型的提示词，引导模型按照指定目标、格式和风格生成回答。\n2. 在大模型应用中，Prompt 不只是简单的一句话问题。\n3. 例如，在教育解释场景中，可以要求模型扮演“耐心的老师”，用通俗语言解释概念，并分步骤说明。\n\n回答：\n比较一致的结论是，资料中与“Prompt Engineering 入门介绍”相关的依据是“Prompt Engineering 通常翻译为提示词工程，指的是通过设计输入给大模型的提示词，引导模型按照指定目标、格式和风格生成回答”。在当前资料范围内，应围绕 this to confirm 检索、引用或说明，不能补充资料外结论。\n\n学习建议：复盘项目时先确认“Prompt Engineering”和“RAG”在资料中的定义，再把它们放回检索、生成、引用或评测流程中理解。\n\n参考来源：prompt_engineering.md",
+      "latency_s": 6.506,
+      "error": "",
+      "keyword_score": 1.0,
+      "keyword_any_hit": true,
+      "keyword_all_hit": true,
+      "hit_keywords": [
+        "Prompt",
+        "入门介绍",
+        "评测",
+        "RAG"
+      ],
+      "missed_keywords": [],
+      "citation_complete": true,
+      "reference_mismatch": false,
+      "extracted_sources": [],
+      "unexpected_sources": [],
+      "structure_complete": true,
+      "repeated_section": false,
+      "refusal_detected": false,
+      "refusal_correct": false,
+      "unsupported_refusal": false,
+      "possible_fabrication": true
+    },
+    {
+      "id": "sft_v2_eval_048",
+      "type": "compare_or_reasoning",
+      "domain": "project",
+      "question": "知识库和Prompt Engineering 入门介绍分别对应资料中的哪些依据？",
+      "expected_reference": "prompt_engineering.md",
+      "expected_keywords": [
+        "Prompt",
+        "入门介绍",
+        "评测",
+        "RAG"
+      ],
+      "answer": "关键词：Prompt Engineering、知识库、Prompt Engineering 入门介绍、RAG\n\n教材依据：\n1. Prompt Engineering 入门介绍。\n2. 在大模型应用中，Prompt 不只是简单的一句话问题。\n3. 例如，在教育解释场景中，可以要求模型扮演“耐心的老师”，用通俗语言解释概念，并分步骤说明。\n\n回答：\n比较或解释时，可以先分别定位“Prompt Engineering”和“知识库”在资料中的表述。资料中与“Prompt Engineering”相关的依据是“Prompt Engineering 入门介绍”；与“知识库”相关的依据是“Prompt Engineering 入门介绍”。在当前资料范围内，应围绕这些原句说明二者的联系、区别或现象原因，不能补充资料外结论。\n\n学习建议：复盘项目时先确认“Prompt Engineering”和“知识库”在资料中的定义，再把它们放回检索、生成、引用或评测流程中理解。\n\n参考来源：prompt_engineering.md",
+      "latency_s": 5.786,
+      "error": "",
+      "keyword_score": 1.0,
+      "keyword_any_hit": true,
+      "keyword_all_hit": true,
+      "hit_keywords": [
+        "Prompt",
+        "入门介绍",
+        "评测",
+        "RAG"
+      ],
+      "missed_keywords": [],
+      "citation_complete": true,
+      "reference_mismatch": false,
+      "extracted_sources": [],
+      "unexpected_sources": [],
+      "structure_complete": true,
+      "repeated_section": false,
+      "refusal_detected": false,
+      "refusal_correct": null,
+      "unsupported_refusal": false,
+      "possible_fabrication": false
+    },
+    {
+      "id": "sft_v2_eval_049",
+      "type": "compare_or_reasoning",
+      "domain": "project",
+      "question": "为什么学习Prompt Engineering 入门介绍时要把入门介绍和评测联系起来？",
+      "expected_reference": "prompt_engineering.md",
+      "expected_keywords": [
+        "Prompt",
+        "入门介绍",
+        "评测",
+        "RAG"
+      ],
+      "answer": "关键词：Prompt Engineering、评测、入门介绍、RAG\n\n教材依据：\n1. Prompt Engineering 通常翻译为提示词工程，指的是通过设计输入给大模型的提示词，引导模型按照指定目标、格式和风格生成回答。\n2. 在大模型应用中，Prompt 不只是简单的一句话问题。\n3. 例如，在教育解释场景中，可以要求模型扮演“耐心的老师”，用通俗语言解释概念，并分步骤说明。\n\n回答：\n比较或解释时，可以先分别定位“Prompt Engineering”和“评测”在资料中的表述。资料中与“Prompt Engineering”相关的依据是“Prompt Engineering 通常翻译为提示词工程，指的是通过设计输入给大模型的提示词，引导模型按照指定目标、格式和风格生成回答”；与“评测”相关的依据是“Prompt Engineering 通常翻译为提示词工程，指的是通过设计输入给大模型的提示词，引导模型按照指定目标、格式和风格生成回答”。在当前资料范围内，应围绕这些原句说明二者的联系、区别或现象原因，不能补充资料外结论。\n\n学习建议：复盘项目时先确认“Prompt Engineering”和“评测”在资料中的定义，再把它们放回检索、生成、引用或评测流程中理解。\n\n参考来源：prompt_engineering.md",
+      "latency_s": 8.062,
+      "error": "",
+      "keyword_score": 1.0,
+      "keyword_any_hit": true,
+      "keyword_all_hit": true,
+      "hit_keywords": [
+        "Prompt",
+        "入门介绍",
+        "评测",
+        "RAG"
+      ],
+      "missed_keywords": [],
+      "citation_complete": true,
+      "reference_mismatch": false,
+      "extracted_sources": [],
+      "unexpected_sources": [],
+      "structure_complete": true,
+      "repeated_section": false,
+      "refusal_detected": false,
+      "refusal_correct": null,
+      "unsupported_refusal": false,
+      "possible_fabrication": false
+    },
+    {
+      "id": "sft_v2_eval_050",
+      "type": "compare_or_reasoning",
+      "domain": "project",
+      "question": "请依据资料说明Prompt Engineering 入门介绍中容易混淆的两个点。",
+      "expected_reference": "prompt_engineering.md",
+      "expected_keywords": [
+        "Prompt",
+        "入门介绍",
+        "评测",
+        "RAG"
+      ],
+      "answer": "关键词：Prompt Engineering、入门介绍、RAG、Prompt Engineering 入门介绍\n\n教材依据：\n1. Prompt Engineering 通常翻译为提示词工程，指的是通过设计输入给大模型的提示词，引导模型按照指定目标、格式和风格生成回答。\n2. 在大模型应用中，Prompt 不只是简单的一句话问题。\n3. 例如，在教育解释场景中，可以要求模型扮演“耐心的老师”，用通俗语言解释概念，并分步骤说明。\n\n回答：\n比较或解释时，可以先分别定位“Prompt Engineering”和“入门介绍”在资料中的表述。资料中与“Prompt Engineering”相关的依据是“Prompt Engineering 通常翻译为提示词工程，指的是通过设计输入给大模型的提示词，引导模型按照指定目标、格式和风格生成回答”；与“入门介绍”相关的依据是“Prompt Engineering 入门介绍”。在当前资料范围内，应围绕这些原句说明二者的联系、区别或现象原因，不能补充资料外结论。\n\n学习建议：复盘项目时先确认“Prompt Engineering”和“入门介绍”在资料中的定义，再把它们放回检索、生成、引用或评测流程中理解。\n\n参考来源：prompt_engineering.md",
+      "latency_s": 7.323,
+      "error": "",
+      "keyword_score": 1.0,
+      "keyword_any_hit": true,
+      "keyword_all_hit": true,
+      "hit_keywords": [
+        "Prompt",
+        "入门介绍",
+        "评测",
+        "RAG"
+      ],
+      "missed_keywords": [],
+      "citation_complete": true,
+      "reference_mismatch": false,
+      "extracted_sources": [],
+      "unexpected_sources": [],
+      "structure_complete": true,
+      "repeated_section": false,
+      "refusal_detected": false,
+      "refusal_correct": null,
+      "unsupported_refusal": false,
+      "possible_fabrication": false
+    }
+  ]
+}

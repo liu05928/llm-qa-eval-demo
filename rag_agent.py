@@ -7,8 +7,12 @@ from typing import Any, Callable, Dict, List, Tuple
 
 from agent_memory import ensure_memory
 from agent_state import AgentState, AgentTraceStep
+from context_guard import (
+    build_no_context_answer,
+    is_unsupported_fact_request,
+    judge_context,
+)
 from config import USE_MOCK
-from hybrid_retriever import bm25_tokenize
 from llm_client import call_llm
 from prompt_templates import build_rag_prompt
 from rag_pipeline import (
@@ -192,7 +196,10 @@ def classify_query(question: str) -> Dict[str, Any]:
         "gpu",
     ]
 
-    if _contains_any(stripped_question, OUT_OF_DOMAIN_TERMS):
+    if is_unsupported_fact_request(stripped_question):
+        query_type = "missing"
+        reason = "问题要求预测未来、获取隐私或查询外部实时事实，当前资料无法直接支持。"
+    elif _contains_any(stripped_question, OUT_OF_DOMAIN_TERMS):
         query_type = "missing"
         reason = "问题包含明显超出当前教育资料知识库范围的主题。"
     elif any(term in stripped_question for term in missing_check_terms) and _contains_any(stripped_question, missing_risk_terms):
@@ -363,80 +370,6 @@ def rewrite_query_with_metadata(
 def rewrite_query(question: str, query_type: str) -> str:
     rewritten_query, _ = rewrite_query_with_metadata(question, query_type)
     return rewritten_query
-
-
-def calculate_context_coverage(query: str, chunks: List[Dict[str, Any]]) -> float:
-    query_tokens = set(bm25_tokenize(query))
-
-    if not query_tokens:
-        return 0.0
-
-    context_tokens = set()
-
-    for chunk in chunks:
-        context_tokens.update(bm25_tokenize(chunk.get("content", "")))
-
-    if not context_tokens:
-        return 0.0
-
-    hit_count = len(query_tokens.intersection(context_tokens))
-    return hit_count / len(query_tokens)
-
-
-def judge_context(
-    original_question: str,
-    current_query: str,
-    chunks: List[Dict[str, Any]],
-    query_type: str,
-) -> Dict[str, Any]:
-    if query_type == "missing":
-        return {
-            "context_sufficient": False,
-            "coverage": 0.0,
-            "reason": "问题主题超出当前教育资料知识库范围，按资料缺失处理。",
-        }
-
-    if not chunks:
-        return {
-            "context_sufficient": False,
-            "coverage": 0.0,
-            "reason": "没有召回任何可用片段。",
-        }
-
-    original_coverage = calculate_context_coverage(original_question, chunks)
-    query_coverage = calculate_context_coverage(current_query, chunks)
-    coverage = max(original_coverage, query_coverage)
-    source_count = len({chunk.get("source") for chunk in chunks if chunk.get("source")})
-
-    if query_type == "comparison" and source_count < 2 and coverage < 0.35:
-        return {
-            "context_sufficient": False,
-            "coverage": coverage,
-            "reason": "对比类问题需要更充分或更多来源的上下文。",
-        }
-
-    if coverage < 0.18:
-        return {
-            "context_sufficient": False,
-            "coverage": coverage,
-            "reason": "召回片段与问题关键词覆盖不足。",
-        }
-
-    return {
-        "context_sufficient": True,
-        "coverage": coverage,
-        "reason": "召回片段覆盖了问题的关键主题，可用于生成回答。",
-    }
-
-
-def build_no_context_answer(question: str, context_reason: str) -> str:
-    return (
-        "资料中未提及足够信息，无法基于当前知识库可靠回答该问题。\n\n"
-        f"- 用户问题：{question}\n"
-        f"- 判断原因：{context_reason}\n"
-        "- 建议：补充相关资料后重新构建知识库，或将问题改写为当前资料覆盖的大模型技术资料、"
-        "初中科学教材、实验观察、质量密度、光和声音、地球运动等主题。"
-    )
 
 
 def append_agent_log(result: Dict[str, Any]):

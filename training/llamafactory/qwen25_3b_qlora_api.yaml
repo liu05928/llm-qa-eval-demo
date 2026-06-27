@@ -1,0 +1,5 @@
+model_name_or_path: Qwen/Qwen2.5-3B-Instruct
+adapter_name_or_path: training/outputs/qwen25-3b-edu-qlora
+template: qwen
+finetuning_type: lora
+trust_remote_code: true

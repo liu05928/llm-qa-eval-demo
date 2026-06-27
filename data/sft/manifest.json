@@ -1,0 +1,74 @@
+{
+  "total": 184,
+  "split_counts": {
+    "train": 155,
+    "dev": 15,
+    "test": 14
+  },
+  "type_counts": {
+    "citation_qa:application": 20,
+    "citation_qa:compare": 8,
+    "citation_qa:comparison": 1,
+    "citation_qa:concept": 19,
+    "citation_qa:experiment": 6,
+    "citation_qa:mechanism": 24,
+    "grounded_qa:application": 20,
+    "grounded_qa:compare": 8,
+    "grounded_qa:comparison": 1,
+    "grounded_qa:concept": 19,
+    "grounded_qa:experiment": 6,
+    "grounded_qa:mechanism": 24,
+    "query_rewrite": 10,
+    "refusal": 18
+  },
+  "source_count": 36,
+  "top_sources": [
+    [
+      "rag_intro.md",
+      22
+    ],
+    [
+      "agent_intro.md",
+      22
+    ],
+    [
+      "prompt_engineering.md",
+      21
+    ],
+    [
+      "education_ai.md",
+      21
+    ],
+    [
+      "no_source",
+      19
+    ],
+    [
+      "retrieval_optimization.md",
+      6
+    ],
+    [
+      "science_textbooks/003_科学_8年级上册_沪教版_2013版_一_压力与压强_main_036.md",
+      4
+    ],
+    [
+      "science_textbooks/059_科学_9年级上册_沪教版_2013版_五_欧姆定律_main_199.md",
+      4
+    ],
+    [
+      "science_textbooks/056_科学_7年级下册_沪教版_2012版_二_空气的性质_main_051.md",
+      4
+    ],
+    [
+      "embedding_intro.md",
+      4
+    ]
+  ],
+  "format": "alpaca_jsonl",
+  "fields": [
+    "instruction",
+    "input",
+    "output"
+  ],
+  "note": "Generated locally from existing RAG/science evaluation sets and chunk evidence. Review before cloud training."
+}

@@ -1,11 +1,13 @@
 import json
 from pathlib import Path
 from datetime import datetime
+from typing import Optional
 
+from context_guard import build_no_context_answer, infer_guard_query_type, judge_context
 from rag_logger import save_rag_log
 from vector_store import VectorStore
 from prompt_templates import build_rag_prompt
-from llm_client import call_llm
+from llm_client import call_llm, get_llm_runtime_info
 from hybrid_retriever import dense_search, hybrid_search
 from long_text_context import expand_chunks_to_big_context
 from reranker import rerank_chunks
@@ -372,6 +374,7 @@ def rag_answer(
     candidate_k: int = 10,
     use_rerank: bool = True,
     context_mode: str = "small_to_big",
+    generation_backend: Optional[str] = None,
 ):
     """
     RAG 问答主流程。
@@ -396,28 +399,53 @@ def rag_answer(
         context_mode=context_mode,
     )
 
-    context = format_context(retrieved_chunks)
-
-    rag_prompt = build_rag_prompt(
-        question=question,
-        context=context,
+    context_info = judge_context(
+        original_question=question,
+        current_query=question,
+        chunks=retrieved_chunks,
+        query_type=infer_guard_query_type(question),
     )
+    context_sufficient = bool(context_info.get("context_sufficient"))
+    context_reason = context_info.get("reason", "")
+    context_coverage = round(float(context_info.get("coverage", 0.0)), 4)
 
-    answer = call_llm(
-        question=rag_prompt,
-        mode="education",
-    )
+    if context_sufficient:
+        context = format_context(retrieved_chunks)
+        rag_prompt = build_rag_prompt(
+            question=question,
+            context=context,
+        )
+
+        answer = call_llm(
+            question=rag_prompt,
+            mode="education",
+            generation_backend=generation_backend,
+        )
+        sources = build_sources(retrieved_chunks)
+    else:
+        answer = build_no_context_answer(
+            question=question,
+            context_reason=context_reason,
+        )
+        sources = []
+
+    llm_runtime = get_llm_runtime_info(generation_backend)
 
     result = {
         "question": question,
         "answer": answer,
-        "sources": build_sources(retrieved_chunks),
+        "sources": sources,
         "retrieved_chunks": retrieved_chunks,
         "retriever_mode": retriever_mode,
         "context_mode": context_mode,
+        "context_sufficient": context_sufficient,
+        "context_reason": context_reason,
+        "context_coverage": context_coverage,
         "candidate_k": candidate_k,
         "top_k": top_k,
         "use_rerank": use_rerank,
+        "generation_backend": llm_runtime["generation_backend"],
+        "generator_model": llm_runtime["generator_model"],
         "small_retrieved_chunks": retrieval_log.get("small_final_context", []),
         "long_context": retrieval_log.get("long_context", {}),
     }
@@ -429,6 +457,11 @@ def rag_answer(
         "context_mode": context_mode,
         "candidate_k": candidate_k,
         "use_rerank": use_rerank,
+        "generation_backend": result["generation_backend"],
+        "generator_model": result["generator_model"],
+        "context_sufficient": context_sufficient,
+        "context_reason": context_reason,
+        "context_coverage": context_coverage,
         "answer": answer,
         "sources": result["sources"],
         "small_retrieved_chunks": result["small_retrieved_chunks"],
@@ -443,6 +476,9 @@ def rag_answer(
 
     retrieval_log["answer_length"] = len(answer)
     retrieval_log["sources"] = result["sources"]
+    retrieval_log["context_sufficient"] = context_sufficient
+    retrieval_log["context_reason"] = context_reason
+    retrieval_log["context_coverage"] = context_coverage
     append_retrieval_log(retrieval_log)
 
     return result

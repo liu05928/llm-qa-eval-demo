@@ -14,11 +14,11 @@ from agent_session_store import (
 from langgraph_agent import run_langgraph_rag_agent
 from rag_agent import run_rag_agent
 from rag_pipeline import rag_answer
-from config import CHAT_MODEL, EMBEDDING_MODEL, RERANK_MODEL
+from config import CHAT_MODEL, EMBEDDING_MODEL, GENERATION_BACKEND, LOCAL_SFT_MODEL, RERANK_MODEL
 
 
 st.set_page_config(
-    page_title="企业知识库 RAG Agent 问答系统",
+    page_title="教育领域大模型可信问答系统",
     page_icon="📚",
     layout="wide"
 )
@@ -114,14 +114,16 @@ def show_eval_summary(title, rows):
         st.dataframe(rows, width="stretch")
 
 
-st.title("📚 企业知识库 RAG Agent 问答与检索优化系统")
+st.title("📚 教育领域大模型可信问答系统")
 
 st.markdown(
     f"""
-本系统面向企业内部制度文档、产品手册、培训资料、客服 FAQ 等知识库问答场景，当前使用教育资料作为实验语料。系统支持 LangGraph Skills Agent、本地状态机 Agent、BM25 Hybrid、Rerank、Small-to-Big Long-text RAG、会话记忆、来源引用、检索日志和自动评测。
+本系统面向初中科学教材问答场景，主线是“模型微调 + 检索增强 + 可信回答”。当前本地版本支持 BM25 Hybrid、Rerank、Small-to-Big Long-text RAG、Workflow 编排、会话记忆、来源引用、检索日志和自动评测；云端 SFT 模型训练完成后可通过 OpenAI-compatible endpoint 接入。
 
-**生成模型：** `{CHAT_MODEL}`  
-**Embedding 模型：** `{EMBEDDING_MODEL}`  
+**API baseline 模型：** `{CHAT_MODEL}`<br>
+**默认生成后端：** `{GENERATION_BACKEND}`<br>
+**SFT 模型占位：** `{LOCAL_SFT_MODEL}`<br>
+**Embedding 模型：** `{EMBEDDING_MODEL}`<br>
 **Rerank 模型：** `{RERANK_MODEL}`
 """
 )
@@ -500,6 +502,17 @@ with tab_chat:
             help="小 chunk 用于召回，父级大段落用于回答。"
         )
 
+        generation_backend = st.selectbox(
+            "生成模型后端",
+            options=["默认配置", "mock", "api", "local_sft"],
+            index=0,
+            help="local_sft 用于后续接入云端微调后的 Qwen LoRA/QLoRA 服务。",
+        )
+
+        selected_generation_backend = (
+            None if generation_backend == "默认配置" else generation_backend
+        )
+
     if st.button("开始问答", type="primary"):
         if not question.strip():
             st.warning("请输入问题。")
@@ -512,10 +525,15 @@ with tab_chat:
                     candidate_k=candidate_k,
                     use_rerank=use_rerank,
                     context_mode="small_to_big" if use_small_to_big else "small",
+                    generation_backend=selected_generation_backend,
                 )
 
             st.subheader("模型回答")
             st.write(result["answer"])
+            st.caption(
+                f"生成后端：`{result.get('generation_backend')}` | "
+                f"生成模型：`{result.get('generator_model')}`"
+            )
 
             st.subheader("引用来源")
             sources = result.get("sources", [])

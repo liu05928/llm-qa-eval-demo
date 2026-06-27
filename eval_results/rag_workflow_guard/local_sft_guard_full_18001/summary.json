@@ -1,0 +1,41 @@
+{
+  "generated_at": "2026-06-27 22:53:29",
+  "backend": "local_sft",
+  "total_rows": 24,
+  "overall_pass_rate": 1.0,
+  "error_count": 0,
+  "local_sft_status": {
+    "available": true,
+    "models_url": "http://127.0.0.1:18001/v1/models",
+    "latency_ms": 677.29,
+    "model_ids": [
+      "gpt-3.5-turbo"
+    ]
+  },
+  "by_path": {
+    "rag_chat_api": {
+      "total": 8,
+      "pass_rate": 1.0,
+      "guard_refusal_pass_rate": 1.0,
+      "support_pass_rate": 1.0,
+      "error_count": 0,
+      "avg_latency_ms": 3222.47
+    },
+    "workflow_langgraph": {
+      "total": 8,
+      "pass_rate": 1.0,
+      "guard_refusal_pass_rate": 1.0,
+      "support_pass_rate": 1.0,
+      "error_count": 0,
+      "avg_latency_ms": 3010.14
+    },
+    "workflow_local": {
+      "total": 8,
+      "pass_rate": 1.0,
+      "guard_refusal_pass_rate": 1.0,
+      "support_pass_rate": 1.0,
+      "error_count": 0,
+      "avg_latency_ms": 2793.2
+    }
+  }
+}

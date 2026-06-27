@@ -1,0 +1,1921 @@
+{
+  "run_name": "v1_qlora",
+  "model": "qwen25-3b-edu-qlora-v1",
+  "base_url": "http://127.0.0.1:8001/v1/chat/completions",
+  "started_at": "2026-06-27T10:23:23",
+  "finished_at": "2026-06-27T10:28:01",
+  "questions_meta": {
+    "version": "v2",
+    "count": 50,
+    "note": "Fixed generation-quality questions selected from source-level held-out test sources; they are not in the training split."
+  },
+  "settings": {
+    "temperature": 0.2,
+    "max_tokens": 700,
+    "timeout": 240
+  },
+  "summary": {
+    "question_count": 50,
+    "completed_count": 50,
+    "error_count": 0,
+    "avg_keyword_score": 0.5667,
+    "keyword_any_hit_rate": 0.92,
+    "keyword_all_hit_rate": 0.24,
+    "citation_complete_rate": 0.98,
+    "structure_complete_rate": 0.72,
+    "refusal_correct_rate": 0.0,
+    "unsupported_refusal_rate": 0.0,
+    "reference_mismatch_rate": 0.0,
+    "possible_fabrication_rate": 0.22,
+    "avg_latency_s": 5.556,
+    "by_type": {
+      "grounded_qa": {
+        "count": 17,
+        "avg_keyword_score": 0.4853,
+        "keyword_any_hit_rate": 0.8235,
+        "keyword_all_hit_rate": 0.1176,
+        "citation_complete_rate": 1.0,
+        "structure_complete_rate": 0.5294,
+        "reference_mismatch_rate": 0.0,
+        "possible_fabrication_rate": 0.0
+      },
+      "citation_qa": {
+        "count": 11,
+        "avg_keyword_score": 0.5227,
+        "keyword_any_hit_rate": 1.0,
+        "keyword_all_hit_rate": 0.1818,
+        "citation_complete_rate": 1.0,
+        "structure_complete_rate": 0.8182,
+        "reference_mismatch_rate": 0.0,
+        "possible_fabrication_rate": 0.0
+      },
+      "compare_or_reasoning": {
+        "count": 11,
+        "avg_keyword_score": 0.8106,
+        "keyword_any_hit_rate": 1.0,
+        "keyword_all_hit_rate": 0.5455,
+        "citation_complete_rate": 0.9091,
+        "structure_complete_rate": 0.8182,
+        "reference_mismatch_rate": 0.0,
+        "possible_fabrication_rate": 0.0
+      },
+      "refusal": {
+        "count": 11,
+        "avg_keyword_score": 0.4924,
+        "keyword_any_hit_rate": 0.9091,
+        "keyword_all_hit_rate": 0.1818,
+        "citation_complete_rate": 1.0,
+        "structure_complete_rate": 0.8182,
+        "reference_mismatch_rate": 0.0,
+        "possible_fabrication_rate": 1.0,
+        "refusal_correct_rate": 0.0
+      }
+    }
+  },
+  "details": [
+    {
+      "id": "sft_v2_eval_001",
+      "type": "grounded_qa",
+      "domain": "science",
+      "question": "如果同学问电流为什么重要，可以怎样依据教材回答？",
+      "expected_reference": "science_textbooks/053_科学_9年级上册_沪教版_2013版_二_电生磁_main_232.md",
+      "expected_keywords": [
+        "电生磁",
+        "电压",
+        "电流",
+        "电路"
+      ],
+      "answer": "关键词：电流、磁效应、实验。\n教材依据：1. 电流的磁效应指________，这是由________最先发现的。\n复习建议：复习时先抓住教材中的关键词，再把它们和具体例子或实验现象联系起来。\n参考来源：science_textbooks/053_科学_9年级上册_沪教版_2013版_二_电生磁_main_232.md",
+      "latency_s": 3.245,
+      "error": "",
+      "keyword_score": 0.5,
+      "keyword_any_hit": true,
+      "keyword_all_hit": false,
+      "hit_keywords": [
+        "电生磁",
+        "电流"
+      ],
+      "missed_keywords": [
+        "电压",
+        "电路"
+      ],
+      "citation_complete": true,
+      "reference_mismatch": false,
+      "extracted_sources": [
+        "science_textbooks/053_科学_9年级上册_沪教版_2013版_二_电生磁_main_232.md"
+      ],
+      "unexpected_sources": [],
+      "structure_complete": false,
+      "refusal_detected": false,
+      "refusal_correct": null,
+      "unsupported_refusal": false,
+      "possible_fabrication": false
+    },
+    {
+      "id": "sft_v2_eval_002",
+      "type": "grounded_qa",
+      "domain": "science",
+      "question": "教材中关于观察和感受周围的世界的核心观点是什么？",
+      "expected_reference": "science_textbooks/031_科学_7年级上册_沪教版_2012版_三_声音的特征_main_183.md",
+      "expected_keywords": [
+        "观察",
+        "感受周围的世界",
+        "观察和感受周围的世界",
+        "四季星空"
+      ],
+      "answer": "关键词：观察、感受、周围的世界、教材依据。\n教材依据：本册教材引导他们借助初步的科学方法认识新的学习环境，进而认识我们周围的世界。\n教材依据：教材在表述方式上尽可能亲切、平易，情境设计尽可能贴近学生生活，通过对平凡现象的探究揭示事物的本质和规律，使学生感受到科学探究的乐趣和妙处。\n建议学习时先抓住教材中的关键词，再把它们和具体例子或实验现象联系起来。\n参考来源：science_textbooks/031_科学_7年级上册_沪教版_2012版_三_声音的特征_main_183.md",
+      "latency_s": 3.959,
+      "error": "",
+      "keyword_score": 0.25,
+      "keyword_any_hit": true,
+      "keyword_all_hit": false,
+      "hit_keywords": [
+        "观察"
+      ],
+      "missed_keywords": [
+        "感受周围的世界",
+        "观察和感受周围的世界",
+        "四季星空"
+      ],
+      "citation_complete": true,
+      "reference_mismatch": false,
+      "extracted_sources": [
+        "science_textbooks/031_科学_7年级上册_沪教版_2012版_三_声音的特征_main_183.md"
+      ],
+      "unexpected_sources": [],
+      "structure_complete": false,
+      "refusal_detected": false,
+      "refusal_correct": null,
+      "unsupported_refusal": false,
+      "possible_fabrication": false
+    },
+    {
+      "id": "sft_v2_eval_003",
+      "type": "grounded_qa",
+      "domain": "science",
+      "question": "请把生态系统的结构的知识点整理成适合复习的答案。",
+      "expected_reference": "science_textbooks/057_科学_8年级上册_沪教版_2013版_二_生态系统的结构_main_144.md",
+      "expected_keywords": [
+        "生态系统的结构",
+        "生态系统",
+        "土壤",
+        "空气"
+      ],
+      "answer": "关键词：生产者、消费者、分解者、非生物环境。\n教材依据：二、生态系统的结构。\n教材依据：1. 生态系统的组成。\n教材依据：2. 生态系统中的生物有植物、动物、细菌、真菌等类群；。\n教材依据：3. 生态系统中的非生物环境包括阳光、温度、水分、空气、土壤等因素。\n学习建议：复习时先抓住教材中的关键词，再把它们和具体例子或实验现象联系起来。\n参考来源：science_textbooks/057_科学_8年级上册_沪教版_2013版_二_生态系统的结构_main_144.md",
+      "latency_s": 4.113,
+      "error": "",
+      "keyword_score": 1.0,
+      "keyword_any_hit": true,
+      "keyword_all_hit": true,
+      "hit_keywords": [
+        "生态系统的结构",
+        "生态系统",
+        "土壤",
+        "空气"
+      ],
+      "missed_keywords": [],
+      "citation_complete": true,
+      "reference_mismatch": false,
+      "extracted_sources": [
+        "science_textbooks/057_科学_8年级上册_沪教版_2013版_二_生态系统的结构_main_144.md"
+      ],
+      "unexpected_sources": [],
+      "structure_complete": true,
+      "refusal_detected": false,
+      "refusal_correct": null,
+      "unsupported_refusal": false,
+      "possible_fabrication": false
+    },
+    {
+      "id": "sft_v2_eval_004",
+      "type": "grounded_qa",
+      "domain": "science",
+      "question": "教材中关于四季星空的核心观点是什么？",
+      "expected_reference": "science_textbooks/025_科学_7年级上册_沪教版_2012版_三_四季星空_main_115.md",
+      "expected_keywords": [
+        "四季星空",
+        "地球自转",
+        "春季星空"
+      ],
+      "answer": "关键词：狮子座、天蝎座、四季星空。\n教材依据：四季星空。\n复习建议：复习时先抓住教材中的关键词，再把它们和具体例子或实验现象联系起来。\n参考来源：science_textbooks/025_科学_7年级上册_沪教版_2012版_三_四季星空_main_115.md",
+      "latency_s": 2.28,
+      "error": "",
+      "keyword_score": 0.3333,
+      "keyword_any_hit": true,
+      "keyword_all_hit": false,
+      "hit_keywords": [
+        "四季星空"
+      ],
+      "missed_keywords": [
+        "地球自转",
+        "春季星空"
+      ],
+      "citation_complete": true,
+      "reference_mismatch": false,
+      "extracted_sources": [
+        "science_textbooks/025_科学_7年级上册_沪教版_2012版_三_四季星空_main_115.md"
+      ],
+      "unexpected_sources": [],
+      "structure_complete": false,
+      "refusal_detected": false,
+      "refusal_correct": null,
+      "unsupported_refusal": false,
+      "possible_fabrication": false
+    },
+    {
+      "id": "sft_v2_eval_005",
+      "type": "grounded_qa",
+      "domain": "science",
+      "question": "请把人体的自我保护的知识点整理成适合复习的答案。",
+      "expected_reference": "science_textbooks/072_科学_9年级下册_沪教版_2013版_第四章_main_088.md",
+      "expected_keywords": [
+        "人体的自我保护",
+        "空气",
+        "进化",
+        "人体的防御机制"
+      ],
+      "answer": "关键词：皮肤、黏膜、防御机制、病原体。\n教材依据：第四章。\n复习建议：复习时先抓住教材中的关键词，再把它们和具体例子或实验现象联系起来。\n参考来源：science_textbooks/072_科学_9年级下册_沪教版_2013版_第四章_main_088.md",
+      "latency_s": 2.309,
+      "error": "",
+      "keyword_score": 0.0,
+      "keyword_any_hit": false,
+      "keyword_all_hit": false,
+      "hit_keywords": [],
+      "missed_keywords": [
+        "人体的自我保护",
+        "空气",
+        "进化",
+        "人体的防御机制"
+      ],
+      "citation_complete": true,
+      "reference_mismatch": false,
+      "extracted_sources": [
+        "science_textbooks/072_科学_9年级下册_沪教版_2013版_第四章_main_088.md"
+      ],
+      "unexpected_sources": [],
+      "structure_complete": false,
+      "refusal_detected": false,
+      "refusal_correct": null,
+      "unsupported_refusal": false,
+      "possible_fabrication": false
+    },
+    {
+      "id": "sft_v2_eval_006",
+      "type": "grounded_qa",
+      "domain": "science",
+      "question": "地球自转在四季星空中有什么作用或含义？",
+      "expected_reference": "science_textbooks/025_科学_7年级上册_沪教版_2012版_三_四季星空_main_115.md",
+      "expected_keywords": [
+        "四季星空",
+        "地球自转",
+        "春季星空"
+      ],
+      "answer": "根据参考资料，可以这样回答：\n1. 这个问题的核心关键词是：自转、四季、星空。\n2. 教材依据：四季星空的变化则是由地球绕太阳的公转造成的。\n3. 教材依据：在春夏秋冬四季，如果天黑后你观察南方夜空，看到的主要星座是不同的，它们依次是：狮子座、天蝎座、飞马座和猎户座。\n4. 教材依据：春季星空（图7-3-1）的代表星座是狮子座。\n学习建议：复习时先抓住教材中的关键词，再把它们和具体例子或实验现象联系起来。\n参考来源：science_textbooks/025_科学_7年级上册_沪教版_2012版_三_四季星空_main_115.md",
+      "latency_s": 4.983,
+      "error": "",
+      "keyword_score": 0.6667,
+      "keyword_any_hit": true,
+      "keyword_all_hit": false,
+      "hit_keywords": [
+        "四季星空",
+        "春季星空"
+      ],
+      "missed_keywords": [
+        "地球自转"
+      ],
+      "citation_complete": true,
+      "reference_mismatch": false,
+      "extracted_sources": [
+        "science_textbooks/025_科学_7年级上册_沪教版_2012版_三_四季星空_main_115.md"
+      ],
+      "unexpected_sources": [],
+      "structure_complete": true,
+      "refusal_detected": false,
+      "refusal_correct": null,
+      "unsupported_refusal": false,
+      "possible_fabrication": false
+    },
+    {
+      "id": "sft_v2_eval_007",
+      "type": "grounded_qa",
+      "domain": "science",
+      "question": "请把浮力的知识点整理成适合复习的答案。",
+      "expected_reference": "science_textbooks/063_科学_8年级上册_沪教版_2013版_五_浮力_main_058.md",
+      "expected_keywords": [
+        "浮力",
+        "空气",
+        "验证空气浮力的大小",
+        "验证空气浮力的大"
+      ],
+      "answer": "根据参考资料，可以这样回答：\n1. 这个问题的核心关键词是：浮力、物体、排开。\n2. 教材依据：空气的质量很小，采用和水同样的实验方法显然不行，我们可以采用对照的方法。\n3. 教材依据：首先使空气中的两个物体处于相同的状态，然后改变其中一个物体的体积，保持其他因素不变，观察物体所受到的空气浮力的变化。\n4. 教材依据：1. 向带有自行车进气阀的大塑料瓶中打气（约十几次）后，将进气阀关紧。\n学习建议：复习时先抓住教材中的关键词，再把它们和具体例子或实验现象联系起来。\n参考来源：science_textbooks/063_科学_8年级上册_沪教版_2013版_五_浮力_main_058.md",
+      "latency_s": 5.284,
+      "error": "",
+      "keyword_score": 0.5,
+      "keyword_any_hit": true,
+      "keyword_all_hit": false,
+      "hit_keywords": [
+        "浮力",
+        "空气"
+      ],
+      "missed_keywords": [
+        "验证空气浮力的大小",
+        "验证空气浮力的大"
+      ],
+      "citation_complete": true,
+      "reference_mismatch": false,
+      "extracted_sources": [
+        "science_textbooks/063_科学_8年级上册_沪教版_2013版_五_浮力_main_058.md"
+      ],
+      "unexpected_sources": [],
+      "structure_complete": true,
+      "refusal_detected": false,
+      "refusal_correct": null,
+      "unsupported_refusal": false,
+      "possible_fabrication": false
+    },
+    {
+      "id": "sft_v2_eval_008",
+      "type": "grounded_qa",
+      "domain": "science",
+      "question": "如果同学问土壤为什么重要，可以怎样依据教材回答？",
+      "expected_reference": "science_textbooks/057_科学_8年级上册_沪教版_2013版_二_生态系统的结构_main_144.md",
+      "expected_keywords": [
+        "生态系统的结构",
+        "生态系统",
+        "土壤",
+        "空气"
+      ],
+      "answer": "关键词：土壤、植物、有机物。\n教材依据：二、生态系统的结构。\n复习建议：复习时先抓住教材中的关键词，再把它们和具体例子或实验现象联系起来。\n参考来源：science_textbooks/057_科学_8年级上册_沪教版_2013版_二_生态系统的结构_main_144.md",
+      "latency_s": 2.331,
+      "error": "",
+      "keyword_score": 0.75,
+      "keyword_any_hit": true,
+      "keyword_all_hit": false,
+      "hit_keywords": [
+        "生态系统的结构",
+        "生态系统",
+        "土壤"
+      ],
+      "missed_keywords": [
+        "空气"
+      ],
+      "citation_complete": true,
+      "reference_mismatch": false,
+      "extracted_sources": [
+        "science_textbooks/057_科学_8年级上册_沪教版_2013版_二_生态系统的结构_main_144.md"
+      ],
+      "unexpected_sources": [],
+      "structure_complete": false,
+      "refusal_detected": false,
+      "refusal_correct": null,
+      "unsupported_refusal": false,
+      "possible_fabrication": false
+    },
+    {
+      "id": "sft_v2_eval_009",
+      "type": "grounded_qa",
+      "domain": "science",
+      "question": "学到电生磁时，容易忽略哪些教材依据？",
+      "expected_reference": "science_textbooks/053_科学_9年级上册_沪教版_2013版_二_电生磁_main_232.md",
+      "expected_keywords": [
+        "电生磁",
+        "电压",
+        "电流",
+        "电路"
+      ],
+      "answer": "关键词：电流的磁效应、实验、电生磁。\n教材依据：1. 电流的磁效应指________，这是由________最先发现的。\n复习建议：复习时先抓住教材中的关键词，再把它们和具体例子或实验现象联系起来。\n参考来源：science_textbooks/053_科学_9年级上册_沪教版_2013版_二_电生磁_main_232.md",
+      "latency_s": 2.748,
+      "error": "",
+      "keyword_score": 0.5,
+      "keyword_any_hit": true,
+      "keyword_all_hit": false,
+      "hit_keywords": [
+        "电生磁",
+        "电流"
+      ],
+      "missed_keywords": [
+        "电压",
+        "电路"
+      ],
+      "citation_complete": true,
+      "reference_mismatch": false,
+      "extracted_sources": [
+        "science_textbooks/053_科学_9年级上册_沪教版_2013版_二_电生磁_main_232.md"
+      ],
+      "unexpected_sources": [],
+      "structure_complete": false,
+      "refusal_detected": false,
+      "refusal_correct": null,
+      "unsupported_refusal": false,
+      "possible_fabrication": false
+    },
+    {
+      "id": "sft_v2_eval_010",
+      "type": "grounded_qa",
+      "domain": "science",
+      "question": "请根据资料概括能源的学习重点。",
+      "expected_reference": "science_textbooks/036_科学_9年级下册_沪教版_2013版_三_能源_main_148.md",
+      "expected_keywords": [
+        "能源",
+        "地表",
+        "随着水流经地表流",
+        "入湖泊"
+      ],
+      "answer": "关键词：水力发电、水力发电站、水能。\n教材依据：地表，随着水流经地表流入湖泊、海洋。千百年来，人们一直利用水力推动的水车碾磨谷物。今天，人们建造水力发电站，用水力发电（图7-3-11）。\n学习建议：复习时先抓住教材中的关键词，再把它们和具体例子或实验现象联系起来。\n参考来源：science_textbooks/036_科学_9年级下册_沪教版_2013版_三_能源_main_148.md",
+      "latency_s": 3.691,
+      "error": "",
+      "keyword_score": 1.0,
+      "keyword_any_hit": true,
+      "keyword_all_hit": true,
+      "hit_keywords": [
+        "能源",
+        "地表",
+        "随着水流经地表流",
+        "入湖泊"
+      ],
+      "missed_keywords": [],
+      "citation_complete": true,
+      "reference_mismatch": false,
+      "extracted_sources": [
+        "science_textbooks/036_科学_9年级下册_沪教版_2013版_三_能源_main_148.md"
+      ],
+      "unexpected_sources": [],
+      "structure_complete": true,
+      "refusal_detected": false,
+      "refusal_correct": null,
+      "unsupported_refusal": false,
+      "possible_fabrication": false
+    },
+    {
+      "id": "sft_v2_eval_011",
+      "type": "grounded_qa",
+      "domain": "science",
+      "question": "人体的自我保护这一节需要抓住哪些关键词？",
+      "expected_reference": "science_textbooks/072_科学_9年级下册_沪教版_2013版_第四章_main_088.md",
+      "expected_keywords": [
+        "人体的自我保护",
+        "空气",
+        "进化",
+        "人体的防御机制"
+      ],
+      "answer": "关键词：皮肤、黏膜、防御、屏障、病原体。\n教材依据：皮肤和黏膜是人体的最外层屏障。\n学习建议：复习时先抓住教材中的关键词，再把它们和具体例子或实验现象联系起来。\n参考来源：science_textbooks/072_科学_9年级下册_沪教版_2013版_第四章_main_088.md",
+      "latency_s": 2.573,
+      "error": "",
+      "keyword_score": 0.0,
+      "keyword_any_hit": false,
+      "keyword_all_hit": false,
+      "hit_keywords": [],
+      "missed_keywords": [
+        "人体的自我保护",
+        "空气",
+        "进化",
+        "人体的防御机制"
+      ],
+      "citation_complete": true,
+      "reference_mismatch": false,
+      "extracted_sources": [
+        "science_textbooks/072_科学_9年级下册_沪教版_2013版_第四章_main_088.md"
+      ],
+      "unexpected_sources": [],
+      "structure_complete": true,
+      "refusal_detected": false,
+      "refusal_correct": null,
+      "unsupported_refusal": false,
+      "possible_fabrication": false
+    },
+    {
+      "id": "sft_v2_eval_012",
+      "type": "grounded_qa",
+      "domain": "science",
+      "question": "学到空气的性质时，容易忽略哪些教材依据？",
+      "expected_reference": "science_textbooks/056_科学_7年级下册_沪教版_2012版_二_空气的性质_main_051.md",
+      "expected_keywords": [
+        "空气的性质",
+        "空气",
+        "自然资源",
+        "空气有质量"
+      ],
+      "answer": "根据参考资料，可以这样回答：\n1. 这个问题的核心关键词是：密度、质量、热胀冷缩。\n2. 教材依据是：空气的密度较小。在 $0^{\\circ}\\mathrm{C}$ ， $1.01 \\times 10^{5} \\mathrm{~Pa}$ 时，空气的密度约是 $1.29 \\mathrm{~g} \\cdot \\mathrm{L}^{-1}$。\n3. 教材依据是：当空气的体积很大时，质量也会很大，一间约 $20 \\mathrm{~m}^{2}$ 的房间里空气的质量大约有 $70 \\mathrm{~kg}$ ，相当于一个成年人的质量。\n4. 教材依据是：空气的热胀冷缩。\n学习建议：复习时先抓住教材中的关键词，再把它们和具体例子或实验现象联系起来。\n参考来源：science_textbooks/056_科学_7年级下册_沪教版_2012版_二_空气的性质_main_051.md",
+      "latency_s": 6.557,
+      "error": "",
+      "keyword_score": 0.5,
+      "keyword_any_hit": true,
+      "keyword_all_hit": false,
+      "hit_keywords": [
+        "空气的性质",
+        "空气"
+      ],
+      "missed_keywords": [
+        "自然资源",
+        "空气有质量"
+      ],
+      "citation_complete": true,
+      "reference_mismatch": false,
+      "extracted_sources": [
+        "science_textbooks/056_科学_7年级下册_沪教版_2012版_二_空气的性质_main_051.md"
+      ],
+      "unexpected_sources": [],
+      "structure_complete": true,
+      "refusal_detected": false,
+      "refusal_correct": null,
+      "unsupported_refusal": false,
+      "possible_fabrication": false
+    },
+    {
+      "id": "sft_v2_eval_013",
+      "type": "citation_qa",
+      "domain": "science",
+      "question": "如果学生复习生态系统的结构，应该怎样回答并引用来源？",
+      "expected_reference": "science_textbooks/057_科学_8年级上册_沪教版_2013版_二_生态系统的结构_main_144.md",
+      "expected_keywords": [
+        "生态系统的结构",
+        "生态系统",
+        "土壤",
+        "空气"
+      ],
+      "answer": "关键词：生产者、消费者、分解者；教材依据：二、生态系统的结构。\n参考来源：science_textbooks/057_科学_8年级上册_沪教版_2013版_二_生态系统的结构_main_144.md。\n学习建议：复习时先抓住教材中的关键词，再把它们和具体例子或实验现象联系起来。\n答案：复习建议：复习时先抓住教材中的关键词，再把它们和具体例子或实验现象联系起来。\n关键词：生产者、消费者、分解者；教材依据：二、生态系统的结构。\n参考来源：science_textbooks/057_科学_8年级上册_沪教版_2013版_二_生态系统的结构_main_144.md。",
+      "latency_s": 4.736,
+      "error": "",
+      "keyword_score": 0.5,
+      "keyword_any_hit": true,
+      "keyword_all_hit": false,
+      "hit_keywords": [
+        "生态系统的结构",
+        "生态系统"
+      ],
+      "missed_keywords": [
+        "土壤",
+        "空气"
+      ],
+      "citation_complete": true,
+      "reference_mismatch": false,
+      "extracted_sources": [
+        "science_textbooks/057_科学_8年级上册_沪教版_2013版_二_生态系统的结构_main_144.md"
+      ],
+      "unexpected_sources": [],
+      "structure_complete": true,
+      "refusal_detected": false,
+      "refusal_correct": null,
+      "unsupported_refusal": false,
+      "possible_fabrication": false
+    },
+    {
+      "id": "sft_v2_eval_014",
+      "type": "citation_qa",
+      "domain": "science",
+      "question": "请根据资料回答：空气的性质主要讲了什么？答案末尾写参考来源。",
+      "expected_reference": "science_textbooks/056_科学_7年级下册_沪教版_2012版_二_空气的性质_main_051.md",
+      "expected_keywords": [
+        "空气的性质",
+        "空气",
+        "自然资源",
+        "空气有质量"
+      ],
+      "answer": "关键词：密度、热胀冷缩、质量。\n教材依据：二、空气的性质。\n参考来源：science_textbooks/056_科学_7年级下册_沪教版_2012版_二_空气的性质_main_051.md。\n回答：1. 这个问题的核心关键词是：密度、热胀冷缩、质量。\n2. 教材依据：二、空气的性质。\n3. 教材依据：空气的密度较小。\n4. 教材依据：在 $0^{\\circ}\\mathrm{C}$ ， $1.01 \\times 10^{5} \\mathrm{~Pa}$ 时，空气的密度约是 $1.29 \\mathrm{~g} \\cdot \\mathrm{L}^{-1}$。\n学习建议：复习时先抓住教材中的关键词，再把它们和具体例子或实验现象联系起来。\n参考来源：science_textbooks/056_科学_7年级下册_沪教版_2012版_二_空气的性质_main_051.md。",
+      "latency_s": 6.719,
+      "error": "",
+      "keyword_score": 0.5,
+      "keyword_any_hit": true,
+      "keyword_all_hit": false,
+      "hit_keywords": [
+        "空气的性质",
+        "空气"
+      ],
+      "missed_keywords": [
+        "自然资源",
+        "空气有质量"
+      ],
+      "citation_complete": true,
+      "reference_mismatch": false,
+      "extracted_sources": [
+        "science_textbooks/056_科学_7年级下册_沪教版_2012版_二_空气的性质_main_051.md"
+      ],
+      "unexpected_sources": [],
+      "structure_complete": true,
+      "refusal_detected": false,
+      "refusal_correct": null,
+      "unsupported_refusal": false,
+      "possible_fabrication": false
+    },
+    {
+      "id": "sft_v2_eval_015",
+      "type": "citation_qa",
+      "domain": "science",
+      "question": "如果学生复习人体的自我保护，应该怎样回答并引用来源？",
+      "expected_reference": "science_textbooks/072_科学_9年级下册_沪教版_2013版_第四章_main_088.md",
+      "expected_keywords": [
+        "人体的自我保护",
+        "空气",
+        "进化",
+        "人体的防御机制"
+      ],
+      "answer": "关键词：皮肤、黏膜、防御机制；教材依据：第四章。\n参考来源：science_textbooks/072_科学_9年级下册_沪教版_2013版_第四章_main_088.md。\n回答：1. 这个问题的核心关键词是：皮肤、黏膜、防御机制。\n2. 教材依据：第四章。\n3. 教材依据：人体的自我保护。\n4. 教材依据：在我们周围的环境中，有很多物理的、化学的、生物的社会的因素，时时侵扰我们，特别是一些致病的微生物，造成我们“生病”。\n学习建议：复习时先抓住教材中的关键词，再把它们和具体例子或实验现象联系起来。\n参考来源：science_textbooks/072_科学_9年级下册_沪教版_2013版_第四章_main_088.md。",
+      "latency_s": 5.584,
+      "error": "",
+      "keyword_score": 0.25,
+      "keyword_any_hit": true,
+      "keyword_all_hit": false,
+      "hit_keywords": [
+        "人体的自我保护"
+      ],
+      "missed_keywords": [
+        "空气",
+        "进化",
+        "人体的防御机制"
+      ],
+      "citation_complete": true,
+      "reference_mismatch": false,
+      "extracted_sources": [
+        "science_textbooks/072_科学_9年级下册_沪教版_2013版_第四章_main_088.md"
+      ],
+      "unexpected_sources": [],
+      "structure_complete": true,
+      "refusal_detected": false,
+      "refusal_correct": null,
+      "unsupported_refusal": false,
+      "possible_fabrication": false
+    },
+    {
+      "id": "sft_v2_eval_016",
+      "type": "citation_qa",
+      "domain": "science",
+      "question": "请根据资料回答：观察和感受周围的世界主要讲了什么？答案末尾写参考来源。",
+      "expected_reference": "science_textbooks/031_科学_7年级上册_沪教版_2012版_三_声音的特征_main_183.md",
+      "expected_keywords": [
+        "观察",
+        "感受周围的世界",
+        "观察和感受周围的世界",
+        "四季星空"
+      ],
+      "answer": "关键词：教材依据、观察和感受周围的世界、本册教材。\n教材依据：本册教材引导他们借助初步的科学方法认识新的学习环境，进而认识我们周围的世界。\n教材依据：教材在表述方式上尽可能亲切、平易，情境设计尽可能贴近学生生活，通过对平凡现象的探究揭示事物的本质和规律，使学生感受到科学探究的乐趣和妙处。\n参考来源：science_textbooks/031_科学_7年级上册_沪教版_2012版_三_声音的特征_main_183.md",
+      "latency_s": 3.444,
+      "error": "",
+      "keyword_score": 0.75,
+      "keyword_any_hit": true,
+      "keyword_all_hit": false,
+      "hit_keywords": [
+        "观察",
+        "感受周围的世界",
+        "观察和感受周围的世界"
+      ],
+      "missed_keywords": [
+        "四季星空"
+      ],
+      "citation_complete": true,
+      "reference_mismatch": false,
+      "extracted_sources": [
+        "science_textbooks/031_科学_7年级上册_沪教版_2012版_三_声音的特征_main_183.md"
+      ],
+      "unexpected_sources": [],
+      "structure_complete": false,
+      "refusal_detected": false,
+      "refusal_correct": null,
+      "unsupported_refusal": false,
+      "possible_fabrication": false
+    },
+    {
+      "id": "sft_v2_eval_017",
+      "type": "citation_qa",
+      "domain": "science",
+      "question": "如果学生复习浮力，应该怎样回答并引用来源？",
+      "expected_reference": "science_textbooks/063_科学_8年级上册_沪教版_2013版_五_浮力_main_058.md",
+      "expected_keywords": [
+        "浮力",
+        "空气",
+        "验证空气浮力的大小",
+        "验证空气浮力的大"
+      ],
+      "answer": "根据参考资料，可以这样回答：\n1. 这个问题的核心关键词是：浮力、物体、排开。\n2. 教材依据：2. 将气球套在进气阀口上，用细线系紧。\n3. 教材依据：3. 将此瓶与另一塑料瓶分别悬挂在细木棍的两端，用细线吊起后，调节平衡，如图3-5-9所示。\n4. 教材依据：根据阿基米得定律，空气对塑料瓶有浮力，浮力的大小与物体排开空气的体积有关。\n学习建议：复习时先抓住教材中的关键词，再把它们和具体例子或实验现象联系起来。\n参考来源：science_textbooks/063_科学_8年级上册_沪教版_2013版_五_浮力_main_058.md",
+      "latency_s": 5.473,
+      "error": "",
+      "keyword_score": 0.5,
+      "keyword_any_hit": true,
+      "keyword_all_hit": false,
+      "hit_keywords": [
+        "浮力",
+        "空气"
+      ],
+      "missed_keywords": [
+        "验证空气浮力的大小",
+        "验证空气浮力的大"
+      ],
+      "citation_complete": true,
+      "reference_mismatch": false,
+      "extracted_sources": [
+        "science_textbooks/063_科学_8年级上册_沪教版_2013版_五_浮力_main_058.md"
+      ],
+      "unexpected_sources": [],
+      "structure_complete": true,
+      "refusal_detected": false,
+      "refusal_correct": null,
+      "unsupported_refusal": false,
+      "possible_fabrication": false
+    },
+    {
+      "id": "sft_v2_eval_018",
+      "type": "citation_qa",
+      "domain": "science",
+      "question": "如果学生复习能源，应该怎样回答并引用来源？",
+      "expected_reference": "science_textbooks/036_科学_9年级下册_沪教版_2013版_三_能源_main_148.md",
+      "expected_keywords": [
+        "能源",
+        "地表",
+        "随着水流经地表流",
+        "入湖泊"
+      ],
+      "answer": "关键词：水力发电、能源。\n教材依据：地表，随着水流经地表流入湖泊、海洋。千百年来，人们一直利用水力推动的水车碾磨谷物。今天，人们建造水力发电站，用水力发电（图7-3-11）。\n学习建议：复习时先抓住教材中的关键词，再把它们和具体例子或实验现象联系起来。\n参考来源：science_textbooks/036_科学_9年级下册_沪教版_2013版_三_能源_main_148.md",
+      "latency_s": 3.535,
+      "error": "",
+      "keyword_score": 1.0,
+      "keyword_any_hit": true,
+      "keyword_all_hit": true,
+      "hit_keywords": [
+        "能源",
+        "地表",
+        "随着水流经地表流",
+        "入湖泊"
+      ],
+      "missed_keywords": [],
+      "citation_complete": true,
+      "reference_mismatch": false,
+      "extracted_sources": [
+        "science_textbooks/036_科学_9年级下册_沪教版_2013版_三_能源_main_148.md"
+      ],
+      "unexpected_sources": [],
+      "structure_complete": true,
+      "refusal_detected": false,
+      "refusal_correct": null,
+      "unsupported_refusal": false,
+      "possible_fabrication": false
+    },
+    {
+      "id": "sft_v2_eval_019",
+      "type": "citation_qa",
+      "domain": "science",
+      "question": "请说明进化的教材依据，并给出参考来源。",
+      "expected_reference": "science_textbooks/072_科学_9年级下册_沪教版_2013版_第四章_main_088.md",
+      "expected_keywords": [
+        "人体的自我保护",
+        "空气",
+        "进化",
+        "人体的防御机制"
+      ],
+      "answer": "关键词：皮肤、黏膜、进化、教材依据。\n教材依据：第四章。\n学习建议：复习时先抓住教材中的关键词，再把它们和具体例子或实验现象联系起来。\n参考来源：science_textbooks/072_科学_9年级下册_沪教版_2013版_第四章_main_088.md",
+      "latency_s": 2.24,
+      "error": "",
+      "keyword_score": 0.25,
+      "keyword_any_hit": true,
+      "keyword_all_hit": false,
+      "hit_keywords": [
+        "进化"
+      ],
+      "missed_keywords": [
+        "人体的自我保护",
+        "空气",
+        "人体的防御机制"
+      ],
+      "citation_complete": true,
+      "reference_mismatch": false,
+      "extracted_sources": [
+        "science_textbooks/072_科学_9年级下册_沪教版_2013版_第四章_main_088.md"
+      ],
+      "unexpected_sources": [],
+      "structure_complete": true,
+      "refusal_detected": false,
+      "refusal_correct": null,
+      "unsupported_refusal": false,
+      "possible_fabrication": false
+    },
+    {
+      "id": "sft_v2_eval_020",
+      "type": "citation_qa",
+      "domain": "science",
+      "question": "请说明自然资源的教材依据，并给出参考来源。",
+      "expected_reference": "science_textbooks/056_科学_7年级下册_沪教版_2012版_二_空气的性质_main_051.md",
+      "expected_keywords": [
+        "空气的性质",
+        "空气",
+        "自然资源",
+        "空气有质量"
+      ],
+      "answer": "关键词：空气、密度、教材依据。\n教材依据：二、空气的性质。\n空气是我们接触最多的物质之一，也是一种重要的自然资源。了解空气的性质，有助于我们更好地研究和利用空气。\n空气有质量。\n学习建议：复习时先抓住教材中的关键词，再把它们和具体例子或实验现象联系起来。\n参考来源：science_textbooks/056_科学_7年级下册_沪教版_2012版_二_空气的性质_main_051.md",
+      "latency_s": 3.12,
+      "error": "",
+      "keyword_score": 1.0,
+      "keyword_any_hit": true,
+      "keyword_all_hit": true,
+      "hit_keywords": [
+        "空气的性质",
+        "空气",
+        "自然资源",
+        "空气有质量"
+      ],
+      "missed_keywords": [],
+      "citation_complete": true,
+      "reference_mismatch": false,
+      "extracted_sources": [
+        "science_textbooks/056_科学_7年级下册_沪教版_2012版_二_空气的性质_main_051.md"
+      ],
+      "unexpected_sources": [],
+      "structure_complete": true,
+      "refusal_detected": false,
+      "refusal_correct": null,
+      "unsupported_refusal": false,
+      "possible_fabrication": false
+    },
+    {
+      "id": "sft_v2_eval_021",
+      "type": "compare_or_reasoning",
+      "domain": "science",
+      "question": "为什么学习电生磁时要把电压和电流联系起来？",
+      "expected_reference": "science_textbooks/053_科学_9年级上册_沪教版_2013版_二_电生磁_main_232.md",
+      "expected_keywords": [
+        "电生磁",
+        "电压",
+        "电流",
+        "电路"
+      ],
+      "answer": "根据参考资料，可以这样回答：\n1. 这个问题的核心关键词是：电流、磁效应、实验。\n2. 教材依据：2. 探究决定电磁铁磁性大小的因素。\n3. 教材依据：(1) 用实验室的螺线管、铁心、导线、干电池、电键、滑动变阻器、电流计, 仿照图8-2-7设计出实验线路图, 并连接好线路。\n4. 教材依据：(2) 移动滑动变阻器的触头以改变电流的大小, 观察不同电流下小磁针的偏转程度和吸引大头针数目的多少。\n学习建议：复习时先抓住教材中的关键词，再把它们和具体例子或实验现象联系起来。\n参考来源：science_textbooks/053_科学_9年级上册_沪教版_2013版_二_电生磁_main_232.md",
+      "latency_s": 6.116,
+      "error": "",
+      "keyword_score": 0.5,
+      "keyword_any_hit": true,
+      "keyword_all_hit": false,
+      "hit_keywords": [
+        "电生磁",
+        "电流"
+      ],
+      "missed_keywords": [
+        "电压",
+        "电路"
+      ],
+      "citation_complete": true,
+      "reference_mismatch": false,
+      "extracted_sources": [
+        "science_textbooks/053_科学_9年级上册_沪教版_2013版_二_电生磁_main_232.md"
+      ],
+      "unexpected_sources": [],
+      "structure_complete": true,
+      "refusal_detected": false,
+      "refusal_correct": null,
+      "unsupported_refusal": false,
+      "possible_fabrication": false
+    },
+    {
+      "id": "sft_v2_eval_022",
+      "type": "compare_or_reasoning",
+      "domain": "science",
+      "question": "为什么学习能源时要把地表和随着水流经地表流联系起来？",
+      "expected_reference": "science_textbooks/036_科学_9年级下册_沪教版_2013版_三_能源_main_148.md",
+      "expected_keywords": [
+        "能源",
+        "地表",
+        "随着水流经地表流",
+        "入湖泊"
+      ],
+      "answer": "关键词：地表、水流、发电、环境。\n教材依据：地表，随着水流经地表流入湖泊、海洋。\n学习建议：复习时先抓住教材中的关键词，再把它们和具体例子或实验现象联系起来。\n参考来源：science_textbooks/036_科学_9年级下册_沪教版_2013版_三_能源_main_148.md",
+      "latency_s": 2.493,
+      "error": "",
+      "keyword_score": 1.0,
+      "keyword_any_hit": true,
+      "keyword_all_hit": true,
+      "hit_keywords": [
+        "能源",
+        "地表",
+        "随着水流经地表流",
+        "入湖泊"
+      ],
+      "missed_keywords": [],
+      "citation_complete": true,
+      "reference_mismatch": false,
+      "extracted_sources": [
+        "science_textbooks/036_科学_9年级下册_沪教版_2013版_三_能源_main_148.md"
+      ],
+      "unexpected_sources": [],
+      "structure_complete": true,
+      "refusal_detected": false,
+      "refusal_correct": null,
+      "unsupported_refusal": false,
+      "possible_fabrication": false
+    },
+    {
+      "id": "sft_v2_eval_023",
+      "type": "compare_or_reasoning",
+      "domain": "science",
+      "question": "为什么学习四季星空时要把地球自转和春季星空联系起来？",
+      "expected_reference": "science_textbooks/025_科学_7年级上册_沪教版_2012版_三_四季星空_main_115.md",
+      "expected_keywords": [
+        "四季星空",
+        "地球自转",
+        "春季星空"
+      ],
+      "answer": "根据参考资料，可以这样回答：\n1. 这个问题的核心关键词是：自转、星空、季节。\n2. 教材依据：四季星空。\n3. 教材依据：我们在前面已经知道，日月星辰每天东升西落的现象是由于地球自转造成的，四季星空的变化则是由地球绕太阳的公转造成的。\n4. 教材依据：在春夏秋冬四季，如果天黑后你观察南方夜空，看到的主要星座是不同的，它们依次是：狮子座、天蝎座、飞马座和猎户座。\n学习建议：复习时先抓住教材中的关键词，再把它们和具体例子或实验现象联系起来。\n参考来源：science_textbooks/025_科学_7年级上册_沪教版_2012版_三_四季星空_main_115.md",
+      "latency_s": 5.174,
+      "error": "",
+      "keyword_score": 0.6667,
+      "keyword_any_hit": true,
+      "keyword_all_hit": false,
+      "hit_keywords": [
+        "四季星空",
+        "地球自转"
+      ],
+      "missed_keywords": [
+        "春季星空"
+      ],
+      "citation_complete": true,
+      "reference_mismatch": false,
+      "extracted_sources": [
+        "science_textbooks/025_科学_7年级上册_沪教版_2012版_三_四季星空_main_115.md"
+      ],
+      "unexpected_sources": [],
+      "structure_complete": true,
+      "refusal_detected": false,
+      "refusal_correct": null,
+      "unsupported_refusal": false,
+      "possible_fabrication": false
+    },
+    {
+      "id": "sft_v2_eval_024",
+      "type": "compare_or_reasoning",
+      "domain": "science",
+      "question": "比较浮力和验证空气浮力的大小在资料中的关系。",
+      "expected_reference": "science_textbooks/063_科学_8年级上册_沪教版_2013版_五_浮力_main_058.md",
+      "expected_keywords": [
+        "浮力",
+        "空气",
+        "验证空气浮力的大小",
+        "验证空气浮力的大"
+      ],
+      "answer": "根据参考资料，可以这样回答：\n1. 这个问题的核心关键词是：浮力、空气、体积。\n2. 教材依据：活动-探究。\n3. 教材依据：验证空气浮力的大小与物体排开空气的体积有关。\n4. 教材依据：首先使空气中的两个物体处于相同的状态，然后改变其中一个物体的体积，保持其他因素不变，观察物体所受到的空气浮力的变化。\n学习建议：复习时先抓住教材中的关键词，再把它们和具体例子或实验现象联系起来。\n参考来源：science_textbooks/063_科学_8年级上册_沪教版_2013版_五_浮力_main_058.md",
+      "latency_s": 4.477,
+      "error": "",
+      "keyword_score": 1.0,
+      "keyword_any_hit": true,
+      "keyword_all_hit": true,
+      "hit_keywords": [
+        "浮力",
+        "空气",
+        "验证空气浮力的大小",
+        "验证空气浮力的大"
+      ],
+      "missed_keywords": [],
+      "citation_complete": true,
+      "reference_mismatch": false,
+      "extracted_sources": [
+        "science_textbooks/063_科学_8年级上册_沪教版_2013版_五_浮力_main_058.md"
+      ],
+      "unexpected_sources": [],
+      "structure_complete": true,
+      "refusal_detected": false,
+      "refusal_correct": null,
+      "unsupported_refusal": false,
+      "possible_fabrication": false
+    },
+    {
+      "id": "sft_v2_eval_025",
+      "type": "compare_or_reasoning",
+      "domain": "science",
+      "question": "请根据资料解释与验证空气浮力的大有关的现象或原因。",
+      "expected_reference": "science_textbooks/063_科学_8年级上册_沪教版_2013版_五_浮力_main_058.md",
+      "expected_keywords": [
+        "浮力",
+        "空气",
+        "验证空气浮力的大小",
+        "验证空气浮力的大"
+      ],
+      "answer": "根据参考资料，可以这样回答：\n1. 这个问题的核心关键词是：浮力、空气、体积。\n2. 教材依据：活动-探究。\n3. 教材依据：验证空气浮力的大小与物体排开空气的体积有关。\n4. 教材依据：首先使空气中的两个物体处于相同的状态，然后改变其中一个物体的体积，保持其他因素不变，观察物体所受到的空气浮力的变化。\n学习建议：复习时先抓住教材中的关键词，再把它们和具体例子或实验现象联系起来。\n参考来源：science_textbooks/063_科学_8年级上册_沪教版_2013版_五_浮力_main_058.md",
+      "latency_s": 4.491,
+      "error": "",
+      "keyword_score": 1.0,
+      "keyword_any_hit": true,
+      "keyword_all_hit": true,
+      "hit_keywords": [
+        "浮力",
+        "空气",
+        "验证空气浮力的大小",
+        "验证空气浮力的大"
+      ],
+      "missed_keywords": [],
+      "citation_complete": true,
+      "reference_mismatch": false,
+      "extracted_sources": [
+        "science_textbooks/063_科学_8年级上册_沪教版_2013版_五_浮力_main_058.md"
+      ],
+      "unexpected_sources": [],
+      "structure_complete": true,
+      "refusal_detected": false,
+      "refusal_correct": null,
+      "unsupported_refusal": false,
+      "possible_fabrication": false
+    },
+    {
+      "id": "sft_v2_eval_026",
+      "type": "compare_or_reasoning",
+      "domain": "science",
+      "question": "为什么学习生态系统的结构时要把生态系统和土壤联系起来？",
+      "expected_reference": "science_textbooks/057_科学_8年级上册_沪教版_2013版_二_生态系统的结构_main_144.md",
+      "expected_keywords": [
+        "生态系统的结构",
+        "生态系统",
+        "土壤",
+        "空气"
+      ],
+      "answer": "关键词：土壤、分解者、分解。\n教材依据：二、生态系统的结构。\n教材依据：1. 生态系统的组成。\n教材依据：2. 生态系统中的生物有植物、动物、细菌、真菌等类群；。\n教材依据：3. 生态系统中的非生物环境包括阳光、温度、水分、空气、土壤等因素。\n教材依据：4. 生态系统中的植物，可以利用太阳能，通过光合作用制造有机物。\n教材依据：5. 生态系统中的植物，可以利用太阳能，通过光合作用制造有机物。\n教材依据：6. 植物制造的有机物不仅养活了自身，还为动物的生存提供食物，因此，绿色植物是生态系统中的生产者（producer）。\n教材依据：7. 生态系统中的植物，可以利用太阳能，通过光合作用制造有机物。\n教材依据：8. 生态系统中的植物，可以利用太阳能，通过光合作用制造有机物。\n教材依据：9. 生态系统中的植物，可以利用太阳能，通过光合作用制造有机物。\n教材依据：10. 生态系统中的植物，可以利用太阳能，通过光合作用制造有机物。\n教材依据：11. 生态系统中的植物，可以利用太阳能，通过光合作用制造有机物。\n教材依据：12. 生态系统中的植物，可以利用太阳能，通过光合作用制造有机物。\n教材依据：13. 生态系统中的植物，可以利用太阳能，通过光合作用制造有机物。\n教材依据：14. 生态系统中的植物，可以利用太阳能，通过光合作用制造有机物。\n教材依据：15. 生态系统中的植物，可以利用太阳能，通过光合作用制造有机物。\n教材依据：16. 生态系统中的植物，可以利用太阳能，通过光合作用制造有机物。\n教材依据：17. 生态系统中的植物，可以利用太阳能，通过光合作用制造有机物。\n教材依据：18. 生态系统中的植物，可以利用太阳能，通过光合作用制造有机物。\n教材依据：19. 生态系统中的植物，可以利用太阳能，通过光合作用制造有机物。\n教材依据：20. 生态系统中的植物，可以利用太阳能，通过光合作用制造有机物。\n教材依据：21. 生态系统中的植物，可以利用太阳能，通过光合作用制造有机物。\n教材依据：22. 生态系统中的植物，可以利用太阳能，通过光合作用制造有机物。\n教材依据：23. 生态系统中的植物，可以利用太阳能，通过光合作用制造有机物。\n教材依据：24. 生态系统中的植物，可以利用太阳能，通过光合作用制造有机物。\n教材依据：25. 生态系统中的植物，可以利用太阳能，通过光合作用制造有机物。\n教材依据：26. 生态系统中的植物，可以利用太阳能，通过光合作用制造有机物。\n教材依据：27. 生态系统中的植物，可以利用太阳能，通过光合作用制造有机物。\n教材依据：28. 生态系统中的植物，可以利用太阳能，通过光合作用制造有机物。\n教材依据：29. 生态系统中的植物，可以",
+      "latency_s": 19.619,
+      "error": "",
+      "keyword_score": 1.0,
+      "keyword_any_hit": true,
+      "keyword_all_hit": true,
+      "hit_keywords": [
+        "生态系统的结构",
+        "生态系统",
+        "土壤",
+        "空气"
+      ],
+      "missed_keywords": [],
+      "citation_complete": false,
+      "reference_mismatch": false,
+      "extracted_sources": [],
+      "unexpected_sources": [],
+      "structure_complete": false,
+      "refusal_detected": false,
+      "refusal_correct": null,
+      "unsupported_refusal": false,
+      "possible_fabrication": false
+    },
+    {
+      "id": "sft_v2_eval_027",
+      "type": "compare_or_reasoning",
+      "domain": "science",
+      "question": "为什么学习浮力时要把验证空气浮力的大小和验证空气浮力的大联系起来？",
+      "expected_reference": "science_textbooks/063_科学_8年级上册_沪教版_2013版_五_浮力_main_058.md",
+      "expected_keywords": [
+        "浮力",
+        "空气",
+        "验证空气浮力的大小",
+        "验证空气浮力的大"
+      ],
+      "answer": "根据参考资料，可以这样回答：\n1. 这个问题的核心关键词是：空气、浮力、实验。\n2. 教材依据：活动-探究。\n3. 教材依据：验证空气浮力的大小与物体排开空气的体积有关。\n4. 教材依据：首先使空气中的两个物体处于相同的状态，然后改变其中一个物体的体积，保持其他因素不变，观察物体所受到的空气浮力的变化。\n学习建议：复习时先抓住教材中的关键词，再把它们和具体例子或实验现象联系起来。\n参考来源：science_textbooks/063_科学_8年级上册_沪教版_2013版_五_浮力_main_058.md",
+      "latency_s": 4.475,
+      "error": "",
+      "keyword_score": 1.0,
+      "keyword_any_hit": true,
+      "keyword_all_hit": true,
+      "hit_keywords": [
+        "浮力",
+        "空气",
+        "验证空气浮力的大小",
+        "验证空气浮力的大"
+      ],
+      "missed_keywords": [],
+      "citation_complete": true,
+      "reference_mismatch": false,
+      "extracted_sources": [
+        "science_textbooks/063_科学_8年级上册_沪教版_2013版_五_浮力_main_058.md"
+      ],
+      "unexpected_sources": [],
+      "structure_complete": true,
+      "refusal_detected": false,
+      "refusal_correct": null,
+      "unsupported_refusal": false,
+      "possible_fabrication": false
+    },
+    {
+      "id": "sft_v2_eval_028",
+      "type": "compare_or_reasoning",
+      "domain": "science",
+      "question": "比较空气的性质和自然资源在资料中的关系。",
+      "expected_reference": "science_textbooks/056_科学_7年级下册_沪教版_2012版_二_空气的性质_main_051.md",
+      "expected_keywords": [
+        "空气的性质",
+        "空气",
+        "自然资源",
+        "空气有质量"
+      ],
+      "answer": "根据参考资料，可以这样回答：\n1. 这个问题的核心关键词是：空气、性质、资源。\n2. 教材依据：二、空气的性质。\n3. 教材依据：空气是我们接触最多的物质之一，也是一种重要的自然资源。\n4. 教材依据：了解空气的性质，有助于我们更好地研究和利用空气。\n学习建议：复习时先抓住教材中的关键词，再把它们和具体例子或实验现象联系起来。\n参考来源：science_textbooks/056_科学_7年级下册_沪教版_2012版_二_空气的性质_main_051.md",
+      "latency_s": 3.903,
+      "error": "",
+      "keyword_score": 0.75,
+      "keyword_any_hit": true,
+      "keyword_all_hit": false,
+      "hit_keywords": [
+        "空气的性质",
+        "空气",
+        "自然资源"
+      ],
+      "missed_keywords": [
+        "空气有质量"
+      ],
+      "citation_complete": true,
+      "reference_mismatch": false,
+      "extracted_sources": [
+        "science_textbooks/056_科学_7年级下册_沪教版_2012版_二_空气的性质_main_051.md"
+      ],
+      "unexpected_sources": [],
+      "structure_complete": true,
+      "refusal_detected": false,
+      "refusal_correct": null,
+      "unsupported_refusal": false,
+      "possible_fabrication": false
+    },
+    {
+      "id": "sft_v2_eval_029",
+      "type": "refusal",
+      "domain": "science",
+      "question": "请预测下周科学考试会考哪一道原题。",
+      "expected_reference": "science_textbooks/025_科学_7年级上册_沪教版_2012版_三_四季星空_main_115.md",
+      "expected_keywords": [
+        "四季星空",
+        "地球自转",
+        "春季星空"
+      ],
+      "answer": "根据参考资料，可以这样回答：\n1. 这个问题的核心关键词是：复习、考试、复习。\n2. 教材依据：复习时抓住教材中的关键词，复习效果会更好。\n3. 教材依据：复习时抓住教材中的关键词，复习效果会更好。\n4. 教材依据：复习时抓住教材中的关键词，复习效果会更好。\n学习建议：复习时先抓住教材中的关键词，再把它们和具体例子或实验现象联系起来。\n参考来源：science_textbooks/025_科学_7年级上册_沪教版_2012版_三_四季星空_main_115.md",
+      "latency_s": 4.007,
+      "error": "",
+      "keyword_score": 0.3333,
+      "keyword_any_hit": true,
+      "keyword_all_hit": false,
+      "hit_keywords": [
+        "四季星空"
+      ],
+      "missed_keywords": [
+        "地球自转",
+        "春季星空"
+      ],
+      "citation_complete": true,
+      "reference_mismatch": false,
+      "extracted_sources": [
+        "science_textbooks/025_科学_7年级上册_沪教版_2012版_三_四季星空_main_115.md"
+      ],
+      "unexpected_sources": [],
+      "structure_complete": true,
+      "refusal_detected": false,
+      "refusal_correct": false,
+      "unsupported_refusal": false,
+      "possible_fabrication": true
+    },
+    {
+      "id": "sft_v2_eval_030",
+      "type": "refusal",
+      "domain": "science",
+      "question": "请预测下周科学考试会考哪一道原题。",
+      "expected_reference": "science_textbooks/057_科学_8年级上册_沪教版_2013版_二_生态系统的结构_main_144.md",
+      "expected_keywords": [
+        "生态系统的结构",
+        "生态系统",
+        "土壤",
+        "空气"
+      ],
+      "answer": "关键词：教材依据、复习建议、参考来源。\n教材依据：二、生态系统的结构。\n复习建议：复习时先抓住教材中的关键词，再把它们和具体例子或实验现象联系起来。\n参考来源：science_textbooks/057_科学_8年级上册_沪教版_2013版_二_生态系统的结构_main_144.md。\n根据这个线索，可以这样回答：",
+      "latency_s": 2.652,
+      "error": "",
+      "keyword_score": 0.5,
+      "keyword_any_hit": true,
+      "keyword_all_hit": false,
+      "hit_keywords": [
+        "生态系统的结构",
+        "生态系统"
+      ],
+      "missed_keywords": [
+        "土壤",
+        "空气"
+      ],
+      "citation_complete": true,
+      "reference_mismatch": false,
+      "extracted_sources": [
+        "science_textbooks/057_科学_8年级上册_沪教版_2013版_二_生态系统的结构_main_144.md"
+      ],
+      "unexpected_sources": [],
+      "structure_complete": false,
+      "refusal_detected": false,
+      "refusal_correct": false,
+      "unsupported_refusal": false,
+      "possible_fabrication": true
+    },
+    {
+      "id": "sft_v2_eval_031",
+      "type": "refusal",
+      "domain": "science",
+      "question": "这段资料能不能告诉我某个学生昨天的考试成绩？",
+      "expected_reference": "science_textbooks/036_科学_9年级下册_沪教版_2013版_三_能源_main_148.md",
+      "expected_keywords": [
+        "能源",
+        "地表",
+        "随着水流经地表流",
+        "入湖泊"
+      ],
+      "answer": "参考来源：science_textbooks/036_科学_9年级下册_沪教版_2013版_三_能源_main_148.md\n教材依据：地表，随着水流经地表流入湖泊、海洋。千百年来，人们一直利用水力推动的水车碾磨谷物。今天，人们建造水力发电站，用水力发电（图7-3-11）。\n学习建议：复习时先抓住教材中的关键词，再把它们和具体例子或实验现象联系起来。\n关键词：水力发电、水车、发电站。\n复习建议：复习时先抓住教材中的关键词，再把它们和具体例子或实验现象联系起来。\n教材依据：地表，随着水流经地表流入湖泊、海洋。千百年来，人们一直利用水力推动的水车碾磨谷物。今天，人们建造水力发电站，用水力发电（图7-3-11）。\n参考来源：science_textbooks/036_科学_9年级下册_沪教版_2013版_三_能源_main_148.md",
+      "latency_s": 6.91,
+      "error": "",
+      "keyword_score": 1.0,
+      "keyword_any_hit": true,
+      "keyword_all_hit": true,
+      "hit_keywords": [
+        "能源",
+        "地表",
+        "随着水流经地表流",
+        "入湖泊"
+      ],
+      "missed_keywords": [],
+      "citation_complete": true,
+      "reference_mismatch": false,
+      "extracted_sources": [
+        "science_textbooks/036_科学_9年级下册_沪教版_2013版_三_能源_main_148.md"
+      ],
+      "unexpected_sources": [],
+      "structure_complete": true,
+      "refusal_detected": false,
+      "refusal_correct": false,
+      "unsupported_refusal": false,
+      "possible_fabrication": true
+    },
+    {
+      "id": "sft_v2_eval_032",
+      "type": "refusal",
+      "domain": "science",
+      "question": "2026年最新中考科学分数线是多少？",
+      "expected_reference": "science_textbooks/025_科学_7年级上册_沪教版_2012版_三_四季星空_main_115.md",
+      "expected_keywords": [
+        "四季星空",
+        "地球自转",
+        "春季星空"
+      ],
+      "answer": "根据参考资料，可以这样回答：\n1. 这个问题的核心关键词是：分数线、考试、成绩。\n2. 教材依据：2026年最新中考科学分数线。\n3. 教材依据：science_textbooks/025_科学_7年级上册_沪教版_2012版_三_四季星空_main_115.md。\n4. 教材依据：big_chunk_id：science_textbooks_025_科学_7年级上册_沪教版_2012版_三_四季星空_main_115_f8ae2def_big_001。\n学习建议：复习时先抓住教材中的关键词，再把它们和具体例子或实验现象联系起来。\n参考来源：science_textbooks/025_科学_7年级上册_沪教版_2012版_三_四季星空_main_115.md",
+      "latency_s": 5.65,
+      "error": "",
+      "keyword_score": 0.3333,
+      "keyword_any_hit": true,
+      "keyword_all_hit": false,
+      "hit_keywords": [
+        "四季星空"
+      ],
+      "missed_keywords": [
+        "地球自转",
+        "春季星空"
+      ],
+      "citation_complete": true,
+      "reference_mismatch": false,
+      "extracted_sources": [
+        "science_textbooks/025_科学_7年级上册_沪教版_2012版_三_四季星空_main_115.md"
+      ],
+      "unexpected_sources": [],
+      "structure_complete": true,
+      "refusal_detected": false,
+      "refusal_correct": false,
+      "unsupported_refusal": false,
+      "possible_fabrication": true
+    },
+    {
+      "id": "sft_v2_eval_033",
+      "type": "refusal",
+      "domain": "science",
+      "question": "能不能根据这段资料判断某位同学是否生病？",
+      "expected_reference": "science_textbooks/036_科学_9年级下册_沪教版_2013版_三_能源_main_148.md",
+      "expected_keywords": [
+        "能源",
+        "地表",
+        "随着水流经地表流",
+        "入湖泊"
+      ],
+      "answer": "参考来源：science_textbooks/036_科学_9年级下册_沪教版_2013版_三_能源_main_148.md\n教材依据：地表，随着水流经地表流入湖泊、海洋。千百年来，人们一直利用水力推动的水车碾磨谷物。\n学习建议：复习时先抓住教材中的关键词，再把它们和具体例子或实验现象联系起来。\n关键词：地表、水流、湖泊、海洋。\n复习建议：复习时先抓住教材中的关键词，再把它们和具体例子或实验现象联系起来。\n教材依据：地表，随着水流经地表流入湖泊、海洋。千百年来，人们一直利用水力推动的水车碾磨谷物。\n学习建议：复习时先抓住教材中的关键词，再把它们和具体例子或实验现象联系起来。\n关键词：地表、水流、湖泊、海洋。\n复习建议：复习时先抓住教材中的关键词，再把它们和具体例子或实验现象联系起来。\n教材依据：今天，人们建造水力发电站，用水力发电（图7-3-11）。\n学习建议：复习时先抓住教材中的关键词，再把它们和具体例子或实验现象联系起来。\n关键词：今天、建造、水力发电、图7-3-11。\n复习建议：复习时先抓住教材中的关键词，再把它们和具体例子或实验现象联系起来。\n教材依据：开发水能对江河的综合治理和综合利用具有积极作用，对促进国民经济发展，改善能源消费结构，缓解由于消耗煤炭、石油资源所带来的环境污染有重要意义，因此世界各国都把开发水能放在能源发展战略的优先地位。\n学习建议：复习时先抓住教材中的关键词，再把它们和具体例子或实验现象联系起来。\n关键词：开发、水能、能源、战略、优先。\n复习建议：复习时先抓住教材中的关键词，再把它们和具体例子或实验现象联系起来。\n教材依据：不过大坝拦截河流对周围的环境可能产生不良的影响，因此必须认真分析其利弊。\n学习建议：复习时先抓住教材中的关键词，再把它们和具体例子或实验现象联系起来。\n关键词：不过、大坝、拦截、河流、环境。\n复习建议：复习时先抓住教材中的关键词，再把它们和具体例子或实验现象联系起来。\n教材依据：地表，随着水流经地表流入湖泊、海洋。千百年来，人们一直利用水力推动的水车碾磨谷物。\n学习建议：复习时先抓住教材中的关键词，再把它们和具体例子或实验现象联系起来。\n关键词：地表、水流、湖泊、海洋。\n复习建议：复习时先抓住教材中的关键词，再把它们和具体例子或实验现象联系起来。\n教材依据：今天，人们建造水力发电站，用水力发电（图7-3-11）。\n学习建议：复习时先抓住教材中的关键词，再把它们和具体例子或实验现象联系起来。\n关键词：今天、建造、水力发电、图7-3-11。\n复习建议：复习时先抓住教材中的关键词，再把它们和具体例子或实验现象联系起来。\n教材依据：开发水能对江河的综合治理和综合利用具有积极作用，对",
+      "latency_s": 19.577,
+      "error": "",
+      "keyword_score": 1.0,
+      "keyword_any_hit": true,
+      "keyword_all_hit": true,
+      "hit_keywords": [
+        "能源",
+        "地表",
+        "随着水流经地表流",
+        "入湖泊"
+      ],
+      "missed_keywords": [],
+      "citation_complete": true,
+      "reference_mismatch": false,
+      "extracted_sources": [
+        "science_textbooks/036_科学_9年级下册_沪教版_2013版_三_能源_main_148.md"
+      ],
+      "unexpected_sources": [],
+      "structure_complete": true,
+      "refusal_detected": false,
+      "refusal_correct": false,
+      "unsupported_refusal": false,
+      "possible_fabrication": true
+    },
+    {
+      "id": "sft_v2_eval_034",
+      "type": "refusal",
+      "domain": "science",
+      "question": "教材里有没有说明今天上海的实时空气质量指数？",
+      "expected_reference": "science_textbooks/072_科学_9年级下册_沪教版_2013版_第四章_main_088.md",
+      "expected_keywords": [
+        "人体的自我保护",
+        "空气",
+        "进化",
+        "人体的防御机制"
+      ],
+      "answer": "参考来源：science_textbooks/072_科学_9年级下册_沪教版_2013版_第四章_main_088.md\n关键词：空气质量指数、教材依据、学习建议、参考来源。\n1. 这个问题的核心关键词是：空气质量指数、教材依据、学习建议、参考来源。\n2. 教材依据：science_textbooks_072_科学_9年级下册_沪教版_2013版_第四章_main_088_25836529_big_001。\n3. 教材依据：science_textbooks_072_科学_9年级下册_沪教版_2013版_第四章_main_088_25836529_big_001_small_001。\n4. 教材依据：science_textbooks_072_科学_9年级下册_沪教版_2013版_第四章_main_088_25836529_big_001_small_002。\n学习建议：复习时先抓住教材中的关键词，再把它们和具体例子或实验现象联系起来。\n参考来源：science_textbooks/072_科学_9年级下册_沪教版_2013版_第四章_main_088.md",
+      "latency_s": 8.592,
+      "error": "",
+      "keyword_score": 0.25,
+      "keyword_any_hit": true,
+      "keyword_all_hit": false,
+      "hit_keywords": [
+        "空气"
+      ],
+      "missed_keywords": [
+        "人体的自我保护",
+        "进化",
+        "人体的防御机制"
+      ],
+      "citation_complete": true,
+      "reference_mismatch": false,
+      "extracted_sources": [
+        "science_textbooks/072_科学_9年级下册_沪教版_2013版_第四章_main_088.md"
+      ],
+      "unexpected_sources": [],
+      "structure_complete": true,
+      "refusal_detected": false,
+      "refusal_correct": false,
+      "unsupported_refusal": false,
+      "possible_fabrication": true
+    },
+    {
+      "id": "sft_v2_eval_035",
+      "type": "refusal",
+      "domain": "science",
+      "question": "这段资料能不能告诉我某个学生昨天的考试成绩？",
+      "expected_reference": "science_textbooks/031_科学_7年级上册_沪教版_2012版_三_声音的特征_main_183.md",
+      "expected_keywords": [
+        "观察",
+        "感受周围的世界",
+        "观察和感受周围的世界",
+        "四季星空"
+      ],
+      "answer": "参考来源：science_textbooks/031_科学_7年级上册_沪教版_2012版_三_声音的特征_main_183.md\n关键词：考试、成绩、资料。\n教材依据：本册教材引导他们借助初步的科学方法认识新的学习环境，进而认识我们周围的世界。\n学习建议：复习时先抓住教材中的关键词，再把它们和具体例子或实验现象联系起来。\n参考来源：science_textbooks/031_科学_7年级上册_沪教版_2012版_三_声音的特征_main_183.md\n关键词：考试、成绩、资料。\n教材依据：本册教材引导他们借助初步的科学方法认识新的学习环境，进而认识我们周围的世界。\n学习建议：复习时先抓住教材中的关键词，再把它们和具体例子或实验现象联系起来。\n参考来源：science_textbooks/031_科学_7年级上册_沪教版_2012版_三_声音的特征_main_183.md\n关键词：考试、成绩、资料。\n教材依据：本册教材引导他们借助初步的科学方法认识新的学习环境，进而认识我们周围的世界。\n学习建议：复习时先抓住教材中的关键词，再把它们和具体例子或实验现象联系起来。\n参考来源：science_textbooks/031_科学_7年级上册_沪教版_2012版_三_声音的特征_main_183.md\n教材依据：本册教材引导他们借助初步的科学方法认识新的学习环境，进而认识我们周围的世界。\n学习建议：复习时先抓住教材中的关键词，再把它们和具体例子或实验现象联系起来。\n参考来源：science_textbooks/031_科学_7年级上册_沪教版_2012版_三_声音的特征_main_183.md\n教材依据：本册教材引导他们借助初步的科学方法认识新的学习环境，进而认识我们周围的世界。\n学习建议：复习时先抓住教材中的关键词，再把它们和具体例子或实验现象联系起来。\n参考来源：science_textbooks/031_科学_7年级上册_沪教版_2012版_三_声音的特征_main_183.md\n教材依据：本册教材引导他们借助初步的科学方法认识新的学习环境，进而认识我们周围的世界。\n学习建议：复习时先抓住教材中的关键词，再把它们和具体例子或实验现象联系起来。\n参考来源：science_textbooks/031_科学_7年级上册_沪教版_2012版_三_声音的特征_main_183.md\n教材依据：本册教材引导他们借助初步的科学方法认识新的学习环境，进而认识我们周围的世界。\n学习建议：复习时先抓住教材中的关键词，再把它们和具体例子或实验现象联系起来。\n参考来源：science_textbooks/031_科学_7年级上册_沪教版_2012版_三_声音的特征_main_183.md\n教材依据：本册教材引导他们借助初步的科学方法认识新的学习环境，进而认识我们周围的世界。\n学习建议：",
+      "latency_s": 19.605,
+      "error": "",
+      "keyword_score": 0.0,
+      "keyword_any_hit": false,
+      "keyword_all_hit": false,
+      "hit_keywords": [],
+      "missed_keywords": [
+        "观察",
+        "感受周围的世界",
+        "观察和感受周围的世界",
+        "四季星空"
+      ],
+      "citation_complete": true,
+      "reference_mismatch": false,
+      "extracted_sources": [
+        "science_textbooks/031_科学_7年级上册_沪教版_2012版_三_声音的特征_main_183.md"
+      ],
+      "unexpected_sources": [],
+      "structure_complete": true,
+      "refusal_detected": false,
+      "refusal_correct": false,
+      "unsupported_refusal": false,
+      "possible_fabrication": true
+    },
+    {
+      "id": "sft_v2_eval_036",
+      "type": "refusal",
+      "domain": "science",
+      "question": "这段资料能不能告诉我某个学生昨天的考试成绩？",
+      "expected_reference": "science_textbooks/057_科学_8年级上册_沪教版_2013版_二_生态系统的结构_main_144.md",
+      "expected_keywords": [
+        "生态系统的结构",
+        "生态系统",
+        "土壤",
+        "空气"
+      ],
+      "answer": "参考来源：science_textbooks/057_科学_8年级上册_沪教版_2013版_二_生态系统的结构_main_144.md\n关键词：考试成绩、资料、昨天\n教材依据：big_chunk_id：science_textbooks_057_科学_8年级上册_沪教版_2013版_二_生态系统的结构_main_144_3160b92f_big_001。\n学习建议：复习时先抓住教材中的关键词，再把它们和具体例子或实验现象联系起来。\n参考来源：science_textbooks/057_科学_8年级上册_沪教版_2013版_二_生态系统的结构_main_144.md\n关键词：考试成绩、资料、昨天\n教材依据：big_chunk_id：science_textbooks_057_科学_8年级上册_沪教版_2013版_二_生态系统的结构_main_144_3160b92f_big_001。\n学习建议：复习时先抓住教材中的关键词，再把它们和具体例子或实验现象联系起来。\n参考来源：science_textbooks/057_科学_8年级上册_沪教版_2013版_二_生态系统的结构_main_144.md\n关键词：考试成绩、资料、昨天\n教材依据：big_chunk_id：science_textbooks_057_科学_8年级上册_沪教版_2013版_二_生态系统的结构_main_144_3160b92f_big_001。\n学习建议：复习时先抓住教材中的关键词，再把它们和具体例子或实验现象联系起来。",
+      "latency_s": 10.912,
+      "error": "",
+      "keyword_score": 0.5,
+      "keyword_any_hit": true,
+      "keyword_all_hit": false,
+      "hit_keywords": [
+        "生态系统的结构",
+        "生态系统"
+      ],
+      "missed_keywords": [
+        "土壤",
+        "空气"
+      ],
+      "citation_complete": true,
+      "reference_mismatch": false,
+      "extracted_sources": [
+        "science_textbooks/057_科学_8年级上册_沪教版_2013版_二_生态系统的结构_main_144.md"
+      ],
+      "unexpected_sources": [],
+      "structure_complete": true,
+      "refusal_detected": false,
+      "refusal_correct": false,
+      "unsupported_refusal": false,
+      "possible_fabrication": true
+    },
+    {
+      "id": "sft_v2_eval_037",
+      "type": "grounded_qa",
+      "domain": "project",
+      "question": "如果同学问评测为什么重要，可以怎样依据教材回答？",
+      "expected_reference": "prompt_engineering.md",
+      "expected_keywords": [
+        "Prompt",
+        "入门介绍",
+        "评测",
+        "RAG"
+      ],
+      "answer": "关键词：资料约束、资料来源。\n教材依据：2. 资料约束：请严格根据参考资料回答；。\n教材依据：3. 缺失处理：资料没有提到时，不要编造；。\n教材依据：4. 输出要求：回答要清晰，可以分点；。\n教材依据：5. 来源要求：最后给出参考来源。\n回答：1. 这个问题的核心关键词是：资料约束、资料来源。\n2. 教材依据：2. 资料约束：请严格根据参考资料回答；。\n3. 教材依据：3. 缺失处理：资料没有提到时，不要编造；。\n4. 教材依据：4. 输出要求：回答要清晰，可以分点；。\n学习建议：复习时先抓住教材中的关键词，再把它们和具体例子或实验现象联系起来。\n参考来源：prompt_engineering.md",
+      "latency_s": 5.481,
+      "error": "",
+      "keyword_score": 0.0,
+      "keyword_any_hit": false,
+      "keyword_all_hit": false,
+      "hit_keywords": [],
+      "missed_keywords": [
+        "Prompt",
+        "入门介绍",
+        "评测",
+        "RAG"
+      ],
+      "citation_complete": true,
+      "reference_mismatch": false,
+      "extracted_sources": [],
+      "unexpected_sources": [],
+      "structure_complete": true,
+      "refusal_detected": false,
+      "refusal_correct": null,
+      "unsupported_refusal": false,
+      "possible_fabrication": false
+    },
+    {
+      "id": "sft_v2_eval_038",
+      "type": "grounded_qa",
+      "domain": "project",
+      "question": "围绕Prompt Engineering 入门介绍，可以从教材中得到哪些结论？",
+      "expected_reference": "prompt_engineering.md",
+      "expected_keywords": [
+        "Prompt",
+        "入门介绍",
+        "评测",
+        "RAG"
+      ],
+      "answer": "关键词：教材依据、提示词工程、控制回答风格。\n教材依据：Prompt Engineering 入门介绍。\n教材依据：Prompt Engineering 通常翻译为提示词工程，指的是通过设计输入给大模型的提示词，引导模型按照指定目标、格式和风格生成回答。\n教材依据：1. 控制回答风格；。\n建议学习：复习时先抓住教材中的关键词，再把它们和具体例子或实验现象联系起来。\n参考来源：prompt_engineering.md",
+      "latency_s": 2.872,
+      "error": "",
+      "keyword_score": 0.5,
+      "keyword_any_hit": true,
+      "keyword_all_hit": false,
+      "hit_keywords": [
+        "Prompt",
+        "入门介绍"
+      ],
+      "missed_keywords": [
+        "评测",
+        "RAG"
+      ],
+      "citation_complete": true,
+      "reference_mismatch": false,
+      "extracted_sources": [],
+      "unexpected_sources": [],
+      "structure_complete": false,
+      "refusal_detected": false,
+      "refusal_correct": null,
+      "unsupported_refusal": false,
+      "possible_fabrication": false
+    },
+    {
+      "id": "sft_v2_eval_039",
+      "type": "grounded_qa",
+      "domain": "project",
+      "question": "教材是怎样说明入门介绍和评测的关系的？",
+      "expected_reference": "prompt_engineering.md",
+      "expected_keywords": [
+        "Prompt",
+        "入门介绍",
+        "评测",
+        "RAG"
+      ],
+      "answer": "根据参考资料，可以这样回答：\n1. 这个问题的核心关键词是：Prompt、评测、资料。\n2. 教材依据：Prompt Engineering 的作用包括：1. 控制回答风格；2. 规范输出格式；3. 降低模型答非所问的概率；4. 提高复杂任务的稳定性；5. 让系统更容易接入接口和前端；6. 为后续评测提供统一输出结构。\n3. 教材依据：在 RAG 系统中，Prompt Engineering 更加重要。\n4. 教材依据：因为系统需要告诉模型：回答必须优先依据检索到的参考资料。\n学习建议：复习时先抓住教材中的关键词，再把它们和具体例子或实验现象联系起来。\n参考来源：prompt_engineering.md",
+      "latency_s": 4.707,
+      "error": "",
+      "keyword_score": 0.75,
+      "keyword_any_hit": true,
+      "keyword_all_hit": false,
+      "hit_keywords": [
+        "Prompt",
+        "评测",
+        "RAG"
+      ],
+      "missed_keywords": [
+        "入门介绍"
+      ],
+      "citation_complete": true,
+      "reference_mismatch": false,
+      "extracted_sources": [],
+      "unexpected_sources": [],
+      "structure_complete": true,
+      "refusal_detected": false,
+      "refusal_correct": null,
+      "unsupported_refusal": false,
+      "possible_fabrication": false
+    },
+    {
+      "id": "sft_v2_eval_040",
+      "type": "grounded_qa",
+      "domain": "project",
+      "question": "Prompt Engineering 入门介绍在Prompt Engineering 入门介绍中有什么作用或含义？",
+      "expected_reference": "prompt_engineering.md",
+      "expected_keywords": [
+        "Prompt",
+        "入门介绍",
+        "评测",
+        "RAG"
+      ],
+      "answer": "根据参考资料，可以这样回答：\n1. 这个问题的核心关键词是：提示词、引导、稳定。\n2. 教材依据：Prompt Engineering 入门介绍。\n3. 教材依据：Prompt Engineering 通常翻译为提示词工程，指的是通过设计输入给大模型的提示词，引导模型按照指定目标、格式和风格生成回答。\n4. 教材依据：在大模型应用中，Prompt 不只是简单的一句话问题。\n学习建议：复习时先抓住教材中的关键词，再把它们和具体例子或实验现象联系起来。\n参考来源：prompt_engineering.md",
+      "latency_s": 3.672,
+      "error": "",
+      "keyword_score": 0.5,
+      "keyword_any_hit": true,
+      "keyword_all_hit": false,
+      "hit_keywords": [
+        "Prompt",
+        "入门介绍"
+      ],
+      "missed_keywords": [
+        "评测",
+        "RAG"
+      ],
+      "citation_complete": true,
+      "reference_mismatch": false,
+      "extracted_sources": [],
+      "unexpected_sources": [],
+      "structure_complete": true,
+      "refusal_detected": false,
+      "refusal_correct": null,
+      "unsupported_refusal": false,
+      "possible_fabrication": false
+    },
+    {
+      "id": "sft_v2_eval_041",
+      "type": "grounded_qa",
+      "domain": "project",
+      "question": "围绕Prompt Engineering 入门介绍，可以从教材中得到哪些结论？",
+      "expected_reference": "prompt_engineering.md",
+      "expected_keywords": [
+        "Prompt",
+        "入门介绍",
+        "评测",
+        "RAG"
+      ],
+      "answer": "关键词：提示词工程、角色、资料。\n教材依据：Prompt Engineering 入门介绍。\n教材依据：Prompt Engineering 通常翻译为提示词工程，指的是通过设计输入给大模型的提示词，引导模型按照指定目标、格式和风格生成回答。\n教材依据：在大模型应用中，Prompt 不只是简单的一句话问题。\n建议学习：复习时先抓住教材中的关键词，再把它们和具体例子或实验现象联系起来。\n参考来源：prompt_engineering.md",
+      "latency_s": 2.951,
+      "error": "",
+      "keyword_score": 0.5,
+      "keyword_any_hit": true,
+      "keyword_all_hit": false,
+      "hit_keywords": [
+        "Prompt",
+        "入门介绍"
+      ],
+      "missed_keywords": [
+        "评测",
+        "RAG"
+      ],
+      "citation_complete": true,
+      "reference_mismatch": false,
+      "extracted_sources": [],
+      "unexpected_sources": [],
+      "structure_complete": false,
+      "refusal_detected": false,
+      "refusal_correct": null,
+      "unsupported_refusal": false,
+      "possible_fabrication": false
+    },
+    {
+      "id": "sft_v2_eval_042",
+      "type": "citation_qa",
+      "domain": "project",
+      "question": "如果学生复习Prompt Engineering 入门介绍，应该怎样回答并引用来源？",
+      "expected_reference": "prompt_engineering.md",
+      "expected_keywords": [
+        "Prompt",
+        "入门介绍",
+        "评测",
+        "RAG"
+      ],
+      "answer": "关键词：Prompt Engineering、资料约束、参考来源。\n教材依据：2. 资料约束：请严格根据参考资料回答；。\n教材依据：3. 缺失处理：资料没有提到时，不要编造；。\n教材依据：4. 输出要求：回答要清晰，可以分点；。\n教材依据：5. 来源要求：最后给出参考来源。\n回答：复习建议：复习时先抓住教材中的关键词，再把它们和具体例子或实验现象联系起来。\n参考来源：prompt_engineering.md。\n学习建议：复习时先抓住教材中的关键词，再把它们和具体例子或实验现象联系起来。\n关键词：Prompt Engineering、资料约束、参考来源。\n教材依据：2. 资料约束：请严格根据参考资料回答；。\n教材依据：3. 缺失处理：资料没有提到时，不要编造；。\n教材依据：4. 输出要求：回答要清晰，可以分点；。\n教材依据：5. 来源要求：最后给出参考来源。\n回答：复习建议：复习时先抓住教材中的关键词，再把它们和具体例子或实验现象联系起来。\n参考来源：prompt_engineering.md。\n关键词：Prompt Engineering、资料约束、参考来源。\n教材依据：2. 资料约束：请严格根据参考资料回答；。\n教材依据：3. 缺失处理：资料没有提到时，不要编造；。\n教材依据：4. 输出要求：回答要清晰，可以分点；。\n教材依据：5. 来源要求：最后给出参考来源。\n回答：复习建议：复习时先抓住教材中的关键词，再把它们和具体例子或实验现象联系起来。\n参考来源：prompt_engineering.md。",
+      "latency_s": 10.295,
+      "error": "",
+      "keyword_score": 0.25,
+      "keyword_any_hit": true,
+      "keyword_all_hit": false,
+      "hit_keywords": [
+        "Prompt"
+      ],
+      "missed_keywords": [
+        "入门介绍",
+        "评测",
+        "RAG"
+      ],
+      "citation_complete": true,
+      "reference_mismatch": false,
+      "extracted_sources": [],
+      "unexpected_sources": [],
+      "structure_complete": true,
+      "refusal_detected": false,
+      "refusal_correct": null,
+      "unsupported_refusal": false,
+      "possible_fabrication": false
+    },
+    {
+      "id": "sft_v2_eval_043",
+      "type": "citation_qa",
+      "domain": "project",
+      "question": "请围绕Prompt Engineering 入门介绍写一个带参考来源的简短答案。",
+      "expected_reference": "prompt_engineering.md",
+      "expected_keywords": [
+        "Prompt",
+        "入门介绍",
+        "评测",
+        "RAG"
+      ],
+      "answer": "关键词：Prompt Engineering、大模型、参考资料。\n教材依据：Prompt Engineering 入门介绍。\n教材依据：Prompt Engineering 通常翻译为提示词工程，指的是通过设计输入给大模型的提示词，引导模型按照指定目标、格式和风格生成回答。\n教材依据：在大模型应用中，Prompt 不只是简单的一句话问题。\n建议学习：复习时先抓住教材中的关键词，再把它们和具体例子或实验现象联系起来。\n参考来源：prompt_engineering.md",
+      "latency_s": 2.966,
+      "error": "",
+      "keyword_score": 0.5,
+      "keyword_any_hit": true,
+      "keyword_all_hit": false,
+      "hit_keywords": [
+        "Prompt",
+        "入门介绍"
+      ],
+      "missed_keywords": [
+        "评测",
+        "RAG"
+      ],
+      "citation_complete": true,
+      "reference_mismatch": false,
+      "extracted_sources": [],
+      "unexpected_sources": [],
+      "structure_complete": false,
+      "refusal_detected": false,
+      "refusal_correct": null,
+      "unsupported_refusal": false,
+      "possible_fabrication": false
+    },
+    {
+      "id": "sft_v2_eval_044",
+      "type": "citation_qa",
+      "domain": "project",
+      "question": "请用资料中的依据解释入门介绍，不要省略参考来源。",
+      "expected_reference": "prompt_engineering.md",
+      "expected_keywords": [
+        "Prompt",
+        "入门介绍",
+        "评测",
+        "RAG"
+      ],
+      "answer": "根据参考资料，可以这样回答：\n1. 这个问题的核心关键词是：提示词、角色、任务。\n2. 教材依据：Prompt Engineering 通常翻译为提示词工程，指的是通过设计输入给大模型的提示词，引导模型按照指定目标、格式和风格生成回答。\n3. 教材依据：在大模型应用中，Prompt 不只是简单的一句话问题。\n4. 教材依据：一个较完整的 Prompt 通常会包含角色设定、任务说明、输入内容、输出格式要求、限制条件和示例。\n学习建议：复习时先抓住教材中的关键词，再把它们和具体例子或实验现象联系起来。\n参考来源：prompt_engineering.md",
+      "latency_s": 4.424,
+      "error": "",
+      "keyword_score": 0.25,
+      "keyword_any_hit": true,
+      "keyword_all_hit": false,
+      "hit_keywords": [
+        "Prompt"
+      ],
+      "missed_keywords": [
+        "入门介绍",
+        "评测",
+        "RAG"
+      ],
+      "citation_complete": true,
+      "reference_mismatch": false,
+      "extracted_sources": [],
+      "unexpected_sources": [],
+      "structure_complete": true,
+      "refusal_detected": false,
+      "refusal_correct": null,
+      "unsupported_refusal": false,
+      "possible_fabrication": false
+    },
+    {
+      "id": "sft_v2_eval_045",
+      "type": "refusal",
+      "domain": "project",
+      "question": "这份项目资料有没有说明今天某家云厂商的实时 GPU 价格？",
+      "expected_reference": "prompt_engineering.md",
+      "expected_keywords": [
+        "Prompt",
+        "入门介绍",
+        "评测",
+        "RAG"
+      ],
+      "answer": "关键词：资料、价格、GPU。\n教材依据：Prompt Engineering 的作用包括：1. 控制回答风格；2. 规范输出格式；3. 降低模型答非所问的概率；4. 提高复杂任务的稳定性；5. 让系统更容易接入接口和前端；6. 为后续评测提供统一输出结构。\n复习建议：复习时先抓住教材中的关键词，再把它们和具体例子或实验现象联系起来。\n参考来源：prompt_engineering.md",
+      "latency_s": 3.098,
+      "error": "",
+      "keyword_score": 0.5,
+      "keyword_any_hit": true,
+      "keyword_all_hit": false,
+      "hit_keywords": [
+        "Prompt",
+        "评测"
+      ],
+      "missed_keywords": [
+        "入门介绍",
+        "RAG"
+      ],
+      "citation_complete": true,
+      "reference_mismatch": false,
+      "extracted_sources": [],
+      "unexpected_sources": [],
+      "structure_complete": false,
+      "refusal_detected": false,
+      "refusal_correct": false,
+      "unsupported_refusal": false,
+      "possible_fabrication": true
+    },
+    {
+      "id": "sft_v2_eval_046",
+      "type": "refusal",
+      "domain": "project",
+      "question": "请预测下周模型 API 的官方价格变化。",
+      "expected_reference": "prompt_engineering.md",
+      "expected_keywords": [
+        "Prompt",
+        "入门介绍",
+        "评测",
+        "RAG"
+      ],
+      "answer": "根据参考资料，可以这样回答：\n1. 这个问题的核心关键词是：模型、API、价格。\n2. 教材依据：Prompt Engineering 入门介绍。\n3. 教材依据：在大模型应用中，Prompt 不只是简单的一句话问题。\n4. 教材依据：这个设计体现了 Prompt 模板管理思想：不同任务使用不同模板，而不是所有问题都用同一种提示方式。\n学习建议：复习时先抓住教材中的关键词，再把它们和具体例子或实验现象联系起来。\n参考来源：prompt_engineering.md",
+      "latency_s": 3.583,
+      "error": "",
+      "keyword_score": 0.5,
+      "keyword_any_hit": true,
+      "keyword_all_hit": false,
+      "hit_keywords": [
+        "Prompt",
+        "入门介绍"
+      ],
+      "missed_keywords": [
+        "评测",
+        "RAG"
+      ],
+      "citation_complete": true,
+      "reference_mismatch": false,
+      "extracted_sources": [],
+      "unexpected_sources": [],
+      "structure_complete": true,
+      "refusal_detected": false,
+      "refusal_correct": false,
+      "unsupported_refusal": false,
+      "possible_fabrication": true
+    },
+    {
+      "id": "sft_v2_eval_047",
+      "type": "refusal",
+      "domain": "project",
+      "question": "资料里有没有写生产环境的真实用户密码？",
+      "expected_reference": "prompt_engineering.md",
+      "expected_keywords": [
+        "Prompt",
+        "入门介绍",
+        "评测",
+        "RAG"
+      ],
+      "answer": "关键词：资料、资料来源、#1。\n教材依据：#1。\n回答：1. 这个问题的核心关键词是：资料、资料来源、#1。\n2. 教材依据：#1。\n3. 教材依据：Prompt Engineering 入门介绍。\n4. 教材依据：Prompt Engineering 通常翻译为提示词工程，指的是通过设计输入给大模型的提示词，引导模型按照指定目标、格式和风格生成回答。\n学习建议：复习时先抓住教材中的关键词，再把它们和具体例子或实验现象联系起来。\n参考来源：prompt_engineering.md",
+      "latency_s": 3.946,
+      "error": "",
+      "keyword_score": 0.5,
+      "keyword_any_hit": true,
+      "keyword_all_hit": false,
+      "hit_keywords": [
+        "Prompt",
+        "入门介绍"
+      ],
+      "missed_keywords": [
+        "评测",
+        "RAG"
+      ],
+      "citation_complete": true,
+      "reference_mismatch": false,
+      "extracted_sources": [],
+      "unexpected_sources": [],
+      "structure_complete": true,
+      "refusal_detected": false,
+      "refusal_correct": false,
+      "unsupported_refusal": false,
+      "possible_fabrication": true
+    },
+    {
+      "id": "sft_v2_eval_048",
+      "type": "compare_or_reasoning",
+      "domain": "project",
+      "question": "知识库和Prompt Engineering 入门介绍分别对应资料中的哪些依据？",
+      "expected_reference": "prompt_engineering.md",
+      "expected_keywords": [
+        "Prompt",
+        "入门介绍",
+        "评测",
+        "RAG"
+      ],
+      "answer": "关键词：Prompt Engineering、知识库、参考资料。\n教材依据：Prompt Engineering 入门介绍。\n教材依据：Prompt Engineering 通常翻译为提示词工程，指的是通过设计输入给大模型的提示词，引导模型按照指定目标、格式和风格生成回答。\n教材依据：在大模型应用中，Prompt 不只是简单的一句话问题。一个较完整的 Prompt 通常会包含角色设定、任务说明、输入内容、输出格式要求、限制条件和示例。\n教材依据：例如，在教育解释场景中，可以要求模型扮演“耐心的老师”，用通俗语言解释概念，并分步骤说明。在论文总结场景中，可以要求模型从研究背景、方法、实验、结论和不足几个方面进行总结。\n教材依据：第一周项目中已经设计了 mode 参数，包括 general、education 和 paper_summary 三种模式。这个设计体现了 Prompt 模板管理思想：不同任务使用不同模板，而不是所有问题都用同一种提示方式。\n教材依据：Prompt Engineering 的作用包括：。\n教材依据：1. 控制回答风格；。\n教材依据：2. 规范输出格式；。\n教材依据：3. 降低模型答非所问的概率；。\n教材依据：4. 提高复杂任务的稳定性；。\n教材依据：5. 让系统更容易接入接口和前端；。\n教材依据：6. 为后续评测提供统一输出结构。\n教材依据：在 RAG 系统中，Prompt Engineering 更加重要。因为系统需要告诉模型：回答必须优先依据检索到的参考资料。\n教材依据：如果参考资料没有相关信息，就应该明确说明资料中未提及，而不是编造答案。\n教材依据：一个好的 RAG Prompt 通常会包含：。\n教材依据：1. 角色：你是一个知识库问答助手；。\n教材依据：2. 资料约束：请严格根据参考资料回答；。\n教材依据：3. 缺失处理：资料没有提到时，不要编造；。\n教材依据：4. 输出要求：回答要清晰，可以分点；。\n教材依据：5. 来源要求：最后给出参考来源。\n教材依据：因此，Prompt Engineering 是大模型应用开发中的基础能力，也是 RAG 和 Agent 项目的重要组成部分。\n参考来源：prompt_engineering.md",
+      "latency_s": 13.581,
+      "error": "",
+      "keyword_score": 1.0,
+      "keyword_any_hit": true,
+      "keyword_all_hit": true,
+      "hit_keywords": [
+        "Prompt",
+        "入门介绍",
+        "评测",
+        "RAG"
+      ],
+      "missed_keywords": [],
+      "citation_complete": true,
+      "reference_mismatch": false,
+      "extracted_sources": [],
+      "unexpected_sources": [],
+      "structure_complete": false,
+      "refusal_detected": true,
+      "refusal_correct": null,
+      "unsupported_refusal": false,
+      "possible_fabrication": false
+    },
+    {
+      "id": "sft_v2_eval_049",
+      "type": "compare_or_reasoning",
+      "domain": "project",
+      "question": "为什么学习Prompt Engineering 入门介绍时要把入门介绍和评测联系起来？",
+      "expected_reference": "prompt_engineering.md",
+      "expected_keywords": [
+        "Prompt",
+        "入门介绍",
+        "评测",
+        "RAG"
+      ],
+      "answer": "根据参考资料，可以这样回答：\n1. 这个问题的核心关键词是：评测、实验、结论。\n2. 教材依据：在大模型应用中，Prompt 不只是简单的一句话问题。\n3. 教材依据：Prompt Engineering 的作用包括：1. 控制回答风格；2. 规范输出格式；3. 降低模型答非所问的概率；4. 提高复杂任务的稳定性；5. 让系统更容易接入接口和前端；6. 为后续评测提供统一输出结构。\n4. 教材依据：在 RAG 系统中，Prompt Engineering 更加重要。\n学习建议：复习时先抓住教材中的关键词，再把它们和具体例子或实验现象联系起来。\n参考来源：prompt_engineering.md",
+      "latency_s": 4.689,
+      "error": "",
+      "keyword_score": 0.75,
+      "keyword_any_hit": true,
+      "keyword_all_hit": false,
+      "hit_keywords": [
+        "Prompt",
+        "评测",
+        "RAG"
+      ],
+      "missed_keywords": [
+        "入门介绍"
+      ],
+      "citation_complete": true,
+      "reference_mismatch": false,
+      "extracted_sources": [],
+      "unexpected_sources": [],
+      "structure_complete": true,
+      "refusal_detected": false,
+      "refusal_correct": null,
+      "unsupported_refusal": false,
+      "possible_fabrication": false
+    },
+    {
+      "id": "sft_v2_eval_050",
+      "type": "compare_or_reasoning",
+      "domain": "project",
+      "question": "请依据资料说明Prompt Engineering 入门介绍中容易混淆的两个点。",
+      "expected_reference": "prompt_engineering.md",
+      "expected_keywords": [
+        "Prompt",
+        "入门介绍",
+        "评测",
+        "RAG"
+      ],
+      "answer": "根据参考资料，可以这样回答：\n1. 这个问题的核心关键词是：模板、参数。\n2. 教材依据：这个设计体现了 Prompt 模板管理思想：不同任务使用不同模板，而不是所有问题都用同一种提示方式。\n3. 教材依据：在大模型应用中，Prompt 不只是简单的一句话问题。\n4. 教材依据：一个较完整的 Prompt 通常会包含角色设定、任务说明、输入内容、输出格式要求、限制条件和示例。\n学习建议：复习时先抓住教材中的关键词，再把它们和具体例子或实验现象联系起来。\n参考来源：prompt_engineering.md",
+      "latency_s": 3.958,
+      "error": "",
+      "keyword_score": 0.25,
+      "keyword_any_hit": true,
+      "keyword_all_hit": false,
+      "hit_keywords": [
+        "Prompt"
+      ],
+      "missed_keywords": [
+        "入门介绍",
+        "评测",
+        "RAG"
+      ],
+      "citation_complete": true,
+      "reference_mismatch": false,
+      "extracted_sources": [],
+      "unexpected_sources": [],
+      "structure_complete": true,
+      "refusal_detected": false,
+      "refusal_correct": null,
+      "unsupported_refusal": false,
+      "possible_fabrication": false
+    }
+  ]
+}

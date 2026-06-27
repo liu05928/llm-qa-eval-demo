@@ -19,17 +19,17 @@ from runtime_controls import (
     set_cached_response,
 )
 
-from config import MODEL, USE_MOCK
-from llm_client import call_llm
+from config import GENERATION_BACKEND, MODEL, USE_MOCK
+from llm_client import call_llm, get_llm_runtime_info
 from chat_logger import save_log
 from prompt_templates import get_available_modes
 from evaluator import run_evaluation, load_eval_results
 
 
 app = FastAPI(
-    title="企业知识库 RAG Agent 问答与检索优化系统",
-    description="面向企业内部文档问答场景的 RAG Agent 服务，支持 LangGraph/本地状态机双引擎、会话记忆、BM25 Hybrid、Rerank、Small-to-Big Long-text RAG、来源引用、缓存限流和自动评测。",
-    version="0.8.0"
+    title="教育领域大模型可信问答系统",
+    description="面向初中科学教材问答场景的大模型可信问答服务，支持 SFT 模型后端预留、检索增强、Workflow 编排、会话记忆、BM25 Hybrid、Rerank、Small-to-Big、来源引用、缓存限流和自动评测。",
+    version="0.9.0"
 )
 
 
@@ -43,6 +43,7 @@ class ChatRequest(BaseModel):
 
     question: str
     mode: Literal["general", "education", "paper_summary"] = "general"
+    generation_backend: Optional[Literal["mock", "api", "local_sft"]] = None
 
 class RagChatRequest(BaseModel):
     """
@@ -62,6 +63,7 @@ class RagChatRequest(BaseModel):
     context_mode: Literal["small", "small_to_big"] = "small_to_big"
     candidate_k: int = 10
     use_rerank: bool = True
+    generation_backend: Optional[Literal["mock", "api", "local_sft"]] = None
 
 
 class AgentChatRequest(BaseModel):
@@ -95,6 +97,8 @@ class ChatResponse(BaseModel):
     mode: str
     model: str
     mock: bool
+    generation_backend: str
+    generator_model: str
 
 
 @app.get("/")
@@ -104,7 +108,7 @@ def root():
     """
 
     return {
-        "message": "企业知识库 RAG Agent 问答接口系统已启动",
+        "message": "教育领域大模型可信问答接口系统已启动",
         "docs": "请访问 /docs 查看接口文档",
         "available_modes": get_available_modes()
     }
@@ -120,6 +124,8 @@ def health_check():
         "status": "ok",
         "model": MODEL,
         "mock": USE_MOCK,
+        "generation_backend": GENERATION_BACKEND,
+        "llm_runtime": get_llm_runtime_info(),
         "available_modes": get_available_modes(),
         "agent_api": {
             "chat": "/agent/chat",
@@ -165,7 +171,12 @@ def chat(request: ChatRequest):
         raise HTTPException(status_code=400, detail="问题不能为空")
 
     try:
-        answer = call_llm(question, mode=mode)
+        answer = call_llm(
+            question,
+            mode=mode,
+            generation_backend=request.generation_backend,
+        )
+        llm_runtime = get_llm_runtime_info(request.generation_backend)
         save_log(question, answer, mode=mode)
 
         return ChatResponse(
@@ -173,7 +184,9 @@ def chat(request: ChatRequest):
             answer=answer,
             mode=mode,
             model=MODEL,
-            mock=USE_MOCK
+            mock=llm_runtime["mock"],
+            generation_backend=llm_runtime["generation_backend"],
+            generator_model=llm_runtime["generator_model"],
         )
 
     except HTTPException:
@@ -204,6 +217,9 @@ def rag_chat(request: RagChatRequest):
     - answer: 模型回答
     - sources: 引用来源
     - retrieved_chunks: 检索到的文本块
+    - context_sufficient: 检索上下文是否足够回答
+    - context_reason: 上下文充分性判断原因
+    - context_coverage: 问题关键词在上下文中的覆盖度
     - retriever_mode: 当前使用的检索模式
     - candidate_k: 候选召回数量
     - use_rerank: 是否启用 Rerank
@@ -225,6 +241,7 @@ def rag_chat(request: RagChatRequest):
             candidate_k=request.candidate_k,
             use_rerank=request.use_rerank,
             context_mode=request.context_mode,
+            generation_backend=request.generation_backend,
         )
 
         return result

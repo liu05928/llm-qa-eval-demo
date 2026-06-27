@@ -1,51 +1,138 @@
+from typing import Optional
+
 import requests
 
-from config import API_KEY, BASE_URL, MODEL_NAME, USE_MOCK
+from config import (
+    API_KEY,
+    BASE_URL,
+    GENERATION_BACKEND,
+    LOCAL_SFT_API_KEY,
+    LOCAL_SFT_BASE_URL,
+    LOCAL_SFT_MAX_TOKENS,
+    LOCAL_SFT_MODEL,
+    LOCAL_SFT_REPETITION_PENALTY,
+    LOCAL_SFT_TEMPERATURE,
+    LOCAL_SFT_TIMEOUT_SECONDS,
+    LOCAL_SFT_TOP_P,
+    MODEL_NAME,
+    USE_MOCK,
+)
 from prompt_templates import get_prompt
 
 
-def call_llm(question: str, mode: str = "general") -> str:
+VALID_GENERATION_BACKENDS = {"mock", "api", "local_sft"}
+
+
+def normalize_generation_backend(generation_backend: Optional[str] = None) -> str:
+    backend = (generation_backend or GENERATION_BACKEND or "").strip().lower()
+
+    if not backend:
+        backend = "mock" if USE_MOCK else "api"
+
+    if backend not in VALID_GENERATION_BACKENDS:
+        valid = ", ".join(sorted(VALID_GENERATION_BACKENDS))
+        raise ValueError(f"不支持的 generation_backend：{backend}。可选值：{valid}")
+
+    return backend
+
+
+def get_llm_runtime_info(generation_backend: Optional[str] = None) -> dict:
+    backend = normalize_generation_backend(generation_backend)
+
+    if backend == "local_sft":
+        model = LOCAL_SFT_MODEL
+    elif backend == "api":
+        model = MODEL_NAME
+    else:
+        model = "mock"
+
+    return {
+        "generation_backend": backend,
+        "generator_model": model,
+        "mock": backend == "mock",
+    }
+
+
+def call_llm(
+    question: str,
+    mode: str = "general",
+    generation_backend: Optional[str] = None,
+) -> str:
     """
     调用大模型或返回模拟回答。
 
     参数：
         question: 用户输入的问题；
         mode: 问答模式，例如 general、education、paper_summary。
+        generation_backend: mock、api 或 local_sft。
 
     当前支持：
-        1. USE_MOCK=true：返回 Mock 模拟回答；
-        2. USE_MOCK=false：调用硅基流动 DeepSeek API。
+        1. mock：返回 Mock 模拟回答；
+        2. api：调用 SiliconFlow / DeepSeek API；
+        3. local_sft：调用 OpenAI-compatible 微调模型服务。
     """
 
     system_prompt = get_prompt(mode)
+    backend = normalize_generation_backend(generation_backend)
 
-    if USE_MOCK:
+    if backend == "mock":
         return generate_mock_answer(question, mode, system_prompt)
 
-    if not API_KEY:
-        raise ValueError("没有检测到 DEEPSEEK_API_KEY，请检查 .env 文件。")
+    if backend == "local_sft":
+        if not LOCAL_SFT_BASE_URL:
+            raise ValueError("LOCAL_SFT_BASE_URL 未配置，无法调用本地/云端 SFT 模型。")
 
-    return call_real_llm_api(
+        return call_openai_compatible_api(
+            question=question,
+            system_prompt=system_prompt,
+            api_key=LOCAL_SFT_API_KEY,
+            base_url=LOCAL_SFT_BASE_URL,
+            model_name=LOCAL_SFT_MODEL,
+            backend_name="local_sft",
+            temperature=LOCAL_SFT_TEMPERATURE,
+            top_p=LOCAL_SFT_TOP_P,
+            max_tokens=LOCAL_SFT_MAX_TOKENS,
+            timeout=LOCAL_SFT_TIMEOUT_SECONDS,
+            repetition_penalty=LOCAL_SFT_REPETITION_PENALTY,
+        )
+
+    if not API_KEY:
+        raise ValueError("没有检测到 SILICONFLOW_API_KEY / DEEPSEEK_API_KEY，请检查 .env 文件。")
+
+    return call_openai_compatible_api(
         question=question,
         system_prompt=system_prompt,
+        api_key=API_KEY,
+        base_url=BASE_URL,
+        model_name=MODEL_NAME,
+        backend_name="api",
     )
 
 
-def call_real_llm_api(question: str, system_prompt: str) -> str:
+def call_openai_compatible_api(
+    question: str,
+    system_prompt: str,
+    api_key: str,
+    base_url: str,
+    model_name: str,
+    backend_name: str,
+    temperature: float = 0.7,
+    top_p: Optional[float] = None,
+    max_tokens: Optional[int] = None,
+    timeout: int = 60,
+    repetition_penalty: Optional[float] = None,
+) -> str:
     """
     调用 OpenAI 兼容格式的大模型 API。
-
-    当前用于：
-        硅基流动平台的 DeepSeek 系列模型。
     """
 
     headers = {
         "Content-Type": "application/json",
-        "Authorization": f"Bearer {API_KEY}",
+        "Authorization": f"Bearer {api_key or 'EMPTY'}",
     }
 
     payload = {
-        "model": MODEL_NAME,
+        "model": model_name,
         "messages": [
             {
                 "role": "system",
@@ -57,19 +144,25 @@ def call_real_llm_api(question: str, system_prompt: str) -> str:
             },
         ],
         "stream": False,
-        "temperature": 0.7,
+        "temperature": temperature,
     }
+    if top_p is not None:
+        payload["top_p"] = top_p
+    if max_tokens is not None:
+        payload["max_tokens"] = max_tokens
+    if repetition_penalty is not None:
+        payload["repetition_penalty"] = repetition_penalty
 
     response = requests.post(
-        BASE_URL,
+        base_url,
         headers=headers,
         json=payload,
-        timeout=60,
+        timeout=timeout,
     )
 
     if response.status_code != 200:
         raise RuntimeError(
-            f"API 调用失败，状态码：{response.status_code}，返回内容：{response.text}"
+            f"{backend_name} API 调用失败，状态码：{response.status_code}，返回内容：{response.text}"
         )
 
     data = response.json()
@@ -78,6 +171,21 @@ def call_real_llm_api(question: str, system_prompt: str) -> str:
         return data["choices"][0]["message"]["content"]
     except (KeyError, IndexError) as e:
         raise RuntimeError(f"API 返回格式异常：{data}") from e
+
+
+def call_real_llm_api(question: str, system_prompt: str) -> str:
+    """
+    兼容旧调用：调用 SiliconFlow / DeepSeek API。
+    """
+
+    return call_openai_compatible_api(
+        question=question,
+        system_prompt=system_prompt,
+        api_key=API_KEY,
+        base_url=BASE_URL,
+        model_name=MODEL_NAME,
+        backend_name="api",
+    )
 
 
 def generate_mock_answer(question: str, mode: str, system_prompt: str) -> str:

@@ -1,0 +1,13 @@
+{
+  "generated_at": "2026-06-27 22:27:46",
+  "backend": "local_sft",
+  "total_rows": 0,
+  "overall_pass_rate": 0.0,
+  "error_count": 0,
+  "local_sft_status": {
+    "available": false,
+    "models_url": "http://127.0.0.1:8001/v1/models",
+    "error": "<urlopen error [Errno 1] Operation not permitted>"
+  },
+  "by_path": {}
+}
