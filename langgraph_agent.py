@@ -42,6 +42,7 @@ class LangGraphRagState(TypedDict, total=False):
     max_rewrites: int
     use_rerank: bool
     context_mode: str
+    guard_mode: str
     query_type: str
     query_type_label: str
     query_reason: str
@@ -49,6 +50,10 @@ class LangGraphRagState(TypedDict, total=False):
     context_sufficient: bool
     context_reason: str
     context_coverage: float
+    support_level: str
+    evidence_score: float
+    guard_details: Dict[str, Any]
+    claim_verification: Dict[str, Any]
     rewrite_count: int
     rewritten_queries: List[str]
     rewrite_steps: List[Dict[str, Any]]
@@ -150,6 +155,7 @@ def _initial_state(
     max_rewrites: int,
     use_rerank: bool,
     context_mode: str,
+    guard_mode: str,
     memory: Any,
 ) -> LangGraphRagState:
     normalized_question = question.strip()
@@ -165,6 +171,7 @@ def _initial_state(
         "max_rewrites": max_rewrites,
         "use_rerank": use_rerank,
         "context_mode": context_mode,
+        "guard_mode": guard_mode,
         "query_type": "general",
         "query_type_label": "普通问答",
         "query_reason": "",
@@ -172,6 +179,10 @@ def _initial_state(
         "context_sufficient": False,
         "context_reason": "",
         "context_coverage": 0.0,
+        "support_level": "unsupported",
+        "evidence_score": 0.0,
+        "guard_details": {},
+        "claim_verification": {},
         "rewrite_count": 0,
         "rewritten_queries": [],
         "rewrite_steps": [],
@@ -214,6 +225,11 @@ def _state_to_result(state: Dict[str, Any], latency_ms: float) -> Dict[str, Any]
         "context_sufficient",
         "context_reason",
         "context_coverage",
+        "support_level",
+        "evidence_score",
+        "guard_mode",
+        "guard_details",
+        "claim_verification",
         "rewritten_queries",
         "rewrite_steps",
         "retriever_mode",
@@ -241,6 +257,7 @@ def run_langgraph_rag_agent(
     max_rewrites: int = 1,
     use_rerank: bool = True,
     context_mode: str = "small_to_big",
+    guard_mode: str = "v2",
     memory: Any = None,
     update_memory: bool = True,
 ) -> Dict[str, Any]:
@@ -259,6 +276,7 @@ def run_langgraph_rag_agent(
             max_rewrites=max_rewrites,
             use_rerank=use_rerank,
             context_mode=context_mode,
+            guard_mode=guard_mode,
             memory=memory,
             update_memory=update_memory,
         )
@@ -280,6 +298,7 @@ def run_langgraph_rag_agent(
         max_rewrites=max_rewrites,
         use_rerank=use_rerank,
         context_mode=context_mode,
+        guard_mode=guard_mode,
         memory=memory,
     )
 

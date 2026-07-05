@@ -29,6 +29,7 @@ class AgentState:
     max_rewrites: int = 1
     use_rerank: bool = True
     context_mode: str = "small_to_big"
+    guard_mode: str = "v2"
     current_query: str = ""
     resolved_question: str = ""
     query_type: str = "general"
@@ -41,6 +42,10 @@ class AgentState:
     context_sufficient: bool = False
     context_reason: str = ""
     context_coverage: float = 0.0
+    support_level: str = "unsupported"
+    evidence_score: float = 0.0
+    guard_details: Dict[str, Any] = field(default_factory=dict)
+    claim_verification: Dict[str, Any] = field(default_factory=dict)
     rewrite_count: int = 0
     rewritten_queries: List[str] = field(default_factory=list)
     rewrite_steps: List[Dict[str, Any]] = field(default_factory=list)
@@ -85,6 +90,11 @@ class AgentState:
             "context_sufficient": self.context_sufficient,
             "context_reason": self.context_reason,
             "context_coverage": self.context_coverage,
+            "support_level": self.support_level,
+            "evidence_score": self.evidence_score,
+            "guard_mode": self.guard_mode,
+            "guard_details": self.guard_details,
+            "claim_verification": self.claim_verification,
             "rewritten_queries": self.rewritten_queries,
             "rewrite_steps": self.rewrite_steps,
             "retriever_mode": self.retriever_mode,

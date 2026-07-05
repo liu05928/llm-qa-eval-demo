@@ -3,7 +3,12 @@ from pathlib import Path
 from datetime import datetime
 from typing import Optional
 
-from context_guard import build_no_context_answer, infer_guard_query_type, judge_context
+from context_guard import (
+    build_no_context_answer,
+    infer_guard_query_type,
+    judge_context,
+    verify_answer_claims,
+)
 from rag_logger import save_rag_log
 from vector_store import VectorStore
 from prompt_templates import build_rag_prompt
@@ -14,7 +19,7 @@ from reranker import rerank_chunks
 
 
 RETRIEVAL_LOG_FILE = Path("logs/retrieval_log.json")
-VALID_RETRIEVER_MODES = {"vector", "dense_rerank", "bm25_hybrid"}
+VALID_RETRIEVER_MODES = {"vector", "dense_rerank", "bm25_hybrid", "contextual_hybrid"}
 VALID_CONTEXT_MODES = {"small", "small_to_big"}
 
 
@@ -228,6 +233,8 @@ def retrieve_chunks(
 
     retriever_mode = "bm25_hybrid"：
         使用向量召回 + BM25 稀疏召回 + RRF 融合，再进行模型 Rerank。
+    retriever_mode = "contextual_hybrid"：
+        在 BM25 侧加入来源、标题和段落位置上下文，再与向量召回融合。
 
     dense_rerank 采用 Dense-Preserving 策略。
     bm25_hybrid 采用 Hybrid/Rerank 优先策略，dense 结果只作为兜底补充，
@@ -236,7 +243,7 @@ def retrieve_chunks(
 
     if retriever_mode not in VALID_RETRIEVER_MODES:
         raise ValueError(
-            "retriever_mode 只能是 'vector'、'dense_rerank' 或 'bm25_hybrid'"
+            "retriever_mode 只能是 'vector'、'dense_rerank'、'bm25_hybrid' 或 'contextual_hybrid'"
         )
 
     if context_mode not in VALID_CONTEXT_MODES:
@@ -290,8 +297,13 @@ def retrieve_chunks(
             top_k=candidate_k,
             candidate_k=candidate_k,
             dense_results=dense_candidates,
+            contextual=retriever_mode == "contextual_hybrid",
         )
-        strategy = "dense_preserving_bm25_hybrid_rerank"
+        strategy = (
+            "contextual_bm25_hybrid_rerank"
+            if retriever_mode == "contextual_hybrid"
+            else "dense_preserving_bm25_hybrid_rerank"
+        )
 
     if use_rerank:
         reranked_chunks = rerank_chunks(
@@ -375,6 +387,7 @@ def rag_answer(
     use_rerank: bool = True,
     context_mode: str = "small_to_big",
     generation_backend: Optional[str] = None,
+    guard_mode: str = "v2",
 ):
     """
     RAG 问答主流程。
@@ -404,16 +417,21 @@ def rag_answer(
         current_query=question,
         chunks=retrieved_chunks,
         query_type=infer_guard_query_type(question),
+        guard_mode=guard_mode,
     )
     context_sufficient = bool(context_info.get("context_sufficient"))
     context_reason = context_info.get("reason", "")
     context_coverage = round(float(context_info.get("coverage", 0.0)), 4)
+    support_level = context_info.get("support_level", "supported" if context_sufficient else "unsupported")
+    evidence_score = round(float(context_info.get("evidence_score", context_coverage)), 4)
+    guard_details = context_info.get("guard_details", {})
 
     if context_sufficient:
         context = format_context(retrieved_chunks)
         rag_prompt = build_rag_prompt(
             question=question,
             context=context,
+            guard_details=guard_details,
         )
 
         answer = call_llm(
@@ -422,12 +440,21 @@ def rag_answer(
             generation_backend=generation_backend,
         )
         sources = build_sources(retrieved_chunks)
+        claim_verification = verify_answer_claims(answer, retrieved_chunks)
     else:
         answer = build_no_context_answer(
             question=question,
             context_reason=context_reason,
         )
         sources = []
+        claim_verification = {
+            "enabled": True,
+            "claim_count": 0,
+            "supported_claim_count": 0,
+            "unsupported_claim_count": 0,
+            "claims": [],
+            "status": "skipped_no_context",
+        }
 
     llm_runtime = get_llm_runtime_info(generation_backend)
 
@@ -441,6 +468,11 @@ def rag_answer(
         "context_sufficient": context_sufficient,
         "context_reason": context_reason,
         "context_coverage": context_coverage,
+        "support_level": support_level,
+        "evidence_score": evidence_score,
+        "guard_mode": context_info.get("guard_mode", guard_mode),
+        "guard_details": guard_details,
+        "claim_verification": claim_verification,
         "candidate_k": candidate_k,
         "top_k": top_k,
         "use_rerank": use_rerank,
@@ -462,6 +494,11 @@ def rag_answer(
         "context_sufficient": context_sufficient,
         "context_reason": context_reason,
         "context_coverage": context_coverage,
+        "support_level": support_level,
+        "evidence_score": evidence_score,
+        "guard_mode": result["guard_mode"],
+        "guard_details": guard_details,
+        "claim_verification": claim_verification,
         "answer": answer,
         "sources": result["sources"],
         "small_retrieved_chunks": result["small_retrieved_chunks"],
@@ -479,6 +516,11 @@ def rag_answer(
     retrieval_log["context_sufficient"] = context_sufficient
     retrieval_log["context_reason"] = context_reason
     retrieval_log["context_coverage"] = context_coverage
+    retrieval_log["support_level"] = support_level
+    retrieval_log["evidence_score"] = evidence_score
+    retrieval_log["guard_mode"] = result["guard_mode"]
+    retrieval_log["guard_details"] = guard_details
+    retrieval_log["claim_verification"] = claim_verification
     append_retrieval_log(retrieval_log)
 
     return result

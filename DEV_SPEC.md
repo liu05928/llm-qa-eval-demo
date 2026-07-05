@@ -23,10 +23,10 @@
 -> 问题类型识别
 -> 检索策略选择
 -> Query Rewrite（可选）
--> BM25+Dense / Vector 检索
+-> BM25+Dense / Contextual Hybrid / Vector 检索
 -> RRF 融合与 Rerank
 -> Small-to-Big 上下文扩展
--> context_guard 上下文充分性判断
+-> context_guard v2 证据充分性判断
 -> 模型生成或无资料拒答
 -> 来源引用
 -> Trace 日志与评测记录
@@ -75,7 +75,7 @@
 ### RAG 与 Workflow
 
 - `rag_pipeline.py`：检索、上下文构造、模型调用、来源引用和检索日志的主流程。
-- `context_guard.py`：判断问题是否能被检索上下文支持；不能支持时返回无来源拒答。
+- `context_guard.py`：判断问题是否能被检索上下文支持；v2 会输出 `support_level`、`evidence_score`、`matched_terms`、`missing_terms` 和轻量 claim verification；不能支持时返回无来源拒答。
 - `agent_memory.py`：维护会话级短期记忆，用于多轮追问中的主题延续和指代补全。
 - `agent_skills.py`：封装分类、策略选择、改写、检索、上下文判断、生成和记忆更新等能力。
 - `rag_agent.py`：本地状态机 Workflow fallback。
@@ -85,6 +85,7 @@
 ### 服务与展示
 
 - `app.py`：FastAPI 服务入口，提供 `/chat`、`/rag_chat`、`/agent/chat`、`/health` 等接口。
+- `local_sft_server.py`：加载 Qwen2.5-3B-Instruct v2.1 QLoRA adapter，并提供 OpenAI-compatible `/v1/models`、`/v1/chat/completions` 和 `/health` 接口。
 - `web_demo.py`：Streamlit 页面，展示 Agent 问答、RAG 问答、评测结果和日志。
 - `docker-compose.yml`：一键启动 API、Web 和 Redis。
 
@@ -114,7 +115,7 @@
 | --- | --- |
 | `GET /health` | 服务状态、当前模型后端、运行时控制状态和可用模式。 |
 | `POST /chat` | 基础问答，支持 mock、API、local_sft 后端。 |
-| `POST /rag_chat` | 检索增强问答，返回回答、来源、检索片段和上下文充分性判断。 |
+| `POST /rag_chat` | 检索增强问答，返回回答、来源、检索片段、support_level、evidence_score 和上下文充分性判断。 |
 | `POST /agent/chat` | Workflow 问答，支持会话记忆、Query Rewrite、策略选择和执行轨迹。 |
 | `GET /agent/session/{session_id}` | 查看会话记忆。 |
 | `DELETE /agent/session/{session_id}` | 重置会话记忆。 |
@@ -127,10 +128,10 @@
 
 - SFT fixed50：评估关键词覆盖、引用完整率、结构完整率、重复段落率和拒答正确率。
 - hard-refusal100：评估资料不足、实时信息、隐私、未记录事实等问题的拒答稳定性。
-- RAG/Workflow guard：验证 `/rag_chat`、LangGraph Workflow、本地 Workflow 三条路径在支持性问题和不支持性问题上的行为。
+- RAG/Workflow guard：验证 `/rag_chat`、LangGraph Workflow、本地 Workflow 三条路径在支持性问题和不支持性问题上的行为，并记录 `support_level`、`evidence_score`、`primary_expected_source`、`expected_sources`、`source_match_category` 和 claim verification 状态。
 - Small-to-Big 对比：评估长文本父段落扩展是否改善教材问题回答。
 
-当前公开结果应理解为“降低无依据回答风险、提升拒答稳定性”，不是对所有开放问题的绝对保证。
+当前 mock 与 `local_sft` 真模型 smoke/extended 回归均已闭环。`local_sft` 回归在没有本地可控 rerank 服务时建议使用 `--no-rerank`，避免外部重排 API 超时影响模型链路判断。当前公开结果应理解为“降低无依据回答风险、提升拒答稳定性”，不是对所有开放问题的绝对保证。
 
 ## 7. 当前边界
 

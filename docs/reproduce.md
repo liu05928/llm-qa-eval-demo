@@ -46,8 +46,8 @@ uvicorn app:app --reload
 
 - `GET /health`：服务健康检查。
 - `POST /chat`：基础问答。
-- `POST /rag_chat`：检索增强问答。
-- `POST /agent/chat`：Workflow/Agent 问答。
+- `POST /rag_chat`：检索增强问答，支持 `guard_mode=v1/v2` 和 `contextual_hybrid` 检索模式。
+- `POST /agent/chat`：Workflow/Agent 问答，返回 `support_level`、`evidence_score`、`guard_details` 和 `claim_verification`。
 
 启动 Streamlit：
 
@@ -131,6 +131,15 @@ GENERATION_BACKEND=local_sft
 
 同时将 `.env.example` 中的 local_sft 模型名、服务地址、采样参数同步为实际服务配置。完成后，`/chat`、`/rag_chat` 和 `/agent/chat` 都可以通过 `generation_backend=local_sft` 调用微调模型。
 
+如果需要直接加载 v2.1 QLoRA adapter，仓库提供了一个轻量 OpenAI-compatible 服务：
+
+```bash
+LOCAL_SFT_BASE_MODEL=Qwen/Qwen2.5-3B-Instruct \
+LOCAL_SFT_ADAPTER_PATH=training/outputs/qwen25-3b-edu-qlora-v21 \
+LOCAL_SFT_MODEL_ID=qwen25-3b-edu-qlora-v21 \
+uvicorn local_sft_server:app --host 127.0.0.1 --port 8001
+```
+
 可先检查模型服务是否可用：
 
 ```bash
@@ -154,15 +163,47 @@ python3 sft_generation_eval_runner.py --questions data/sft_v21/hard_refusal_eval
 RAG/Workflow guard 端到端评测：
 
 ```bash
-python3 rag_workflow_guard_eval_runner.py --backend mock --run-name smoke_mock_guard
+python3 rag_workflow_guard_eval_runner.py --backend mock --guard-mode v2 --run-name smoke_mock_guard_v2
 ```
 
-如果本地已经接入 `local_sft` 服务，可将 `--backend` 改为 `local_sft`。
+扩展回归集会从 `data/rag_test_questions.json`、`data/science_rag_test_questions.json` 和 `data/sft_v21/hard_refusal_eval_questions.json` 组装更多支持题和拒答题：
+
+```bash
+python3 rag_workflow_guard_eval_runner.py --backend mock --guard-mode v2 --case-set extended --run-name extended_mock_guard_v2
+```
+
+当前 mock v2 最终回归结果：
+
+- smoke：24/24 通过，错误数 0，报告目录 `eval_results/rag_workflow_guard/smoke_mock_guard_v2_source_mismatch_final/`。
+- extended：76 个唯一样例、228 条路径结果，整体通过率 100%，guard 拒答通过率 100%，支持题来源命中率 100%，错误数 0。
+- extended 主来源命中率为 96.55%；其余 6 条为 `likely_eval_alias_needed`，即合理来源别名命中，不计为系统失败。
+- extended 报告目录 `eval_results/rag_workflow_guard/extended_mock_guard_v2_source_mismatch_final/`。
+- 销毁云实例后的本地最终基线也已通过 `--fail-on-error`，报告目录为 `eval_results/rag_workflow_guard/smoke_mock_guard_v2_final_local/` 和 `eval_results/rag_workflow_guard/extended_mock_guard_v2_final_local/`。
+
+真实 `local_sft` 后端回归建议先关闭外部 rerank 依赖，避免 `USE_MOCK=false` 时 `reranker.py` 调用外部重排服务导致网络超时污染模型链路评测：
+
+```bash
+USE_MOCK=false \
+GENERATION_BACKEND=local_sft \
+LOCAL_SFT_MODEL=qwen25-3b-edu-qlora-v21 \
+LOCAL_SFT_BASE_URL=http://127.0.0.1:8001/v1/chat/completions \
+LOCAL_SFT_MAX_TOKENS=64 \
+python3 rag_workflow_guard_eval_runner.py --backend local_sft --guard-mode v2 --case-set extended --no-rerank --run-name local_sft_extended_v21_vast_64tok_no_rerank
+```
+
+当前 Vast RTX 5060 Ti 上的 v2.1 `local_sft` 最终回归结果：
+
+- smoke：24/24 通过，guard 拒答通过率 100%，支持题来源命中率 100%，错误数 0，报告目录 `eval_results/rag_workflow_guard/local_sft_smoke_v21_vast/`。
+- extended：76 个唯一样例、228 条路径结果，整体通过率 100%，guard 拒答通过率 100%，支持题来源命中率 100%，错误数 0。
+- extended 主来源命中率按路径为 96.55% 到 98.28%；其余 4 条为 `likely_eval_alias_needed`，即合理来源别名命中，不计为系统失败。
+- extended 报告目录 `eval_results/rag_workflow_guard/local_sft_extended_v21_vast_64tok_no_rerank/`。
 
 主要报告位置：
 
 - `eval_results/sft_generation_v21/comparison_report.md`
 - `eval_results/rag_workflow_guard/*/summary.json`
+- `eval_results/rag_workflow_guard/*/details.csv`：包含 `support_level`、`evidence_score`、`primary_expected_source`、`expected_sources`、`expected_source_match`、`source_match_category`、`claim_verification_status` 等 v2 Guard 字段。
+- `eval_results/rag_workflow_guard/*/report.md`：包含三条路径通过率、支持题来源命中率、失败分类和合理来源别名命中列表。
 - `eval_results/science_small_to_big_report.md`
 - `eval_results/science_failure_cases.md`
 

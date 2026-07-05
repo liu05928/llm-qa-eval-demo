@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Dict, Optional
 
 
 PROMPT_TEMPLATES: Dict[str, str] = {
@@ -62,7 +62,7 @@ def get_available_modes(include_internal: bool = False) -> list:
     return PUBLIC_MODES.copy()
 
 
-def build_rag_prompt(question: str, context: str) -> str:
+def build_rag_prompt(question: str, context: str, guard_details: Optional[dict] = None) -> str:
     """
     构造 RAG 问答 Prompt。
 
@@ -74,19 +74,35 @@ def build_rag_prompt(question: str, context: str) -> str:
     - 拼接好的 RAG Prompt
     """
 
+    guard_text = ""
+
+    if guard_details:
+        support_level = guard_details.get("support_level", "unknown")
+        evidence_score = guard_details.get("evidence_score", "")
+        missing_terms = "、".join(guard_details.get("missing_terms", [])[:12])
+        guard_text = f"""
+
+证据判断：
+- support_level: {support_level}
+- evidence_score: {evidence_score}
+- missing_terms: {missing_terms or "无"}
+""".rstrip()
+
     prompt = f"""
 你是一名教育领域的大模型知识库问答助手。
 请严格根据下面提供的参考资料回答用户问题。
 
 要求：
-1. 优先依据参考资料回答；
-2. 如果参考资料中没有相关信息，请明确说明“资料中未提及”；
-3. 不要编造参考资料中不存在的信息；
-4. 回答要清晰、分点说明；
-5. 最后给出参考来源。
+1. 只依据参考资料回答，不补充参考资料外的事实、数字、政策、时间或预测；
+2. 先判断问题中的每个关键点是否被资料直接支持，只回答被支持的部分；
+3. 如果关键点没有被资料直接支持，请明确说明“资料中未提及”，不要把低相关片段当作答案；
+4. 回答中的每个核心结论都要能在参考资料中找到对应依据；
+5. 回答要清晰、分点说明，最后给出参考来源；
+6. 如果证据判断显示 partial 或 unsupported，请优先拒答或只说明资料边界。
 
 用户问题：
 {question}
+{guard_text}
 
 参考资料：
 {context}

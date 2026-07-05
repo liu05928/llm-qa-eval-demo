@@ -41,7 +41,7 @@ SFT 数据覆盖：
 检索侧包含：
 
 - ChromaDB 向量索引。
-- `vector`、`dense_rerank`、`bm25_hybrid` 三种模式。
+- `vector`、`dense_rerank`、`bm25_hybrid`、`contextual_hybrid` 四种模式。
 - BM25+Dense 候选召回。
 - RRF 融合与 Rerank 精排。
 - Small-to-Big 长文本上下文扩展。
@@ -52,11 +52,11 @@ Workflow 侧包含：
 - 会话记忆和多轮追问补全。
 - 问题分类与检索策略选择。
 - Query Rewrite。
-- 上下文充分性判断。
+- v2 上下文证据判断，输出 `support_level`、`evidence_score`、命中/缺失词和轻量 claim verification。
 - 回答生成或无资料拒答。
 - Agent trace、Graph trace 和 Skills trace。
 
-`context_guard.py` 是当前可信控制中的关键补充：当检索上下文不能直接支持问题时，系统不再把低相关片段交给模型硬答，而是返回无来源拒答。
+`context_guard.py` 是当前可信控制中的关键补充：当检索上下文不能直接支持问题时，系统不再把低相关片段交给模型硬答，而是返回无来源拒答。v2 Guard 在原有 `context_sufficient` 之外继续返回 `support_level`、`evidence_score`、`guard_details` 和 `claim_verification`，便于后续阈值调优和回归分析。
 
 ## 评测结果
 
@@ -68,7 +68,11 @@ SFT 生成质量核心结果：
 | v2.1 QLoRA fixed50 | 0.8317 | 1.00 | 1.00 | 0.00 | 0.0909 |
 | v2.1 QLoRA hard-refusal100 | 0.6225 | 1.00 | 1.00 | 0.00 | 0.9300 |
 
-端到端 Workflow guard smoke test 覆盖 `/rag_chat`、LangGraph Workflow 和本地 Workflow 三条路径，共 24 条样例，当前通过率为 1.0，错误数为 0。
+端到端 Workflow guard smoke test 覆盖 `/rag_chat`、LangGraph Workflow 和本地 Workflow 三条路径，共 24 条样例，当前通过率为 100%，错误数为 0。扩展回归集覆盖 76 个唯一样例、228 条路径结果，mock v2 当前整体通过率为 100%，guard 拒答通过率为 100%，支持题来源命中率为 100%，错误数为 0。扩展评测保留 `primary_expected_source` 用于诊断，主来源命中率为 96.55%，其余 6 条为合理来源别名命中。
+
+真实模型端到端链路已用 Vast RTX 5060 Ti 验证：v2.1 QLoRA adapter 通过 `local_sft` 服务完成 smoke 24/24 和 extended 228/228 回归，overall、guard 拒答和支持题来源命中率均为 100%，错误数为 0。最终 extended 报告目录为 `eval_results/rag_workflow_guard/local_sft_extended_v21_vast_64tok_no_rerank/`。
+
+汇总版实验表格见 `docs/experiment_results.md`。
 
 结果说明：
 
@@ -92,4 +96,4 @@ SFT 生成质量核心结果：
 - 固定题中的开放型无依据问题仍存在强答风险，需要继续扩充更贴近真实学生表达的拒答样本。
 - 评测集规模有限，后续可以增加跨章节、跨年级、实验现象和多轮追问样例。
 - 当前主要使用本地 ChromaDB 和轻量 Redis 控制，生产部署还需要更完整的监控、鉴权和数据治理。
-- Workflow guard 已完成 smoke test，后续可扩大到更长的回归评测集并持续记录失败样例。
+- Workflow guard 已完成 mock 与 `local_sft` 真模型 smoke/extended 回归闭环；后续重点是扩充评测规模、替换本地或可控 rerank 服务，并补充线上监控。

@@ -4,6 +4,7 @@ from typing import Any, Callable, Dict, List, Tuple
 
 from agent_memory import ensure_memory
 from agent_state import AgentTraceStep
+from context_guard import verify_answer_claims
 from llm_client import call_llm
 from prompt_templates import build_rag_prompt
 from rag_agent import (
@@ -44,6 +45,11 @@ def ensure_agent_defaults(state: Dict[str, Any]) -> Dict[str, Any]:
     state.setdefault("context_sufficient", False)
     state.setdefault("context_reason", "")
     state.setdefault("context_coverage", 0.0)
+    state.setdefault("support_level", "unsupported")
+    state.setdefault("evidence_score", 0.0)
+    state.setdefault("guard_mode", "v2")
+    state.setdefault("guard_details", {})
+    state.setdefault("claim_verification", {})
     state.setdefault("memory_used", False)
     state.setdefault("memory_reason", "")
     state.setdefault("memory_snapshot", {})
@@ -316,6 +322,7 @@ def judge_context_skill(state: Dict[str, Any]) -> Dict[str, Any]:
             current_query=state.get("current_query", state["question"]),
             chunks=state.get("retrieved_chunks", []),
             query_type=state.get("query_type", "general"),
+            guard_mode=state.get("guard_mode", "v2"),
         )
 
         return (
@@ -324,10 +331,16 @@ def judge_context_skill(state: Dict[str, Any]) -> Dict[str, Any]:
                 "context_sufficient": bool(context_info.get("context_sufficient")),
                 "context_reason": context_info.get("reason", ""),
                 "context_coverage": context_info.get("coverage", 0.0),
+                "support_level": context_info.get("support_level", "unsupported"),
+                "evidence_score": context_info.get("evidence_score", 0.0),
+                "guard_details": context_info.get("guard_details", {}),
             },
             {
                 "sufficient": bool(context_info.get("context_sufficient")),
                 "coverage": context_info.get("coverage", 0.0),
+                "support_level": context_info.get("support_level", "unsupported"),
+                "evidence_score": context_info.get("evidence_score", 0.0),
+                "guard_mode": state.get("guard_mode", "v2"),
             },
         )
 
@@ -396,6 +409,14 @@ def generate_answer_skill(state: Dict[str, Any]) -> Dict[str, Any]:
                 {
                     "answer": answer,
                     "sources": [],
+                    "claim_verification": {
+                        "enabled": True,
+                        "claim_count": 0,
+                        "supported_claim_count": 0,
+                        "unsupported_claim_count": 0,
+                        "claims": [],
+                        "status": "skipped_no_context",
+                    },
                 },
                 {
                     "no_context": True,
@@ -407,23 +428,30 @@ def generate_answer_skill(state: Dict[str, Any]) -> Dict[str, Any]:
         rag_prompt = build_rag_prompt(
             question=state.get("resolved_question", state["question"]),
             context=context,
+            guard_details=state.get("guard_details", {}),
         )
         answer = call_llm(
             question=rag_prompt,
             mode="education",
         )
         sources = build_sources(state.get("retrieved_chunks", []))
+        claim_verification = verify_answer_claims(
+            answer=answer,
+            chunks=state.get("retrieved_chunks", []),
+        )
 
         return (
             f"生成回答，引用 {len(sources)} 个来源。",
             {
                 "answer": answer,
                 "sources": sources,
+                "claim_verification": claim_verification,
             },
             {
                 "no_context": False,
                 "source_count": len(sources),
                 "answer_chars": len(answer or ""),
+                "claim_verification_status": claim_verification.get("status"),
             },
         )
 

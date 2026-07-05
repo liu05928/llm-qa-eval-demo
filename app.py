@@ -28,7 +28,7 @@ from evaluator import run_evaluation, load_eval_results
 
 app = FastAPI(
     title="教育领域大模型可信问答系统",
-    description="面向初中科学教材问答场景的大模型可信问答服务，支持 SFT 模型后端预留、检索增强、Workflow 编排、会话记忆、BM25 Hybrid、Rerank、Small-to-Big、来源引用、缓存限流和自动评测。",
+    description="面向初中科学教材问答场景的大模型可信问答服务，支持 SFT 模型后端预留、检索增强、Workflow 编排、会话记忆、BM25/Contextual Hybrid、Rerank、Small-to-Big、v2 Guard、来源引用、缓存限流和自动评测。",
     version="0.9.0"
 )
 
@@ -59,10 +59,11 @@ class RagChatRequest(BaseModel):
 
     question: str
     top_k: int = 3
-    retriever_mode: Literal["vector", "dense_rerank", "bm25_hybrid"] = "vector"
+    retriever_mode: Literal["vector", "dense_rerank", "bm25_hybrid", "contextual_hybrid"] = "vector"
     context_mode: Literal["small", "small_to_big"] = "small_to_big"
     candidate_k: int = 10
     use_rerank: bool = True
+    guard_mode: Literal["v1", "v2"] = "v2"
     generation_backend: Optional[Literal["mock", "api", "local_sft"]] = None
 
 
@@ -83,6 +84,7 @@ class AgentChatRequest(BaseModel):
     max_rewrites: int = 1
     use_rerank: bool = True
     context_mode: Literal["small", "small_to_big"] = "small_to_big"
+    guard_mode: Literal["v1", "v2"] = "v2"
     reset_memory: bool = False
     enable_cache: bool = False
     enable_rate_limit: bool = True
@@ -242,6 +244,7 @@ def rag_chat(request: RagChatRequest):
             use_rerank=request.use_rerank,
             context_mode=request.context_mode,
             generation_backend=request.generation_backend,
+            guard_mode=request.guard_mode,
         )
 
         return result
@@ -324,6 +327,7 @@ def agent_chat(request: AgentChatRequest, http_request: Request):
                     "max_rewrites": request.max_rewrites,
                     "use_rerank": request.use_rerank,
                     "context_mode": request.context_mode,
+                    "guard_mode": request.guard_mode,
                     "memory_snapshot": memory.to_dict(),
                 },
             )
@@ -361,6 +365,7 @@ def agent_chat(request: AgentChatRequest, http_request: Request):
                 max_rewrites=request.max_rewrites,
                 use_rerank=request.use_rerank,
                 context_mode=request.context_mode,
+                guard_mode=request.guard_mode,
                 memory=memory,
             )
         else:
@@ -371,6 +376,7 @@ def agent_chat(request: AgentChatRequest, http_request: Request):
                 max_rewrites=request.max_rewrites,
                 use_rerank=request.use_rerank,
                 context_mode=request.context_mode,
+                guard_mode=request.guard_mode,
                 memory=memory,
             )
             result["agent_engine"] = "local"

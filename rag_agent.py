@@ -11,6 +11,7 @@ from context_guard import (
     build_no_context_answer,
     is_unsupported_fact_request,
     judge_context,
+    verify_answer_claims,
 )
 from config import USE_MOCK
 from llm_client import call_llm
@@ -27,6 +28,7 @@ AGENT_LOG_FILE = Path("logs/agent_trace_log.json")
 
 QUERY_TYPE_LABELS = {
     "concept": "概念解释",
+    "project_concept": "项目知识库概念",
     "comparison": "对比分析",
     "learning_advice": "学习建议",
     "missing": "资料缺失候选",
@@ -39,6 +41,8 @@ DOMAIN_TERMS = [
     "agent",
     "prompt",
     "prompt engineering",
+    "prompt a/b",
+    "prompt a/b 测试",
     "embedding",
     "rerank",
     "bm25",
@@ -85,6 +89,12 @@ DOMAIN_TERMS = [
     "溶液",
     "呼吸",
     "土壤",
+    "果实",
+    "干果",
+    "肉果",
+    "磁化",
+    "磁体",
+    "磁场",
     "能量",
     "燃烧",
     "电流",
@@ -92,6 +102,67 @@ DOMAIN_TERMS = [
     "力",
     "浮力",
     "压强",
+]
+
+PROJECT_DOMAIN_TERMS = [
+    "rag",
+    "agent",
+    "workflow",
+    "langgraph",
+    "prompt",
+    "prompt engineering",
+    "embedding",
+    "rerank",
+    "bm25",
+    "hybrid",
+    "rrf",
+    "small-to-big",
+    "small to big",
+    "context guard",
+    "向量数据库",
+    "向量检索",
+    "知识库",
+    "检索增强",
+    "智能体",
+    "多智能体",
+    "a/b 测试",
+    "ab测试",
+    "重排序",
+    "大模型",
+    "微调",
+    "sft",
+    "dpo",
+    "lora",
+    "qlora",
+]
+
+PROJECT_QUERY_CUES = [
+    "什么是",
+    "是什么",
+    "解释",
+    "定义",
+    "原理",
+    "机制",
+    "作用",
+    "意思",
+    "是什么意思",
+    "为什么",
+    "有哪些",
+    "关系",
+    "特点",
+    "说明了什么",
+    "基本流程",
+    "基本循环",
+    "区别",
+    "对比",
+    "相比",
+    "不同",
+    "差异",
+    "怎么学",
+    "如何学习",
+    "学习建议",
+    "学习路径",
+    "测试",
 ]
 
 OUT_OF_DOMAIN_TERMS = [
@@ -169,6 +240,35 @@ def _contains_any(text: str, keywords: List[str]) -> bool:
     return any(keyword.lower() in lower_text for keyword in keywords)
 
 
+def _is_single_chinese_char(text: str) -> bool:
+    return len(text) == 1 and "\u4e00" <= text <= "\u9fff"
+
+
+def _domain_term_matches(question: str, lower_question: str, term: str) -> bool:
+    lower_term = term.lower()
+
+    if not _is_single_chinese_char(term):
+        return lower_term in lower_question or term in question
+
+    stripped_question = question.strip(" ？?。！，,；;：:")
+    single_char_patterns = [
+        stripped_question == term,
+        stripped_question.startswith(term),
+        f"什么是{term}" in question,
+        f"{term}是什么" in question,
+        f"{term}的" in question,
+        f"{term}有什么" in question,
+    ]
+    return any(single_char_patterns)
+
+
+def is_project_domain_query(question: str) -> bool:
+    if not _contains_any(question, PROJECT_DOMAIN_TERMS):
+        return False
+
+    return _contains_any(question, PROJECT_QUERY_CUES) or len(question.strip()) <= 24
+
+
 def classify_query(question: str) -> Dict[str, Any]:
     stripped_question = question.strip()
     lower_question = stripped_question.lower()
@@ -205,6 +305,9 @@ def classify_query(question: str) -> Dict[str, Any]:
     elif any(term in stripped_question for term in missing_check_terms) and _contains_any(stripped_question, missing_risk_terms):
         query_type = "missing"
         reason = "问题是在询问当前知识库是否包含高风险或外部事实类资料。"
+    elif is_project_domain_query(stripped_question):
+        query_type = "project_concept"
+        reason = "问题命中项目知识库术语，优先使用带来源上下文的混合检索。"
     elif any(word in stripped_question for word in ["区别", "对比", "相比", "不同", "差异"]) or " vs " in lower_question:
         query_type = "comparison"
         reason = "问题要求比较两个或多个概念。"
@@ -222,6 +325,8 @@ def classify_query(question: str) -> Dict[str, Any]:
         "有哪些",
         "关系",
         "特点",
+        "怎样分类",
+        "如何分类",
         "说明了什么",
     ]):
         query_type = "concept"
@@ -241,8 +346,11 @@ def classify_query(question: str) -> Dict[str, Any]:
 
 
 def select_strategy(query_type: str) -> str:
+    if query_type == "project_concept":
+        return "contextual_hybrid"
+
     if query_type == "general":
-        return "dense_rerank"
+        return "contextual_hybrid"
 
     return "bm25_hybrid"
 
@@ -253,7 +361,7 @@ def rewrite_query_by_rule(question: str, query_type: str) -> str:
     matched_terms = [
         term
         for term in DOMAIN_TERMS
-        if term.lower() in lower_question or term in question
+        if _domain_term_matches(question, lower_question, term)
     ]
 
     if matched_terms:
@@ -413,12 +521,21 @@ def _generate_with_state(state: AgentState):
             context_reason=state.context_reason,
         )
         state.sources = []
+        state.claim_verification = {
+            "enabled": True,
+            "claim_count": 0,
+            "supported_claim_count": 0,
+            "unsupported_claim_count": 0,
+            "claims": [],
+            "status": "skipped_no_context",
+        }
         return
 
     context = format_context(state.retrieved_chunks)
     rag_prompt = build_rag_prompt(
         question=state.resolved_question,
         context=context,
+        guard_details=state.guard_details,
     )
 
     state.answer = call_llm(
@@ -426,6 +543,10 @@ def _generate_with_state(state: AgentState):
         mode="education",
     )
     state.sources = build_sources(state.retrieved_chunks)
+    state.claim_verification = verify_answer_claims(
+        answer=state.answer,
+        chunks=state.retrieved_chunks,
+    )
 
 
 def run_rag_agent(
@@ -435,6 +556,7 @@ def run_rag_agent(
     max_rewrites: int = 1,
     use_rerank: bool = True,
     context_mode: str = "small_to_big",
+    guard_mode: str = "v2",
     memory: Any = None,
     update_memory: bool = True,
 ) -> Dict[str, Any]:
@@ -455,6 +577,7 @@ def run_rag_agent(
         max_rewrites=max_rewrites,
         use_rerank=use_rerank,
         context_mode=context_mode,
+        guard_mode=guard_mode,
     )
 
     if not state.question:
@@ -590,10 +713,14 @@ def run_rag_agent(
                 current_query=state.current_query,
                 chunks=state.retrieved_chunks,
                 query_type=state.query_type,
+                guard_mode=state.guard_mode,
             )
             state.context_sufficient = result["context_sufficient"]
             state.context_reason = result["reason"]
             state.context_coverage = round(float(result["coverage"]), 4)
+            state.support_level = result.get("support_level", "supported" if state.context_sufficient else "unsupported")
+            state.evidence_score = round(float(result.get("evidence_score", state.context_coverage)), 4)
+            state.guard_details = result.get("guard_details", {})
             return (
                 f"{'上下文充足' if state.context_sufficient else '上下文不足'}："
                 f"{state.context_reason}",
@@ -601,6 +728,10 @@ def run_rag_agent(
                     "context_sufficient": state.context_sufficient,
                     "context_coverage": state.context_coverage,
                     "context_reason": state.context_reason,
+                    "support_level": state.support_level,
+                    "evidence_score": state.evidence_score,
+                    "guard_mode": state.guard_mode,
+                    "guard_details": state.guard_details,
                 },
             )
 

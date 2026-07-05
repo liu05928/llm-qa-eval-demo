@@ -1,0 +1,74 @@
+{
+  "generated_at": "2026-07-05 11:13:09",
+  "backend": "local_sft",
+  "case_set": "smoke",
+  "guard_mode": "v2",
+  "extended_limits": {
+    "project": 30,
+    "science": 28,
+    "guard": 24
+  },
+  "total_rows": 24,
+  "unique_case_count": 8,
+  "overall_pass_rate": 1.0,
+  "error_count": 0,
+  "failure_categories": {},
+  "source_match_categories": {
+    "primary_expected_source": 6
+  },
+  "local_sft_status": {
+    "available": true,
+    "models_url": "http://127.0.0.1:8001/v1/models",
+    "latency_ms": 10.24,
+    "model_ids": [
+      "qwen25-3b-edu-qlora-v21"
+    ]
+  },
+  "by_path": {
+    "rag_chat_api": {
+      "total": 8,
+      "pass_rate": 1.0,
+      "guard_refusal_pass_rate": 1.0,
+      "support_pass_rate": 1.0,
+      "support_source_match_rate": 1.0,
+      "support_primary_source_match_rate": 1.0,
+      "error_count": 0,
+      "avg_latency_ms": 7967.42,
+      "avg_evidence_score": 0.25
+    },
+    "workflow_langgraph": {
+      "total": 8,
+      "pass_rate": 1.0,
+      "guard_refusal_pass_rate": 1.0,
+      "support_pass_rate": 1.0,
+      "support_source_match_rate": 1.0,
+      "support_primary_source_match_rate": 1.0,
+      "error_count": 0,
+      "avg_latency_ms": 7945.42,
+      "avg_evidence_score": 0.25
+    },
+    "workflow_local": {
+      "total": 8,
+      "pass_rate": 1.0,
+      "guard_refusal_pass_rate": 1.0,
+      "support_pass_rate": 1.0,
+      "support_source_match_rate": 1.0,
+      "support_primary_source_match_rate": 1.0,
+      "error_count": 0,
+      "avg_latency_ms": 7972.46,
+      "avg_evidence_score": 0.25
+    }
+  },
+  "by_case_type": {
+    "guard": {
+      "total": 18,
+      "pass_rate": 1.0,
+      "source_match_rate": 0.0
+    },
+    "support": {
+      "total": 6,
+      "pass_rate": 1.0,
+      "source_match_rate": 1.0
+    }
+  }
+}

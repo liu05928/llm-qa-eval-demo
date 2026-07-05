@@ -472,9 +472,9 @@ with tab_chat:
     with col_right:
         retriever_mode = st.selectbox(
             "检索模式",
-            options=["vector", "dense_rerank", "bm25_hybrid"],
+            options=["vector", "dense_rerank", "bm25_hybrid", "contextual_hybrid"],
             index=2,
-            help="vector 表示基础向量检索；dense_rerank 表示无关键词召回对照；bm25_hybrid 表示向量召回 + BM25 + Rerank。"
+            help="vector 表示基础向量检索；dense_rerank 表示无关键词召回对照；bm25_hybrid 表示向量召回 + BM25 + Rerank；contextual_hybrid 会在 BM25 侧加入来源和章节上下文。"
         )
 
         top_k = st.slider(
@@ -502,6 +502,13 @@ with tab_chat:
             help="小 chunk 用于召回，父级大段落用于回答。"
         )
 
+        guard_mode = st.selectbox(
+            "上下文 Guard",
+            options=["v2", "v1"],
+            index=0,
+            help="v2 会输出 support_level、evidence_score 和 claim_verification；v1 为旧覆盖率判断。",
+        )
+
         generation_backend = st.selectbox(
             "生成模型后端",
             options=["默认配置", "mock", "api", "local_sft"],
@@ -526,6 +533,7 @@ with tab_chat:
                     use_rerank=use_rerank,
                     context_mode="small_to_big" if use_small_to_big else "small",
                     generation_backend=selected_generation_backend,
+                    guard_mode=guard_mode,
                 )
 
             st.subheader("模型回答")
@@ -534,6 +542,30 @@ with tab_chat:
                 f"生成后端：`{result.get('generation_backend')}` | "
                 f"生成模型：`{result.get('generator_model')}`"
             )
+
+            guard_cols = st.columns(4)
+            guard_cols[0].metric("support_level", result.get("support_level", ""))
+            guard_cols[1].metric(
+                "evidence_score",
+                round(float(result.get("evidence_score") or 0), 4),
+            )
+            guard_cols[2].metric(
+                "coverage",
+                round(float(result.get("context_coverage") or 0), 4),
+            )
+            guard_cols[3].metric(
+                "claim_status",
+                (result.get("claim_verification") or {}).get("status", ""),
+            )
+
+            with st.expander("查看 Guard 细节"):
+                st.json({
+                    "context_sufficient": result.get("context_sufficient"),
+                    "context_reason": result.get("context_reason"),
+                    "guard_mode": result.get("guard_mode"),
+                    "guard_details": result.get("guard_details"),
+                    "claim_verification": result.get("claim_verification"),
+                })
 
             st.subheader("引用来源")
             sources = result.get("sources", [])

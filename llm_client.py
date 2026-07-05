@@ -1,3 +1,4 @@
+import re
 from typing import Optional
 
 import requests
@@ -201,6 +202,27 @@ def generate_mock_answer(question: str, mode: str, system_prompt: str) -> str:
             f"【通用问答模式】\n"
             f"你的问题是：{question}\n\n"
             f"这是一个模拟回答。真实接入大模型 API 后，系统会根据通用问答提示词生成更完整的回答。"
+        )
+
+    if mode == "education" and "用户问题：" in question and "参考资料：" in question:
+        user_question = question.split("用户问题：", 1)[1].split("参考资料：", 1)[0].strip()
+
+        if "证据判断：" in user_question:
+            user_question = user_question.split("证据判断：", 1)[0].strip()
+
+        context = question.split("参考资料：", 1)[1].strip()
+        source_match = re.search(r"\[来源：([^，\]]+)", context)
+        source = source_match.group(1) if source_match else "mock_source"
+        context_preview = re.sub(r"\s+", " ", context)[:180]
+
+        return (
+            "关键词：资料依据、知识库、学习理解\n\n"
+            f"教材依据：{context_preview}\n\n"
+            f"回答：根据当前检索资料，可以围绕“{user_question}”进行解释。"
+            "资料中的相关片段提供了回答该问题的依据，因此本回答只概括这些已检索内容，"
+            "不补充外部事实。\n\n"
+            "学习建议：复习时先定位资料中的概念、现象或公式，再用自己的话复述其因果关系。\n\n"
+            f"参考来源：{source}"
         )
 
     if mode == "education":
